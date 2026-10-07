@@ -1,308 +1,76 @@
-"use client";
-
 import Link from "next/link";
-import Image from "next/image";
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SpaceLogo } from "@/brand/space/SpaceLogo";
 import { Button } from "@/components/ui/button";
-import { PLAN_CODES, PLAN_MARKETING } from "@/lib/constants/plans";
-import type { PlanCode } from "@/lib/types/database";
-
-gsap.registerPlugin(ScrollTrigger);
-
-const heroStats = [
-  { label: "Catálogos publicados", value: "2,100+" },
-  { label: "Tiempo promedio de setup", value: "8 min" },
-  { label: "Actualizaciones al mes", value: "20+" },
-];
-
-const featureHighlights = [
-  {
-    title: "Panel diseñado para escalar",
-    desc: "Visualiza métricas, inventario y engagement en un dashboard creado para founders que iteran rápido.",
-    badge: "Control total",
-  },
-  {
-    title: "Branding preciso desde el onboarding",
-    desc: "Define colores, CTAs y storytelling una sola vez; Space sincroniza tu identidad en todo el journey.",
-    badge: "Experiencia coherente",
-  },
-  {
-    title: "Automations y analítica nativa",
-    desc: "Registra vistas, clics y búsquedas sin integraciones extra: cada catálogo aprende de tus usuarios.",
-    badge: "Insights en tiempo real",
-  },
-];
-
-const ecosystem = [
-  { title: "Automatiza lanzamiento y updates", body: "Cada cambio se publica con un solo clic: onboarding → branding → catálogo público." },
-  { title: "Integraciones preparadas", body: "REST hooks y Supabase events listos para conectar pagos, CRM o ERP sin fricción." },
-  { title: "Soporte de clase enterprise", body: "Alertas proactivas, health checks y roadmap público para que sepas qué sigue." },
-];
-
-const landingPlanCodes: PlanCode[] = ["starter", "growth", "pro"];
-const landingPlans = landingPlanCodes.map((code) => ({
-  code,
-  marketing: PLAN_MARKETING[code],
-}));
+import { LandingHeader } from "@/components/landing/header";
+import { HeroDemo } from "@/components/landing/hero-demo";
+import { BeforeAfter } from "@/components/landing/before-after";
+import { Showcase } from "@/components/landing/showcase";
+import { Benefits, FreePlan, HowItWorks, SectionTitle } from "@/components/landing/sections";
+import { Faq, FAQ } from "@/components/landing/faq";
+import { FinalCta, LandingFooter } from "@/components/landing/footer";
+import { landingJsonLd } from "@/lib/seo";
 
 export default function LandingPage() {
-  const cardsRef = useRef<HTMLDivElement[]>([]);
-
-  useEffect(() => {
-    cardsRef.current.forEach((card) => {
-      if (!card) return;
-      gsap.fromTo(
-        card,
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 85%",
-          },
-        }
-      );
-    });
-  }, []);
-
   return (
-    <main className="min-h-screen bg-cloud text-ink overflow-hidden">
-      <section className="relative px-6 py-16 sm:py-24 md:py-28">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center gap-3 text-sm text-slate">
-            <SpaceLogo variant="mark" size={32} />
-            <span className="tracking-[0.3em] uppercase text-xs">SPACE</span>
-          </div>
-          <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
-            >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-tight text-ink">
-                Tu catálogo más ambicioso merece una plataforma del mismo nivel.
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd(FAQ)).replace(/</g, "\\u003c") }} />
+      <LandingHeader />
+      <main>
+        <section aria-labelledby="hero-title" className="overflow-hidden pb-16 pt-8 sm:pt-12 lg:pb-24">
+          <div className="container grid items-center gap-12 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-5">
+              <h1 id="hero-title" className="text-balance font-display text-[2.6rem] font-semibold leading-[1.02] text-ink sm:text-6xl lg:text-[3.4rem] xl:text-[3.75rem]">
+                Tu catálogo digital, con pedidos que llegan armados a tu WhatsApp
               </h1>
-              <p className="text-lg text-slate max-w-2xl">
-                SPACE es el HQ para diseñar, lanzar y optimizar catálogos digitales sin fricción. Onboarding guiado, branding preciso y analítica en cada paso.
+              <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                Sube tus productos desde el celular y comparte un solo link. Tus clientes eligen, ven el total y te mandan el pedido completo.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <Button asChild size="lg" className="bg-spaceBlue text-white hover:bg-spaceBlue/80">
-                  <Link href="/signup">Crear mi Space</Link>
+              <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+                <Button asChild size="lg" className="h-14 px-7 text-[1.05rem]">
+                  <Link href="/registro">Crear mi catálogo gratis</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-spaceMist text-ink">
-                  <Link href="/login">Entrar al dashboard</Link>
-                </Button>
+                <p className="text-sm text-muted-foreground">Gratis. Sin tarjeta.</p>
               </div>
-              <div className="grid gap-6 sm:grid-cols-3 py-6 border-t border-b border-spaceMist">
-                {heroStats.map((stat) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <p className="text-2xl font-semibold text-ink">{stat.value}</p>
-                    <p className="text-sm text-slate">{stat.label}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.7 }}
-              className="relative rounded-[32px] border border-spaceMist bg-white shadow-[0_20px_70px_rgba(79,107,255,0.12)] overflow-hidden"
-            >
-              <Image
-                src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80"
-                alt="SPACE dashboard preview"
-                width={1200}
-                height={900}
-                className="h-full w-full object-cover"
-                priority
-              />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-20 sm:py-28 bg-white">
-        <div className="mx-auto max-w-6xl space-y-12">
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-spaceMist px-4 py-1 text-xs font-semibold text-spaceBlue">
-              Flujo inteligente
+              <p className="mt-10 max-w-md border-l-2 border-spaceLavender pl-4 text-[0.95rem] leading-relaxed text-muted-foreground">
+                Pensado para estudiantes y emprendedores que venden comida, accesorios o arte entre clases, en bazares o desde casa.
+              </p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-ink">Un onboarding que ya piensa en tu marca</h2>
-            <p className="text-slate max-w-2xl mx-auto">
-              Cada paso está diseñado para capturar identidad, contenido y operaciones en minutos. Sin plantillas genéricas.
-            </p>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-3">
-            {featureHighlights.map((feature, i) => (
-              <div
-                key={feature.title}
-                ref={(el) => {
-                  cardsRef.current[i] = el!;
-                }}
-                className="rounded-3xl border border-spaceMist bg-cloud/70 p-6 backdrop-blur flex flex-col gap-4"
-              >
-                <span className="text-xs font-semibold text-spaceBlue uppercase tracking-wide">{feature.badge}</span>
-                <h3 className="text-xl font-semibold text-ink">{feature.title}</h3>
-                <p className="text-sm text-slate">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-20 sm:py-28 bg-cloud">
-        <div className="mx-auto max-w-6xl grid gap-12 md:grid-cols-[1fr_0.9fr] items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6"
-          >
-            <div className="inline-flex items-center gap-2 rounded-full bg-spaceMist px-4 py-1 text-xs font-semibold text-spaceBlue">
-              Ecosistema SPACE
+            <div className="lg:col-span-7">
+              <HeroDemo />
             </div>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-ink">
-              Una plataforma creada para convencer clientes y escalar contigo
-            </h2>
-            <p className="text-slate">
-              Más que un builder. Space alinea operaciones, contenido vivo y analítica para que cada interacción transmita confianza.
-            </p>
-            <ul className="space-y-3 text-sm text-ink">
-              <li>• Personaliza CTA, colores y layout una sola vez; Space lo replica en cada vista del catálogo.</li>
-              <li>• Publicaciones optimizadas para buscadores y dispositivos móviles sin configuraciones extra.</li>
-              <li>• Microinteracciones que elevan la percepción y refuerzan la lectura editorial de tu catálogo.</li>
-            </ul>
-          </motion.div>
-          <div className="space-y-5">
-            {ecosystem.map((item, i) => (
-              <motion.div
-                key={item.title}
-                className="rounded-3xl border border-spaceMist bg-white p-5 shadow-sm"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <p className="text-xs uppercase tracking-[0.3em] text-spaceBlue mb-2">Valor {i + 1}</p>
-                <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
-                <p className="text-sm text-slate mt-1">{item.body}</p>
-              </motion.div>
-            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="px-6 py-20 sm:py-28 bg-white">
-        <div className="mx-auto max-w-6xl space-y-10">
-          <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-spaceMist px-4 py-1 text-xs font-semibold text-spaceBlue">
-              Pricing transparente
+        <section aria-labelledby="mensajes-title" className="section-y bg-spaceMist/60">
+          <div className="container grid items-center gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <SectionTitle id="mensajes-title" title="Deja de reenviar fotos cada vez que alguien pregunta qué hay">
+                Un PDF se queda viejo en cuanto algo se acaba, y los mensajes sueltos se pierden en el chat. Con un link, la pregunta se contesta sola.
+              </SectionTitle>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-semibold text-ink">Planes que acompañan tu ritmo</h2>
-            <p className="text-slate max-w-2xl mx-auto">
-              Todas las cuentas arrancan con 30 días de SPACE Pro. Sin tarjeta → vuelves a Starter gratis. Cuando necesites más, eliges el plan en segundos.
-            </p>
+            <div className="lg:col-span-6 lg:col-start-7">
+              <BeforeAfter />
+            </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {landingPlans.map(({ code, marketing }) => (
-              <div
-                key={code}
-                className={`flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm ${
-                  marketing.featured ? "border-spaceBlue/40 shadow-[0_20px_45px_rgba(79,107,255,0.18)]" : "border-spaceMist/70"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Plan</p>
-                    <h3 className="text-2xl font-semibold text-ink">{marketing.title}</h3>
-                  </div>
-                  {marketing.badge && (
-                    <span className="inline-flex items-center rounded-full bg-spaceBlue/10 px-3 py-1 text-xs font-semibold text-spaceBlue">
-                      {marketing.badge}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-3 text-sm text-slate">{marketing.tagline}</p>
-                <div className="mt-6 flex items-baseline gap-2">
-                  <span className="text-4xl font-semibold text-ink">
-                    {marketing.price_mxn === 0
-                      ? "$0"
-                      : new Intl.NumberFormat("es-MX", {
-                          style: "currency",
-                          currency: "MXN",
-                          maximumFractionDigits: 0,
-                        }).format(marketing.price_mxn)}
-                  </span>
-                  <span className="text-sm text-muted-foreground">{marketing.price_mxn === 0 ? "" : "/ mes"}</span>
-                </div>
-                <ul className="mt-6 flex flex-col gap-2 text-sm text-ink/90">
-                  {marketing.highlights.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-spaceBlue" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Button asChild className="mt-8 w-full">
-                  <Link href="/signup">Empezar con {marketing.title}</Link>
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="px-6 py-24 sm:py-32 bg-white">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-5xl flex flex-col gap-6 text-center"
-        >
-          <h2 className="text-3xl sm:text-4xl font-semibold text-ink">
-            Tu catálogo es la primera impresión; haz que transmita el nivel de tu marca con SPACE.
-          </h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg" className="bg-spaceBlue text-white hover:bg-spaceBlue/80">
-              <Link href="/signup">Probar Space</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-spaceMist text-ink">
-              <Link href="/login">Entrar al dashboard</Link>
-            </Button>
+        <section aria-labelledby="para-title" className="section-y">
+          <div className="container">
+            <SectionTitle id="para-title" title="Para vender entre clases, en un bazar o desde tu casa">
+              Cada producto lleva hasta 4 fotos, precio, descripción y si hay, se acabó o es sobre pedido.
+            </SectionTitle>
+            <div className="mt-10">
+              <Showcase />
+            </div>
           </div>
-        </motion.div>
-      </section>
+        </section>
 
-      <footer className="px-6 py-8 bg-white text-ink border-t border-spaceMist">
-        <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate">
-          <div className="flex items-center gap-2">
-            <SpaceLogo variant="wordmark" size={28} />
-            <span>Space®</span>
-          </div>
-          <p>© {new Date().getFullYear()} Space. Todos los derechos reservados.</p>
-          <p>
-            Powered by{" "}
-            <Link href="https://amoxtli.tech" target="_blank" className="font-semibold text-ink hover:underline">
-              Amoxtli®
-            </Link>
-          </p>
-        </div>
-      </footer>
-    </main>
+        <HowItWorks />
+        <Benefits />
+        <FreePlan />
+        <Faq />
+        <FinalCta />
+      </main>
+      <LandingFooter />
+    </>
   );
 }

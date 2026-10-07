@@ -1,0 +1,14 @@
+rules_version = '2';
+// Space: las fotos se suben desde el servidor (Admin SDK).
+// El público solo puede leer las fotos de las tiendas (carpeta u/).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /u/{uid}/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

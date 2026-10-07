@@ -1,326 +1,128 @@
 "use server";
 
-import { createProductSchema, updateProductSchema } from "@/lib/validators/product";
-import { generateSlug } from "@/lib/utils/slug";
-import { revalidatePath } from "next/cache";
-import { ensureWithinPlanLimit } from "@/lib/utils/plan-check";
-import { connectToDatabase } from "@/lib/db/connection";
-import { ProductModel } from "@/lib/db/models/product";
-import { ProductImageModel } from "@/lib/db/models/product-image";
-import { CatalogModel } from "@/lib/db/models/catalog";
-import { StoreModel } from "@/lib/db/models/store";
-import { serializeDoc } from "@/lib/db/serialization";
-import { requireAuthUserId } from "@/lib/auth";
-import { getPublicImageUrl, parseStoragePath } from "@/lib/utils/storage";
+import { getDb, increment } from "@/lib/db";
+import { requireUserForAction } from "@/lib/auth/session";
+import { categoriesPath, getLimits, getStore, productsPath, storePath } from "@/lib/data/queries";
+import { removeImages, ownsPath } from "@/lib/storage/server";
+import { slugify } from "@/lib/slug";
+import { firstError, productSchema, type ProductInput } from "@/lib/validators";
+import type { ActionResult, Availability, Product, Store } from "@/lib/types";
+import { refreshStore, run, UserError } from "./helpers";
 
-interface BulkProductRow {
-  rowNumber?: number;
-  name?: string;
-  slug?: string;
-  url?: string;
-  description?: string;
-  price_text?: string;
-  stock?: string | number;
-  catalog_slug?: string;
+async function uniqueProductSlug(uid: string, name: string, exceptId?: string) {
+  const db = await getDb();
+  const base = slugify(name) || "producto";
+  const existing = await db.list<Product>(productsPath(uid));
+  const used = new Set(existing.filter((p) => p.id !== exceptId).map((p) => p.slug));
+  if (!used.has(base)) return base;
+  for (let i = 2; i < 100; i++) if (!used.has(`${base}-${i}`)) return `${base}-${i}`;
+  return `${base}-${Date.now().toString(36)}`;
 }
 
-function extractSlugFromUrl(input: string) {
-  try {
-    const url = new URL(input);
-    const parts = url.pathname.split("/").filter(Boolean);
-    return parts[parts.length - 1] || "";
-  } catch {
-    const sanitized = input.split(/[?#]/)[0];
-    const parts = sanitized.split("/").filter(Boolean);
-    return parts[parts.length - 1] || sanitized;
-  }
-}
-
-export async function createProduct(storeId: string, data: any) {
-  const userId = await requireAuthUserId();
-
-  const planCheck = await ensureWithinPlanLimit(storeId, userId, "products");
-  if (!planCheck.allowed) {
-    return { error: planCheck.error };
-  }
-
-  // Separate images from product data
-  const { images, id: productId, ...productData } = data;
-
-  const validation = createProductSchema.safeParse(productData);
-  if (!validation.success) {
-    return { error: validation.error.issues[0].message };
-  }
-
-  await connectToDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, owner_id: userId });
-  if (!store) {
-    return { error: "No autorizado" };
-  }
-
-  try {
-    const product = await ProductModel.create({
-      ...(productId ? { _id: productId } : {}),
-      ...validation.data,
-      store_id: storeId,
-    });
-
-    if (images && images.length > 0) {
-      const imageRecords = images.map((img: any, index: number) => ({
-        product_id: String(product._id),
-        path: parseStoragePath(img.path ?? img.url),
-        sort_order: img.sort_order ?? index,
-      }));
-
-      await ProductImageModel.insertMany(imageRecords);
+export async function saveProduct(input: ProductInput): Promise<ActionResult<{ id: string }>> {
+  return run(async () => {
+    const user = await requireUserForAction();
+    const parsed = productSchema.safeParse(input);
+    if (!parsed.success) throw new UserError(firstError(parsed.error));
+    const data = parsed.data;
+    const limits = await getLimits();
+    if (data.images.length > limits.imagesPerProduct) {
+      throw new UserError(`Cada producto puede tener hasta ${limits.imagesPerProduct} fotos.`);
     }
+    if (data.images.some((img) => !ownsPath(user.uid, img.path))) throw new UserError("Hay una foto que no es tuya.");
 
-    revalidatePath("/app/products");
-    return { data: serializeDoc(product) };
-  } catch (error: any) {
-    if (error?.code === 11000) {
-      return { error: "Ya existe un producto con este slug" };
+    const db = await getDb();
+    const store = await getStore(user.uid);
+    if (!store) throw new UserError("Primero crea tu tienda.");
+    if (data.categoryId) {
+      const cat = await db.get(`${categoriesPath(user.uid)}/${data.categoryId}`);
+      if (!cat) data.categoryId = null;
     }
-    return { error: "No se pudo crear el producto" };
-  }
-}
-
-export async function updateProduct(productId: string, data: any) {
-  const userId = await requireAuthUserId();
-
-  // Separate images from product data
-  const { images, ...productData } = data;
-
-  const validation = updateProductSchema.safeParse(productData);
-  if (!validation.success) {
-    return { error: validation.error.issues[0].message };
-  }
-
-  await connectToDatabase();
-  const product = await ProductModel.findOne({ _id: productId });
-  if (!product) {
-    return { error: "Producto no encontrado" };
-  }
-
-  const store = await StoreModel.findOne({ _id: product.store_id, owner_id: userId });
-  if (!store) {
-    return { error: "No autorizado" };
-  }
-
-  const updated = await ProductModel.findByIdAndUpdate(
-    productId,
-    {
-      ...validation.data,
-      updated_at: new Date(),
-    },
-    { new: true }
-  );
-
-  if (images !== undefined) {
-    await ProductImageModel.deleteMany({ product_id: productId });
-
-    if (images.length > 0) {
-      const imageRecords = images.map((img: any, index: number) => ({
-        product_id: productId,
-        path: parseStoragePath(img.path ?? img.url),
-        sort_order: img.sort_order ?? index,
-      }));
-
-      await ProductImageModel.insertMany(imageRecords);
-    }
-  }
-
-  revalidatePath("/app/products");
-  return { data: serializeDoc(updated) };
-}
-
-export async function deleteProduct(productId: string) {
-  const userId = await requireAuthUserId();
-  await connectToDatabase();
-
-  const product = await ProductModel.findOne({ _id: productId });
-  if (!product) {
-    return { error: "Producto no encontrado" };
-  }
-
-  const store = await StoreModel.findOne({ _id: product.store_id, owner_id: userId });
-  if (!store) {
-    return { error: "No autorizado" };
-  }
-
-  await ProductModel.deleteOne({ _id: productId });
-  await ProductImageModel.deleteMany({ product_id: productId });
-
-  revalidatePath("/app/products");
-  return { success: true };
-}
-
-export async function getProducts(storeId: string) {
-  const userId = await requireAuthUserId();
-  await connectToDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, owner_id: userId });
-  if (!store) {
-    return { error: "No autorizado" };
-  }
-
-  const products = await ProductModel.find({ store_id: storeId }).sort({ sort_order: 1 });
-  const productIds = products.map((product) => String(product._id));
-  const images = await ProductImageModel.find({ product_id: { $in: productIds } }).sort({ sort_order: 1 });
-
-  const imagesByProduct = new Map<string, any[]>();
-  images.forEach((img) => {
-    const productId = String(img.product_id);
-    const list = imagesByProduct.get(productId) ?? [];
-    list.push({
-      ...serializeDoc(img),
-      url: getPublicImageUrl(parseStoragePath(img.path)),
-    });
-    imagesByProduct.set(productId, list);
-  });
-
-  const productsWithUrls = products.map((product) => {
-    const serialized = serializeDoc(product) as any;
-    const id = String(product._id);
-    return {
-      ...serialized,
-      images: imagesByProduct.get(id) ?? [],
-    };
-  });
-
-  return { data: productsWithUrls };
-}
-
-export async function importProducts(storeId: string, rows: BulkProductRow[]) {
-  const userId = await requireAuthUserId();
-
-  const initialCheck = await ensureWithinPlanLimit(storeId, userId, "products");
-  if (!initialCheck.allowed) {
-    return { error: initialCheck.error };
-  }
-
-  await connectToDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, owner_id: userId });
-  if (!store) {
-    return { error: "No autorizado" };
-  }
-
-  const catalogs = await CatalogModel.find({ store_id: storeId }).select("slug");
-  const existingProducts = await ProductModel.find({ store_id: storeId }).select("slug");
-
-  const catalogMap = new Map(
-    catalogs.map((catalog: any) => [catalog.slug?.toLowerCase(), String(catalog._id)])
-  );
-  const usedSlugs = new Set(existingProducts.map((product: any) => product.slug));
-
-  const errors: { rowNumber: number; message: string }[] = [];
-  let successCount = 0;
-
-  for (const [index, row] of (rows || []).entries()) {
-    const rowNumber = row.rowNumber ?? index + 2;
-    const name = row.name?.trim();
-
-    if (!name) {
-      errors.push({ rowNumber, message: "El nombre es obligatorio" });
-      continue;
-    }
-
-    const slugFromUrl = row.url?.trim() ? extractSlugFromUrl(row.url.trim()) : "";
-    const slugInput = row.slug?.trim();
-    let slugCandidate = slugFromUrl || slugInput || "";
-    slugCandidate = slugCandidate ? generateSlug(slugCandidate) : "";
-    let slug = slugCandidate || generateSlug(name);
-
-    if (!slug) {
-      errors.push({ rowNumber, message: "No se pudo generar el slug" });
-      continue;
-    }
-
-    if (slugInput) {
-      if (usedSlugs.has(slug)) {
-        errors.push({ rowNumber, message: `El slug "${slug}" ya existe` });
-        continue;
-      }
-    } else {
-      const baseSlug = slug;
-      let counter = 1;
-      while (usedSlugs.has(slug)) {
-        slug = `${baseSlug}-${counter++}`;
-      }
-    }
-
-    usedSlugs.add(slug);
-
-    let catalogId: string | null = null;
-    if (row.catalog_slug && row.catalog_slug.trim() !== "") {
-      const normalizedCatalogSlug = row.catalog_slug.trim().toLowerCase();
-      const catalog = catalogMap.get(normalizedCatalogSlug);
-      if (!catalog) {
-        errors.push({ rowNumber, message: `Catálogo "${normalizedCatalogSlug}" no encontrado` });
-        continue;
-      }
-      catalogId = catalog;
-    }
-
-    let stockValue = 0;
-    if (row.stock !== undefined && row.stock !== null && row.stock !== "") {
-      const normalizedStock = typeof row.stock === "string" ? row.stock.replace(/,/g, "") : row.stock;
-      const parsedStock = Number(normalizedStock);
-      if (Number.isNaN(parsedStock) || parsedStock < 0) {
-        errors.push({ rowNumber, message: "Stock inválido" });
-        continue;
-      }
-      stockValue = Math.floor(parsedStock);
-    }
-
-    const productData = {
-      name,
-      slug,
-      description: row.description?.trim() ? row.description.trim() : null,
-      price_text: row.price_text?.trim() ? row.price_text.trim() : null,
-      stock: stockValue,
-      status: "active" as const,
-      catalog_id: catalogId,
-      out_of_stock_behavior: "label" as const,
-      cta_override: null,
-      payment_url: null,
-      whatsapp_message: null,
-      contact_url: null,
-      sort_order: 0,
+    const now = Date.now();
+    const fields = {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      priceFrom: data.priceFrom && data.price != null,
+      availability: data.availability,
+      visible: data.visible,
+      categoryId: data.categoryId,
+      images: data.images.map(({ path, url }) => ({ path, url })),
+      updatedAt: now,
     };
 
-    const validation = createProductSchema.safeParse(productData);
-    if (!validation.success) {
-      errors.push({ rowNumber, message: validation.error.issues[0].message });
-      continue;
+    if (data.id) {
+      const id = data.id;
+      const current = await db.get<Product>(`${productsPath(user.uid)}/${id}`);
+      if (!current) throw new UserError("Ese producto ya no existe.");
+      const slug = current.name === data.name ? current.slug : await uniqueProductSlug(user.uid, data.name, id);
+      await db.update(`${productsPath(user.uid)}/${id}`, { ...fields, slug });
+      const kept = new Set(fields.images.map((i) => i.path));
+      await removeImages(current.images.filter((i) => !kept.has(i.path)).map((i) => i.path));
+      refreshStore(store.slug);
+      return { id };
     }
 
-    try {
-      await ProductModel.create({
-        ...validation.data,
-        store_id: storeId,
-      });
-    } catch (error: any) {
-      errors.push({ rowNumber, message: error?.message ?? "Error al guardar el producto" });
-      continue;
-    }
+    const id = db.newId();
+    const slug = await uniqueProductSlug(user.uid, data.name);
+    await db.tx(async (tx) => {
+      const s = await tx.get<Store>(storePath(user.uid));
+      if (!s) throw new UserError("Primero crea tu tienda.");
+      if ((s.counts?.products ?? 0) >= limits.products) {
+        throw new UserError(`Llegaste a ${limits.products} productos, el máximo del plan gratis. Borra uno para agregar otro.`);
+      }
+      tx.set(`${productsPath(user.uid)}/${id}`, { ...fields, slug, order: now, createdAt: now });
+      tx.update(storePath(user.uid), { "counts.products": increment(1), updatedAt: now });
+    });
+    refreshStore(store.slug);
+    return { id };
+  });
+}
 
-    successCount++;
+export async function deleteProduct(id: string): Promise<ActionResult> {
+  return run(async () => {
+    const user = await requireUserForAction();
+    const db = await getDb();
+    let images: string[] = [];
+    let slug = "";
+    await db.tx(async (tx) => {
+      const product = await tx.get<Product>(`${productsPath(user.uid)}/${id}`);
+      const store = await tx.get<Store>(storePath(user.uid));
+      if (!product || !store) return;
+      images = product.images.map((i) => i.path);
+      slug = store.slug;
+      tx.delete(`${productsPath(user.uid)}/${id}`);
+      tx.update(storePath(user.uid), { "counts.products": increment(-1), updatedAt: Date.now() });
+    });
+    await removeImages(images);
+    refreshStore(slug);
+    return undefined;
+  });
+}
 
-    // Re-check plan limit before the next insert
-    const planCheck = await ensureWithinPlanLimit(storeId, userId, "products");
-    if (!planCheck.allowed) {
-      errors.push({ rowNumber, message: planCheck.error ?? "Límite alcanzado" });
-      break;
-    }
-  }
+export async function setAvailability(id: string, availability: Availability): Promise<ActionResult> {
+  return run(async () => {
+    const user = await requireUserForAction();
+    if (!["available", "soldout", "onrequest"].includes(availability)) throw new UserError("Opción no válida.");
+    const db = await getDb();
+    const product = await db.get<Product>(`${productsPath(user.uid)}/${id}`);
+    if (!product) throw new UserError("Ese producto ya no existe.");
+    await db.update(`${productsPath(user.uid)}/${id}`, { availability, updatedAt: Date.now() });
+    const store = await getStore(user.uid);
+    refreshStore(store?.slug);
+    return undefined;
+  });
+}
 
-  revalidatePath("/app/products");
-
-  return {
-    data: {
-      imported: successCount,
-      failed: errors.length,
-      errors,
-    },
-  };
+export async function reorderProducts(ids: string[]): Promise<ActionResult> {
+  return run(async () => {
+    const user = await requireUserForAction();
+    const db = await getDb();
+    const existing = new Set((await db.list<Product>(productsPath(user.uid))).map((p) => p.id));
+    const updates = ids.filter((id) => existing.has(id)).map((id, i) => ({ path: `${productsPath(user.uid)}/${id}`, data: { order: i } }));
+    await db.batchUpdate(updates);
+    const store = await getStore(user.uid);
+    refreshStore(store?.slug);
+    return undefined;
+  });
 }

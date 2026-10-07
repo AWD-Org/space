@@ -1,241 +1,49 @@
-# SPACE - Catálogo Digital Premium
+# Space
 
-Un SaaS premium para crear catálogos digitales profesionales. Permite a cualquier vendedor tener un catálogo público y compartible con un dashboard elegante para gestionar productos, inventario y analytics.
+Catálogo digital gratis para vender por WhatsApp. Subes lo que vendes, compartes un link y los pedidos llegan armados al chat. Hecho por [AMOXTLI®](https://amoxtli.tech). En producción: https://space.amoxtli.tech
 
-## Stack Tecnológico
+## Stack
 
-- **Frontend**: Next.js 15 (App Router) + TypeScript
-- **Base de Datos**: MongoDB (Mongoose)
-- **Autenticación**: Clerk (Email/Password + Google OAuth)
-- **Storage**: Supabase Storage (storage-only, bucket público)
-- **Styling**: TailwindCSS + shadcn/ui
-- **Animaciones**: Framer Motion + GSAP
-- **Validación**: Zod
-- **Forms**: React Hook Form
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind · Firebase (Auth, Firestore, Storage) con `firebase-admin` solo en el servidor.
 
-## Características Principales
+## Cómo funciona
 
-- Sistema de autenticación (Email + Password)
-- Onboarding guiado en 6 pasos
-- Dashboard admin con 5 secciones:
-  - **Home**: Analytics y KPIs (vistas, clicks, productos)
-  - **Products**: CRUD completo de productos con inventario
-  - **Catalogs**: Gestión de catálogos/categorías
-  - **Branding**: Personalización visual (colores, template, CTA)
-  - **Preview**: Vista previa del catálogo público
-- Catálogo público SSR con 3 templates (Minimal, Grid, List)
-- Sistema de analytics automático (vistas, búsquedas, clicks)
-- Búsqueda de productos en tiempo real
-- CTAs configurables (WhatsApp, Payment Link, Contact)
-- Gestión de stock e inventario
-- Multi-tenant (cada usuario tiene su tienda)
-- Gestión de planes y facturación con Stripe (trial automático de 30 días)
+- Entrada con Google o correo. El navegador obtiene un ID token de Firebase y `/api/session` lo cambia por una cookie de sesión (`__session`, 14 días).
+- Firestore y Storage no aceptan escrituras del cliente (`firestore.rules`, `storage.rules`). Todo pasa por acciones de servidor que toman la tienda desde la sesión.
+- Los límites del plan gratis viven en `lib/plan.ts` y se pueden cambiar sin desplegar con el documento `config/plan_free`. Se validan dentro de transacciones.
+- Las fotos se comprimen en el navegador (WebP, 1600 px) y se suben por `/api/upload`.
+- El pedido se arma en una bolsa del lado del cliente y se envía con un link `wa.me`.
+- Cobro con Stripe apagado (`NEXT_PUBLIC_BILLING_ENABLED=false`). El código anterior sigue en el historial de git.
 
-### Planes actuales
+## Variables de entorno
 
-| Plan     | Precio (MXN/mes) | Límites principales                                   |
-|----------|------------------|-------------------------------------------------------|
-| Starter  | $0               | 1 tienda, 20 productos, 2 catálogos, branding visible |
-| Growth   | $149             | 200 productos, 10 catálogos, sin branding, soporte prior. |
-| Pro      | $299             | Ilimitado, analytics avanzadas, soporte premium       |
+Copia `.env.example`. En Vercel, agrégalas en Production y Preview.
 
-Todas las cuentas nuevas inician en **Pro** con 30 días gratis. Si no se agrega un método de pago, se degradan automáticamente a Starter al terminar la prueba. Las actualizaciones y cancelaciones se realizan vía Stripe Checkout + Customer Portal.
+| Variable | De dónde sale |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://space.amoxtli.tech` |
+| `NEXT_PUBLIC_FIREBASE_*` | Configuración del proyecto > Tus apps (web) |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | JSON de la cuenta de servicio. Nunca se sube al repositorio ni se comparte por chat. |
 
-## Requisitos Previos
+`FIREBASE_PRIVATE_KEY` acepta los saltos de línea escapados (`\n`).
 
-- Node.js 18+ y npm
-- Cuenta de Clerk (gratis)
-- MongoDB Atlas o instancia local
-- Proyecto Supabase solo para Storage
+## Puesta en marcha de Firebase
 
-## Instalación
+1. Authentication: activar Correo/contraseña y Google; agregar `space.amoxtli.tech` en dominios autorizados.
+2. Crear Firestore y Storage.
+3. Publicar las reglas: `firebase deploy --only firestore:rules,storage` (usa `firebase.json`).
+4. Si Firestore pide un índice compuesto, el error trae el enlace para crearlo.
 
-### 1. Clonar/Descargar el Proyecto
-
-```bash
-cd space
-```
-
-### 2. Instalar Dependencias
+## Desarrollo
 
 ```bash
 npm install
-```
-
-### 3. Configurar MongoDB
-
-1. Crea un cluster en MongoDB Atlas o usa una instancia local.
-2. Copia el connection string y guárdalo en `MONGODB_URI`.
-
-### 4. Configurar Clerk
-
-1. Crea una aplicación en [clerk.com](https://clerk.com)
-2. Habilita Email/Password y Google OAuth.
-3. Copia las claves y define las variables `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` y `CLERK_SECRET_KEY`.
-
-### 5. Configurar Supabase Storage (storage-only)
-
-1. Crea un proyecto dedicado a Storage en Supabase.
-2. Crea el bucket público `public-images`.
-3. No agregues policies (las subidas se realizan con Signed Upload URLs desde el backend).
-
-### 6. Configurar Variables de Entorno
-
-Crea un archivo `.env.local` en la raíz del proyecto:
-
-```bash
-cp .env.example .env.local
-```
-
-Edita `.env.local` y agrega tus credenciales:
-
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
-CLERK_SECRET_KEY=sk_...
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/app/home
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/onboarding
-
-MONGODB_URI=mongodb+srv://...
-
-NEXT_PUBLIC_STORAGE_SUPABASE_URL=https://tu-storage-only.supabase.co
-NEXT_PUBLIC_STORAGE_SUPABASE_ANON_KEY=tu-anon-key
-STORAGE_SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
-STORAGE_BUCKET=public-images
-```
-
-### 5. Iniciar el Proyecto
-
-```bash
 npm run dev
 ```
 
-La aplicación estará disponible en [http://localhost:3000](http://localhost:3000)
+Sin Firebase, define `NEXT_PUBLIC_SPACE_LOCAL_MODE=1` para usar datos locales en `.local-data/` y una sesión simulada. No lo uses en producción.
 
-## Uso
-
-### Primera vez
-
-1. Ve a [http://localhost:3000](http://localhost:3000)
-2. Serás redirigido a `/login`
-3. Haz clic en "Regístrate" para crear una cuenta
-4. Completa el onboarding guiado (6 pasos):
-   - Crear tienda (nombre, slug, descripción, color)
-   - Elegir template visual
-   - Configurar CTA por defecto
-   - Crear primer catálogo
-   - Crear primer producto
-   - Publicar tienda
-5. Al finalizar, tendrás tu catálogo público en `http://localhost:3000/tu-slug`
-
-### Dashboard
-
-Una vez completado el onboarding, accederás al dashboard admin:
-
-- **Home**: Ve analytics, KPIs, top products
-- **Products**: Crea, edita y gestiona productos
-- **Catalogs**: Organiza productos en catálogos
-- **Branding**: Personaliza colores, template, CTA
-- **Preview**: Vista previa de tu catálogo público
-
-### Catálogo Público
-
-Tu catálogo será accesible en:
-- `http://localhost:3000/tu-slug` - Página principal
-- `http://localhost:3000/tu-slug/catalog/nombre-catalogo` - Catálogo específico
-- `http://localhost:3000/tu-slug/product/nombre-producto` - Producto específico
-
-## Estructura del Proyecto
-
+```bash
+npm run type-check
+npm run build
 ```
-space/
-├── app/
-│   ├── (auth)/           # Rutas de autenticación
-│   │   ├── login/
-│   │   └── signup/
-│   ├── app/              # Dashboard admin (protegido)
-│   │   ├── home/
-│   │   ├── products/
-│   │   ├── catalogs/
-│   │   ├── branding/
-│   │   └── preview/
-│   ├── onboarding/       # Wizard de onboarding
-│   ├── (public)/[store_slug]/     # Catálogo público SSR
-│   │   ├── catalog/[catalog_slug]/
-│   │   └── product/[product_slug]/
-│   └── layout.tsx
-├── components/
-│   ├── ui/               # shadcn/ui components
-│   ├── layout/           # Sidebar, etc.
-│   └── public/           # Componentes del catálogo público
-├── lib/
-│   ├── actions/          # Server Actions
-│   ├── db/               # Modelos y conexión MongoDB
-│   ├── storage/          # Clientes de storage (Supabase storage-only)
-│   ├── types/            # TypeScript types
-│   ├── utils/            # Utilidades
-│   └── validators/       # Zod schemas
-├── styles/
-│   ├── globals.css
-│   └── tokens.css
-└── middleware.ts         # Protección de rutas
-```
-
-## Tecnologías y Decisiones
-
-- **Next.js App Router**: SSR, Server Actions, routing moderno
-- **MongoDB + Clerk**: Separación de Auth y DB con control multi-tenant
-- **TypeScript**: Type safety
-- **TailwindCSS**: Styling utility-first
-- **shadcn/ui**: Componentes accesibles y customizables
-- **RLS**: Row Level Security para multi-tenancy seguro
-- **Server Actions**: Mutaciones seguras sin API routes
-- **Zod**: Validación runtime type-safe
-
-## Analytics
-
-El sistema trackea automáticamente:
-- Vistas de tienda
-- Vistas de producto
-- Búsquedas
-- Clicks en CTAs
-
-Los datos se almacenan en la tabla `events` y se muestran en el dashboard.
-
-## Deployment
-
-### Vercel (Recomendado)
-
-1. Push el código a GitHub
-2. Importa el proyecto en Vercel
-3. Configura las variables de entorno (`.env.local`)
-4. Deploy
-
-### Otras plataformas
-
-Compatible con cualquier plataforma que soporte Next.js:
-- Netlify
-- Railway
-- Render
-- etc.
-
-## Checklist de verificación manual
-
-- Login con email/password (Clerk)
-- Login con Google OAuth
-- Onboarding completo (store, catálogo, producto, publicación)
-- Crear/editar productos y catálogos en `/app/*`
-- Subir imágenes (logo/producto) con Signed Upload URL y verificar lectura pública
-- Catálogo público: navegación, búsqueda y filtros por catálogo
-- Dashboard: métricas y eventos básicos
-- Webhooks de Stripe actualizan el plan en MongoDB
-
-## Soporte
-
-Para reportar bugs o solicitar features, crea un issue en el repositorio.
-
-## Licencia
-
-ISC
-# space
