@@ -129,7 +129,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
               <Input id="s-wa" inputMode="tel" autoComplete="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="55 1234 5678" />
             </Field>
             <Field label="Dónde y cuándo entregas" htmlFor="s-del" counter={`${deliveryNote.length}/160`}>
-              <Input id="s-del" value={deliveryNote} onChange={(e) => setDeliveryNote(e.target.value)} maxLength={160} placeholder="Ej. Explanada de la facultad, de 12 a 3" />
+              <Input id="s-del" value={deliveryNote} onChange={(e) => setDeliveryNote(e.target.value)} maxLength={160} placeholder="Ej. Entrego en el centro, de 12 a 3" />
             </Field>
             <div>
               <p className="mb-2 text-sm font-medium text-ink">Cómo te pagan</p>

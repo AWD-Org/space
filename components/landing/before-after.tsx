@@ -59,7 +59,7 @@ function After() {
           <p className="mt-1">• 2 × Galletas con chispas · $50</p>
           <p>• 1 × Café frío · $45</p>
           <p className="mt-1 font-semibold">Total aproximado: $95</p>
-          <p>Entrega: Explanada a la 1</p>
+          <p>Entrega: Centro, a la 1</p>
           <span className="mt-0.5 block text-right text-[0.68rem] text-[#54656F]">11:51</span>
         </div>
       </div>

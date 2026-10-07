@@ -107,7 +107,7 @@ function ChatPreview() {
             Total{partial ? " aproximado" : ""}: <NumberTicker value={total} format={format} />
           </p>
           <p>A nombre de: Diego</p>
-          <p>Entrega: Explanada a la 1</p>
+          <p>Entrega: Centro, a la 1</p>
           <p className="mt-1 flex items-center justify-end gap-1 text-[0.7rem] text-[#54656F]">
             1:02 p.m. <CheckCheck className="h-3.5 w-3.5 text-[#53BDEB]" aria-hidden />
           </p>

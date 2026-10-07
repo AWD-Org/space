@@ -31,7 +31,7 @@ export default function LandingPage() {
                 <p className="text-sm text-muted-foreground">Gratis. Sin tarjeta.</p>
               </div>
               <p className="mt-10 max-w-md border-l-2 border-spaceLavender pl-4 text-[0.95rem] leading-relaxed text-muted-foreground">
-                Pensado para estudiantes y emprendedores que venden comida, accesorios o arte entre clases, en bazares o desde casa.
+                Para quien vende comida, accesorios, arte o servicios desde su celular, en un puesto o desde casa.
               </p>
             </div>
             <div className="lg:col-span-7">
@@ -55,7 +55,7 @@ export default function LandingPage() {
 
         <section aria-labelledby="para-title" className="section-y">
           <div className="container">
-            <SectionTitle id="para-title" title="Para vender entre clases, en un bazar o desde tu casa">
+            <SectionTitle id="para-title" title="Para vender en un puesto, en un bazar o desde tu casa">
               Cada producto lleva hasta 4 fotos, precio, descripción y si hay, se acabó o es sobre pedido.
             </SectionTitle>
             <div className="mt-10">

@@ -34,7 +34,7 @@ export const demoStore: CatalogStore = {
   slug: "antojos-de-vale",
   tagline: "Postres hechos en casa",
   whatsapp: "520000000000",
-  deliveryNote: "Explanada, de 12 a 3",
+  deliveryNote: "Centro, de 12 a 3",
   paymentMethods: ["efectivo", "transferencia"],
   accent: "#B4235A",
   logo: null,
@@ -63,7 +63,7 @@ export const showcases: Showcase[] = [
     key: "comida",
     tab: "Postres y comida",
     store: "Antojos de Vale",
-    line: "Vende en la explanada y por encargo",
+    line: "Vende en el centro y por encargo",
     items: [
       { name: "Galletas con chispas", price: "$25", photo: u("photo-1634188023615-7e08901193b6", 520) },
       { name: "Fresas con crema", price: "$55", photo: u("photo-1770116957825-e3b5ef516a16", 520) },

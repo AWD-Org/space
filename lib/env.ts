@@ -19,11 +19,11 @@ export const hasFirebaseClient = Boolean(
   firebaseClientConfig.apiKey && firebaseClientConfig.projectId && firebaseClientConfig.appId
 );
 
-const onVercel = Boolean(process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.VERCEL);
+const onHosting = Boolean(process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.VERCEL || process.env.NETLIFY);
 
 /** Modo local: forzado con NEXT_PUBLIC_SPACE_LOCAL_MODE=1, o automático en desarrollo sin Firebase. */
 export const isLocalMode =
-  !onVercel &&
+  !onHosting &&
   (process.env.NEXT_PUBLIC_SPACE_LOCAL_MODE === "1" ||
     (!hasFirebaseClient && process.env.NODE_ENV !== "production"));
 

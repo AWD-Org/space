@@ -68,7 +68,7 @@ export async function HowItWorks() {
               <p>• 2 × Galletas con chispas</p>
               <p>• 1 × Café frío</p>
               <p className="font-semibold">Total aproximado: $95</p>
-              <p>Entrega: Explanada a la 1</p>
+              <p>Entrega: Centro, a la 1</p>
               <p className="flex items-center justify-end gap-1 text-[0.7rem] text-[#54656F]">
                 1:02 p.m. <CheckCheck className="h-3.5 w-3.5 text-[#53BDEB]" aria-hidden />
               </p>
@@ -94,7 +94,7 @@ export function Benefits() {
       <div className="container grid gap-12 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">
-            <SectionTitle id="beneficios-title" title="Lo que resuelve mientras estás en clase" />
+            <SectionTitle id="beneficios-title" title="Lo que resuelve mientras tú sigues con lo tuyo" />
             <Reveal delay={0.1} className="relative mt-8 hidden aspect-[4/5] max-w-sm overflow-hidden rounded-3xl bg-spaceMist lg:block">
               <Image src={stallPhoto} alt="Pulseras y collares de chaquira acomodados en un puesto" fill sizes="384px" className="object-cover" />
             </Reveal>

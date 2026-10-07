@@ -17,7 +17,7 @@ Next.js 15 (App Router) · React 19 · TypeScript · Tailwind · Firebase (Auth,
 
 ## Variables de entorno
 
-Copia `.env.example`. En Vercel, agrégalas en Production y Preview.
+Copia `.env.example`. En Netlify, agrégalas en Production y Preview.
 
 | Variable | De dónde sale |
 |---|---|
