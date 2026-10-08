@@ -8,6 +8,7 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
 import { WordsReveal } from "@/components/landing/motion";
 import { checkSlug, createStore, setPublished } from "@/lib/actions/store";
@@ -20,6 +21,7 @@ import { ProductForm } from "./product-form";
 import { StorePreview } from "./store-preview";
 
 const STEPS = ["Tu tienda", "Primer producto", "Publicar"];
+const PUBLISH_STEPS = ["Guardando tu tienda", "Armando tu link", "Acomodando tus productos", "Publicando tu catálogo", "Abriendo tu espacio"];
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const fieldShell =
@@ -52,6 +54,7 @@ export function Onboarding({
   const [accent, setAccent] = React.useState<string>(store?.accent ?? ACCENTS[0].value);
   const [slugState, setSlugState] = React.useState<{ checking: boolean; ok?: boolean; message?: string }>({ checking: false });
   const [busy, setBusy] = React.useState(false);
+  const [publishing, setPublishing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [created, setCreated] = React.useState(Boolean(store));
 
@@ -91,9 +94,17 @@ export function Onboarding({
 
   async function publish() {
     setBusy(true);
+    setPublishing(true);
+    toast.dismiss();
+    const started = Date.now();
     const res = await setPublished(true);
-    setBusy(false);
-    if (!res.ok) return toast.error(res.error);
+    if (!res.ok) {
+      setBusy(false);
+      setPublishing(false);
+      return toast.error(res.error);
+    }
+    // Deja ver los pasos completos antes de abrir el panel.
+    await new Promise((r) => setTimeout(r, Math.max(0, 3300 - (Date.now() - started))));
     router.push("/app/compartir");
     router.refresh();
   }
@@ -355,6 +366,7 @@ export function Onboarding({
         </div>
       </div>
 
+      <MultiStepLoader steps={PUBLISH_STEPS} loading={publishing} />
       <StorePreview step={step} name={name} slug={effectiveSlug} host={host} accent={accent} whatsappReady={whatsappReady} liveSlug={created && slug ? slug : undefined} />
     </div>
   );
