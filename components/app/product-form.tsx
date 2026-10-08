@@ -7,6 +7,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Field } from "@/components/ui/field";
 import { Segmented } from "@/components/ui/segmented";
 import { Switch } from "@/components/ui/switch";
@@ -49,7 +50,7 @@ export function ProductForm({
   async function submit(another: boolean) {
     setError(null);
     const cents = parsePriceInput(price);
-    if (price.trim() && cents == null) return setError("Revisa el precio: solo números, por ejemplo 45 o 45.50.");
+    if (price.trim() && cents == null) return setError("Revisa el precio: solo números, por ejemplo 45 o 1,250.50.");
     setSaving(another ? "another" : "save");
     const res = await saveProduct({
       id: product?.id,
@@ -129,11 +130,8 @@ export function ProductForm({
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Precio" htmlFor="p-price" hint="Déjalo vacío si prefieres que te pregunten.">
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-              <Input id="p-price" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="45" className="pl-8 tabular-nums" />
-            </div>
+          <Field label="Precio" htmlFor="p-price" hint="En pesos mexicanos (MXN). Déjalo vacío si prefieres que te pregunten.">
+            <MoneyInput id="p-price" value={price} onChange={setPrice} />
           </Field>
           <label className="flex items-center justify-between gap-3 self-start rounded-xl bg-cloud px-4 py-3 sm:mt-7">
             <span>

@@ -41,7 +41,7 @@ export async function HowItWorks() {
         </SectionTitle>
         <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-6">
           <StepCard delay={0} title="Sube la foto y ponle precio" body="Toma la foto o elige una de tu galería. Space la comprime en tu celular para que el catálogo abra rápido.">
-            <PriceStep image={brownie.images[0].url} name={brownie.name} price="$35" />
+            <PriceStep image={brownie.images[0].url} name={brownie.name} price="$35 MXN" />
           </StepCard>
           <StepCard delay={0.1} title="Comparte tu link o tu QR" body="Ponlo en tu bio, en un grupo o impreso en tu puesto. Siempre muestra lo que tienes hoy.">
             <ShareStep qr={qr} />
@@ -102,7 +102,7 @@ export function FreePlan() {
     { k: "Fotos por producto", value: FREE_PLAN.imagesPerProduct },
     { k: "Categorías", value: FREE_PLAN.categories },
     { k: "Historial de métricas", value: FREE_PLAN.statsDays, suffix: " días" },
-    { k: "Comisión por venta", value: 0, prefix: "$" },
+    { k: "Comisión por venta", value: 0, prefix: "$", suffix: " MXN" },
   ];
   return (
     <section id="gratis" aria-labelledby="gratis-title" className="section-y scroll-mt-16">

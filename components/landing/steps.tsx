@@ -102,7 +102,7 @@ export function OrderStep() {
     >
       <motion.p variants={line} transition={t}>• 2 × Galletas con chispas</motion.p>
       <motion.p variants={line} transition={t}>• 1 × Café frío</motion.p>
-      <motion.p variants={line} transition={t} className="font-semibold">Total aproximado: $95</motion.p>
+      <motion.p variants={line} transition={t} className="font-semibold">Total aproximado: $95 MXN</motion.p>
       <motion.p variants={line} transition={t}>Entrega: Centro, a la 1</motion.p>
       <motion.p variants={line} transition={t} className="flex items-center justify-end gap-1 text-[0.7rem] text-[#54656F]">
         1:02 p.m. <CheckCheck className="h-3.5 w-3.5 text-[#53BDEB]" aria-hidden />

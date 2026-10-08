@@ -74,9 +74,9 @@ function After() {
           </div>
           <div className="px-3 py-2 text-[0.9rem] leading-snug text-[#111B21]">
             <p>Hola Antojos de Vale, quiero hacer un pedido:</p>
-            <p className="mt-1">• 2 × Galletas con chispas · $50</p>
-            <p>• 1 × Café frío · $45</p>
-            <p className="mt-1 font-semibold">Total aproximado: $95</p>
+            <p className="mt-1">• 2 × Galletas con chispas · $50 MXN</p>
+            <p>• 1 × Café frío · $45 MXN</p>
+            <p className="mt-1 font-semibold">Total aproximado: $95 MXN</p>
             <p>Entrega: Centro, a la 1</p>
             <span className="mt-0.5 block text-right text-[0.68rem] text-[#54656F]">11:51</span>
           </div>

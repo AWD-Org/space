@@ -2,19 +2,26 @@ import type { Availability, PaymentMethod } from "./types";
 
 const mxn = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 2, minimumFractionDigits: 0 });
 
-/** Centavos a "$45" o "$45.50". */
+/** Centavos a "$45 MXN", "$4,000 MXN" o "$45.50 MXN". Space solo maneja pesos mexicanos. */
 export function formatPrice(cents: number | null | undefined, from = false) {
   if (cents == null) return "Precio a consultar";
-  const text = mxn.format(cents / 100);
+  const text = `${mxn.format(cents / 100)} MXN`;
   return from ? `Desde ${text}` : text;
 }
 
 /** "45.50" o "45" a centavos. */
 export function parsePriceInput(value: string): number | null {
-  const clean = value.replace(/[^\d.,]/g, "").replace(",", ".");
+  const clean = value.replace(/,/g, "").replace(/[^\d.]/g, "");
   if (!clean) return null;
   const n = Number(clean);
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : null;
+}
+
+/** "4000.5" → "4,000.5" (separador de miles mientras escribes). */
+export function groupDigits(raw: string): string {
+  const [int = "", dec] = raw.split(".");
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return dec === undefined ? grouped : `${grouped}.${dec}`;
 }
 
 export function centsToInput(cents: number | null | undefined) {
