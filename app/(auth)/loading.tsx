@@ -1,5 +1,5 @@
 import { RouteLoader } from "@/components/ui/route-loader";
 
 export default function Loading() {
-  return <RouteLoader label="Revisando tu sesión…" className="w-full" />;
+  return <RouteLoader label="Revisando tu sesión…" />;
 }

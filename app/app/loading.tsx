@@ -1,5 +1,5 @@
 import { RouteLoader } from "@/components/ui/route-loader";
 
 export default function Loading() {
-  return <RouteLoader label="Preparando tu espacio…" className="min-h-dvh bg-white" />;
+  return <RouteLoader label="Preparando tu espacio…" />;
 }
