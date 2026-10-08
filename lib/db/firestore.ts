@@ -1,5 +1,5 @@
 import "server-only";
-import { FieldValue, type Query, type DocumentData } from "firebase-admin/firestore";
+import { FieldValue, type DocumentData, type Query, type QueryDocumentSnapshot, type Transaction } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { isSentinel, type Db, type DocData, type QueryOptions, type Tx, type WithId } from "./types";
 
@@ -51,7 +51,7 @@ export const firestoreDb: Db = {
   },
   async list<T>(col: string, opts?: QueryOptions) {
     const snap = await buildQuery(col, opts).get();
-    return snap.docs.map((d) => ({ ...(d.data() as T), id: d.id }));
+    return snap.docs.map((d: QueryDocumentSnapshot) => ({ ...(d.data() as T), id: d.id }));
   },
   async count(col, opts) {
     const snap = await buildQuery(col, opts).count().get();
@@ -67,7 +67,7 @@ export const firestoreDb: Db = {
   },
   async tx(fn) {
     const db = adminDb();
-    return db.runTransaction(async (t) => {
+    return db.runTransaction(async (t: Transaction) => {
       const tx: Tx = {
         async get<T>(path: string) {
           const snap = await t.get(db.doc(path));
