@@ -18,6 +18,8 @@ export const loadCatalog = cache(async (slug: string): Promise<{ catalog: Public
   return null;
 });
 
+const abs = (u?: string) => (u && u.startsWith("/") ? `${SITE_URL}${u}` : u);
+
 export function catalogJsonLd({ store, products }: PublicCatalog) {
   const url = `${SITE_URL}/${store.slug}`;
   return {
@@ -29,7 +31,7 @@ export function catalogJsonLd({ store, products }: PublicCatalog) {
         name: store.name,
         url,
         description: store.tagline || undefined,
-        image: store.logo?.url,
+        image: abs(store.logo?.url),
         paymentAccepted: store.paymentMethods.length ? store.paymentMethods.join(", ") : undefined,
       },
       {
@@ -42,7 +44,7 @@ export function catalogJsonLd({ store, products }: PublicCatalog) {
             "@type": "Product",
             name: p.name,
             url: `${url}/p/${p.slug}`,
-            image: p.images[0]?.url,
+            image: abs(p.images[0]?.url),
             description: p.description || undefined,
             offers:
               p.price != null

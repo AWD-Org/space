@@ -14,7 +14,7 @@ export function slugify(text: string) {
 export const RESERVED_SLUGS = new Set([
   "app", "api", "entrar", "registro", "login", "signup", "logout", "salir", "empezar", "onboarding",
   "admin", "ayuda", "soporte", "terminos", "privacidad", "precios", "planes", "blog", "u", "p",
-  "static", "public", "assets", "images", "img", "_next", "favicon", "robots", "sitemap", "manifest",
+  "static", "public", "assets", "images", "img", "media", "_next", "favicon", "robots", "sitemap", "manifest",
   "opengraph-image", "twitter-image", "icon", "apple-icon", "space", "amoxtli", "www", "home", "inicio",
   "recuperar", "cuenta", "tienda", "tiendas", "catalogo", "catalogos", "billing", "pagos",
 ]);

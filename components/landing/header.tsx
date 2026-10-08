@@ -14,11 +14,29 @@ const LINKS = [
 
 export function LandingHeader() {
   const [scrolled, setScrolled] = React.useState(false);
+  const [active, setActive] = React.useState<string>("");
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  React.useEffect(() => {
+    const ids = LINKS.map((l) => l.href.slice(1));
+    const seen = new Set<string>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) (e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id));
+        setActive(ids.find((id) => seen.has(id)) ?? "");
+      },
+      { rootMargin: "-35% 0px -55% 0px" }
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+    return () => io.disconnect();
   }, []);
 
   return (
@@ -30,7 +48,15 @@ export function LandingHeader() {
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Secciones">
           {LINKS.map((l) => (
-            <a key={l.href} href={l.href} className="rounded-full px-4 py-2 text-[0.95rem] text-ink/80 transition-colors hover:bg-ink/5 hover:text-ink">
+            <a
+              key={l.href}
+              href={l.href}
+              aria-current={active === l.href.slice(1) ? "location" : undefined}
+              className={cn(
+                "rounded-full px-4 py-2 text-[0.95rem] transition-colors hover:bg-ink/5 hover:text-ink",
+                active === l.href.slice(1) ? "bg-white text-ink shadow-sm ring-1 ring-ink/5" : "text-ink/80"
+              )}
+            >
               {l.label}
             </a>
           ))}

@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { ogFonts } from "@/lib/og/fonts";
 import { formatPrice } from "@/lib/format";
 import { loadCatalog } from "../../data";
+import { ogPhoto } from "@/lib/storage/server";
 
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
@@ -13,12 +14,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const result = await loadCatalog(slug);
   const store = result?.catalog.store;
   const p = result?.catalog.products.find((x) => x.slug === product);
-  const photo = p?.images[0]?.url;
+  const photo = await ogPhoto(p?.images[0]?.url);
 
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: "#F4F5F8", fontFamily: "Funnel Sans" }}>
-        {photo?.startsWith("http") ? (
+        {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photo} alt="" width={504} height={630} style={{ objectFit: "cover" }} />
         ) : null}

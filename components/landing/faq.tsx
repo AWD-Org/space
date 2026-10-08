@@ -24,7 +24,11 @@ export const FAQ = [
   },
   {
     q: "¿Sirve si no vendo comida?",
-    a: "Sí. Funciona igual para pulseras, ropa, stickers, velas, dibujos por encargo o clases. Si tiene foto y precio, cabe en tu catálogo.",
+    a: "Sí. Funciona igual para pulseras, ropa, stickers, velas, dibujos por encargo o asesorías. Si tiene foto y precio, o lo cotizas por mensaje, cabe en tu catálogo.",
+  },
+  {
+    q: "¿Puedo cambiar el link de mi tienda?",
+    a: "Sí, desde los ajustes de tu tienda. Puedes cambiarlo una vez cada 30 días; el link anterior deja de funcionar, así que conviene avisar a tus clientes.",
   },
   {
     q: "¿Quién hace Space?",
@@ -34,10 +38,10 @@ export const FAQ = [
 
 export function Faq() {
   return (
-    <section id="preguntas" aria-labelledby="preguntas-title" className="section-y bg-white">
+    <section id="preguntas" aria-labelledby="preguntas-title" className="section-y scroll-mt-16 bg-white">
       <div className="container grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-4">
-          <SectionTitle id="preguntas-title" title="Preguntas antes de empezar" />
+          <SectionTitle id="preguntas-title" title="Antes de empezar" />
         </div>
         <Accordion type="single" collapsible className="border-t border-ink/10 lg:col-span-8">
           {FAQ.map((f) => (

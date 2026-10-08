@@ -52,6 +52,8 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      transition-delay: 0s !important;
+      animation-delay: 0s !important;
       scroll-behavior: auto !important;
     }
   }
@@ -76,4 +78,16 @@
   .pb-safe {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
+}
+
+/* Scroll con inercia (Lenis) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
 }

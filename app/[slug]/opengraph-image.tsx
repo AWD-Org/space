@@ -3,6 +3,7 @@ import { ogFonts } from "@/lib/og/fonts";
 import { loadCatalog } from "./data";
 import { SITE_URL } from "@/lib/env";
 import { storeInitials } from "@/lib/format";
+import { ogPhoto } from "@/lib/storage/server";
 
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
@@ -13,10 +14,13 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const { slug } = await params;
   const result = await loadCatalog(slug);
   const store = result?.catalog.store;
-  const photos = (result?.catalog.products ?? [])
-    .map((p) => p.images[0]?.url)
-    .filter((u): u is string => Boolean(u && u.startsWith("http")))
-    .slice(0, 4);
+  const photos = (
+    await Promise.all(
+      (result?.catalog.products ?? [])
+        .slice(0, 4)
+        .map((p) => ogPhoto(p.images[0]?.url))
+    )
+  ).filter((u): u is string => Boolean(u));
   const accent = store?.accent ?? "#3B55E6";
   const name = store?.name ?? "Space";
   const host = SITE_URL.replace(/^https?:\/\//, "");

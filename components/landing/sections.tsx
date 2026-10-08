@@ -1,27 +1,29 @@
 import Image from "next/image";
-import Link from "next/link";
 import QRCode from "qrcode";
-import { Camera, CheckCheck, Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { demoProducts, stallPhoto } from "@/lib/demo";
 import { FREE_PLAN } from "@/lib/plan";
-import { Reveal } from "./motion";
+import { CountUp, CtaLink, ParallaxFill, Reveal, ScaleOnScroll, WordsReveal } from "./motion";
+import { OrderStep, PriceStep, ShareStep } from "./steps";
 
 export function SectionTitle({ title, children, id, center }: { title: string; children?: React.ReactNode; id?: string; center?: boolean }) {
   return (
-    <Reveal className={center ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
+    <div className={center ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
       <h2 id={id} className="text-balance font-display text-[2.1rem] font-semibold leading-[1.06] text-ink sm:text-5xl">
-        {title}
+        <WordsReveal text={title} />
       </h2>
-      {children && <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">{children}</p>}
-    </Reveal>
+      {children && (
+        <Reveal delay={0.25} y={14}>
+          <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">{children}</p>
+        </Reveal>
+      )}
+    </div>
   );
 }
 
 function StepCard({ title, body, children, delay }: { title: string; body: string; children: React.ReactNode; delay: number }) {
   return (
     <Reveal as="li" delay={delay} className="flex flex-col">
-      <div className="flex h-56 items-center justify-center overflow-hidden rounded-3xl bg-spaceMist/70 p-6">{children}</div>
+      <div className="flex h-56 items-center justify-center overflow-hidden rounded-3xl bg-spaceMist/70 p-6 transition-[background-color,transform] duration-500 ease-out hover:-translate-y-1 hover:bg-spaceMist">{children}</div>
       <h3 className="mt-5 font-display text-xl font-semibold text-ink">{title}</h3>
       <p className="mt-1.5 text-[1.0625rem] leading-relaxed text-muted-foreground">{body}</p>
     </Reveal>
@@ -32,47 +34,20 @@ export async function HowItWorks() {
   const qr = await QRCode.toString("https://space.amoxtli.tech", { type: "svg", margin: 0, color: { dark: "#1E1F24", light: "#00000000" } });
   const brownie = demoProducts[1];
   return (
-    <section id="como-funciona" aria-labelledby="como-title" className="section-y">
+    <section id="como-funciona" aria-labelledby="como-title" className="section-y scroll-mt-16">
       <div className="container">
-        <SectionTitle id="como-title" title="Lo armas en una tarde, desde tu celular">
-          Tu cuenta, tu primer producto y tu link quedan listos en tres pantallas. Después solo actualizas lo que cambie.
+        <SectionTitle id="como-title" title="De tu celular a tu link en tres pasos">
+          Creas tu cuenta, subes tu primer producto y ya tienes una dirección que compartir. Después solo cambias lo que cambie.
         </SectionTitle>
         <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-6">
-          <StepCard delay={0} title="Sube la foto y ponle precio" body="Desde la cámara o tu galería. Space ajusta el tamaño para que el catálogo cargue rápido.">
-            <div className="flex w-full max-w-[240px] items-center gap-3 rounded-2xl bg-white p-3 shadow-sm">
-              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-spaceMist">
-                <Image src={brownie.images[0].url} alt="" fill sizes="64px" className="object-cover" />
-              </div>
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <p className="truncate text-sm font-medium text-ink">{brownie.name}</p>
-                <div className="flex h-8 items-center rounded-lg bg-cloud px-2.5 text-sm tabular-nums text-ink">
-                  $35<span className="ml-0.5 inline-block h-4 w-px animate-pulse bg-blueInk" aria-hidden />
-                </div>
-              </div>
-              <Camera className="h-5 w-5 shrink-0 text-blueInk" aria-hidden />
-            </div>
+          <StepCard delay={0} title="Sube la foto y ponle precio" body="Toma la foto o elige una de tu galería. Space la comprime en tu celular para que el catálogo abra rápido.">
+            <PriceStep image={brownie.images[0].url} name={brownie.name} price="$35" />
           </StepCard>
-          <StepCard delay={0.08} title="Comparte tu link o tu QR" body="En tu bio, en el grupo del salón o impreso en tu puesto. Siempre muestra lo que tienes hoy.">
-            <div className="flex w-full max-w-[240px] flex-col items-center gap-3">
-              <div className="h-24 w-24 rounded-xl bg-white p-2 shadow-sm [&_svg]:h-full [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: qr }} aria-hidden />
-              <div className="flex w-full items-center justify-between gap-2 rounded-full bg-white py-1.5 pl-4 pr-1.5 text-sm shadow-sm">
-                <span className="truncate text-ink">space.amoxtli.tech/tu-tienda</span>
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-spaceMist text-blueInk" aria-hidden>
-                  <Copy className="h-3.5 w-3.5" />
-                </span>
-              </div>
-            </div>
+          <StepCard delay={0.1} title="Comparte tu link o tu QR" body="Ponlo en tu bio, en un grupo o impreso en tu puesto. Siempre muestra lo que tienes hoy.">
+            <ShareStep qr={qr} />
           </StepCard>
-          <StepCard delay={0.16} title="Recibe el pedido armado" body="Con cantidades, total y lugar de entrega. Tú solo confirmas y acuerdas el pago.">
-            <div className="w-full max-w-[240px] rounded-2xl rounded-tr-md bg-[#D9FDD3] px-3.5 py-2.5 text-[0.84rem] leading-relaxed text-[#111B21] shadow-sm">
-              <p>• 2 × Galletas con chispas</p>
-              <p>• 1 × Café frío</p>
-              <p className="font-semibold">Total aproximado: $95</p>
-              <p>Entrega: Centro, a la 1</p>
-              <p className="flex items-center justify-end gap-1 text-[0.7rem] text-[#54656F]">
-                1:02 p.m. <CheckCheck className="h-3.5 w-3.5 text-[#53BDEB]" aria-hidden />
-              </p>
-            </div>
+          <StepCard delay={0.2} title="Recibe el pedido armado" body="Con cantidades, total y lugar de entrega. Tú confirmas y acuerdas el pago como prefieras.">
+            <OrderStep />
           </StepCard>
         </ol>
       </div>
@@ -81,11 +56,12 @@ export async function HowItWorks() {
 }
 
 const benefits = [
-  { title: "Siempre al día", body: "Cambias un precio o marcas que algo se acabó y el link ya lo muestra. No hay archivo que volver a mandar." },
-  { title: "El pedido trae el total", body: "La bolsa suma precios y arma el mensaje con cantidades, nombre de quien pide y dónde lo recoge." },
-  { title: "Pausa los días que no vendes", body: "Un interruptor avisa “Hoy no está vendiendo” y apaga la bolsa. Tu catálogo sigue visible." },
-  { title: "Sabes qué llama la atención", body: "Ves visitas, los productos que más abren y cuántos pedidos se mandaron cada semana." },
-  { title: "Se ve bien en WhatsApp", body: "Al pegar tu link aparece una tarjeta con tu nombre y fotos de tus productos." },
+  { title: "Lo que ves es lo que hay", body: "Cambias un precio o marcas que algo se acabó y tu link lo muestra al momento. No queda ningún archivo viejo circulando." },
+  { title: "El pedido trae las cuentas hechas", body: "La bolsa suma los precios, avisa cuando algún producto va a consultar y arma el mensaje con cantidades, nombre de quien pide y entrega." },
+  { title: "Pausas cuando no vendes", body: "Un interruptor cambia tu tienda a “Hoy no está vendiendo” y apaga la bolsa. El catálogo se sigue viendo." },
+  { title: "Sabes qué se mira", body: "Visitas, productos más abiertos y pedidos enviados, de los últimos 30 días, sin instalar nada más." },
+  { title: "Tu link se ve bien al pegarlo", body: "En WhatsApp aparece con tu nombre y tu foto. Cada producto tiene además su propio link para mandar uno solo." },
+  { title: "Se ve como tu tienda", body: "Subes tu logo, eliges un color de acento y pones tu forma de entrega y los pagos que aceptas." },
 ];
 
 export function Benefits() {
@@ -94,16 +70,23 @@ export function Benefits() {
       <div className="container grid gap-12 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">
-            <SectionTitle id="beneficios-title" title="Lo que resuelve mientras tú sigues con lo tuyo" />
+            <SectionTitle id="beneficios-title" title="Lo que cambia en tu día a día" />
             <Reveal delay={0.1} className="relative mt-8 hidden aspect-[4/5] max-w-sm overflow-hidden rounded-3xl bg-spaceMist lg:block">
-              <Image src={stallPhoto} alt="Pulseras y collares de chaquira acomodados en un puesto" fill sizes="384px" className="object-cover" />
+              <ParallaxFill>
+                <Image src={stallPhoto} alt="Pulseras y collares de chaquira acomodados en un puesto" fill sizes="384px" className="object-cover" />
+              </ParallaxFill>
             </Reveal>
           </div>
         </div>
         <ul className="divide-y divide-ink/10 border-y border-ink/10 lg:col-span-7">
           {benefits.map((b, i) => (
-            <Reveal as="li" key={b.title} delay={i * 0.04} className="grid gap-2 py-7 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-8">
-              <h3 className="font-display text-xl font-semibold text-ink">{b.title}</h3>
+            <Reveal
+              as="li"
+              key={b.title}
+              delay={i * 0.04}
+              className="group relative grid gap-2 py-7 transition-[padding] duration-300 ease-out before:absolute before:inset-y-5 before:left-0 before:w-0.5 before:origin-center before:scale-y-0 before:rounded-full before:bg-blueInk before:transition-transform before:duration-300 hover:pl-5 hover:before:scale-y-100 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-8"
+            >
+              <h3 className="font-display text-xl font-semibold text-ink transition-colors duration-300 group-hover:text-blueInk">{b.title}</h3>
               <p className="text-[1.0625rem] leading-relaxed text-muted-foreground">{b.body}</p>
             </Reveal>
           ))}
@@ -115,39 +98,47 @@ export function Benefits() {
 
 export function FreePlan() {
   const items = [
-    { k: "Productos", v: String(FREE_PLAN.products) },
-    { k: "Fotos por producto", v: String(FREE_PLAN.imagesPerProduct) },
-    { k: "Categorías", v: String(FREE_PLAN.categories) },
-    { k: "Métricas", v: `${FREE_PLAN.statsDays} días` },
-    { k: "Comisión por venta", v: "$0" },
+    { k: "Productos", value: FREE_PLAN.products },
+    { k: "Fotos por producto", value: FREE_PLAN.imagesPerProduct },
+    { k: "Categorías", value: FREE_PLAN.categories },
+    { k: "Historial de métricas", value: FREE_PLAN.statsDays, suffix: " días" },
+    { k: "Comisión por venta", value: 0, prefix: "$" },
   ];
   return (
-    <section id="gratis" aria-labelledby="gratis-title" className="section-y">
+    <section id="gratis" aria-labelledby="gratis-title" className="section-y scroll-mt-16">
       <div className="container">
-        <div className="grid items-center gap-10 overflow-hidden rounded-[2rem] bg-ink px-6 py-12 text-white sm:px-12 lg:grid-cols-2 lg:py-16">
-          <Reveal>
-            <h2 id="gratis-title" className="text-balance font-display text-[2.1rem] font-semibold leading-[1.06] sm:text-5xl">
-              Gratis, con límites claros
-            </h2>
-            <p className="mt-4 max-w-md text-lg leading-relaxed text-white/80">
-              No pide tarjeta y no se queda con parte de tus ventas. El cobro lo acuerdas tú con cada cliente, en efectivo o por transferencia.
-            </p>
-            <Button asChild size="lg" className="mt-8 bg-white text-ink hover:bg-spaceMist">
-              <Link href="/registro">Crear mi catálogo gratis</Link>
-            </Button>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <dl className="divide-y divide-white/15 border-y border-white/15">
-              {items.map((it) => (
-                <div key={it.k} className="flex items-baseline justify-between gap-6 py-4">
-                  <dt className="text-white/80">{it.k}</dt>
-                  <dd className="font-display text-3xl font-semibold tabular-nums text-white">{it.v}</dd>
+        <ScaleOnScroll>
+          <div className="grid items-center gap-10 overflow-hidden rounded-[2rem] bg-ink px-6 py-12 text-white sm:px-12 lg:grid-cols-2 lg:py-16">
+            <div>
+              <h2 id="gratis-title" className="text-balance font-display text-[2.1rem] font-semibold leading-[1.06] sm:text-5xl">
+                <WordsReveal text="Lo que tienes desde el primer día" />
+              </h2>
+              <Reveal delay={0.2} y={14}>
+                <p className="mt-4 max-w-md text-lg leading-relaxed text-white/80">
+                  Sin tarjeta y sin comisión por venta. El cobro lo acuerdas tú con cada cliente, en efectivo o por transferencia.
+                </p>
+                <div className="mt-8">
+                  <CtaLink href="/registro" className="bg-white text-ink hover:bg-spaceMist">
+                    Crear mi catálogo gratis
+                  </CtaLink>
                 </div>
-              ))}
-            </dl>
-            <p className="mt-4 text-sm text-white/80">Incluye tu link propio, código QR y letrero para imprimir.</p>
-          </Reveal>
-        </div>
+              </Reveal>
+            </div>
+            <Reveal delay={0.1}>
+              <dl className="divide-y divide-white/15 border-y border-white/15">
+                {items.map((it) => (
+                  <div key={it.k} className="flex items-baseline justify-between gap-6 py-4">
+                    <dt className="text-white/80">{it.k}</dt>
+                    <dd className="font-display text-3xl font-semibold text-white">
+                      <CountUp value={it.value} prefix={it.prefix} suffix={it.suffix} />
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-4 text-sm text-white/80">Incluye tu link propio, código QR y letrero para imprimir.</p>
+            </Reveal>
+          </div>
+        </ScaleOnScroll>
       </div>
     </section>
   );

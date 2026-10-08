@@ -2,13 +2,17 @@ import "server-only";
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { getStorage } from "firebase-admin/storage";
 
 function privateKey() {
   const key = process.env.FIREBASE_PRIVATE_KEY ?? "";
   // Vercel guarda los saltos de línea escapados.
   return key.replace(/\\n/g, "\n").replace(/^"|"$/g, "");
 }
+
+export const privateKeyLooksValid = () => {
+  const k = privateKey();
+  return k.includes("BEGIN PRIVATE KEY") && k.includes("\n") && k.includes("END PRIVATE KEY");
+};
 
 export const hasFirebaseAdmin = Boolean(
   process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY
@@ -29,11 +33,9 @@ export function adminApp(): App {
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey: privateKey(),
       }),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
   return app;
 }
 
 export const adminAuth = () => getAuth(adminApp());
 export const adminDb = () => getFirestore(adminApp());
-export const adminBucket = () => getStorage(adminApp()).bucket();

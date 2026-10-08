@@ -1,20 +1,17 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
-import { Reveal } from "./motion";
+import { CtaLink, Reveal, WordsReveal } from "./motion";
 
 export function FinalCta() {
   return (
     <section aria-labelledby="final-title" className="section-y">
       <Reveal className="container text-center">
         <h2 id="final-title" className="mx-auto max-w-3xl text-balance font-display text-[2.4rem] font-semibold leading-[1.04] text-ink sm:text-6xl">
-          Que tu próximo pedido llegue ya armado
+          <WordsReveal text="Que tu próximo pedido llegue ya armado" />
         </h2>
         <p className="mx-auto mt-5 max-w-lg text-lg text-muted-foreground">Abre tu cuenta, sube tu primer producto y comparte el link hoy mismo.</p>
         <div className="mt-8 flex flex-col items-center gap-3">
-          <Button asChild size="lg" className="h-14 px-8 text-[1.05rem]">
-            <Link href="/registro">Crear mi catálogo gratis</Link>
-          </Button>
+          <CtaLink href="/registro">Crear mi catálogo gratis</CtaLink>
           <p className="text-sm text-muted-foreground">Entras con Google o con tu correo.</p>
         </div>
       </Reveal>
@@ -49,7 +46,6 @@ export function LandingFooter() {
           </a>
         </p>
       </div>
-      <p className="container pb-8 text-xs text-muted-foreground">Las tiendas y fotos de esta página son ejemplos. Fotos de Unsplash.</p>
     </footer>
   );
 }

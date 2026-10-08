@@ -17,7 +17,7 @@ export const FREE_PLAN: PlanLimits = {
   imagesPerProduct: 4,
   categories: 6,
   maxOriginalMB: 8,
-  maxStoredBytes: 1_200_000,
+  maxStoredBytes: 900_000,
   slugChangeDays: 30,
   statsDays: 30,
 };
