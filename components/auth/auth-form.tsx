@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { RouteLoader } from "@/components/ui/route-loader";
 import { authErrorMessage, localModeAuth, resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase/client";
 
 function GoogleGlyph() {
@@ -24,6 +25,7 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
   const router = useRouter();
   const [pending, setPending] = React.useState<"email" | "google" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [redirecting, setRedirecting] = React.useState(false);
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -35,6 +37,7 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
     setPending(kind);
     try {
       await fn();
+      setRedirecting(true);
       router.replace(destination);
       router.refresh();
     } catch (err) {
@@ -67,6 +70,9 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
 
   return (
     <div className="w-full max-w-sm">
+      {redirecting && (
+        <RouteLoader label={signup ? "Creando tu espacio…" : "Entrando a tu espacio…"} className="fixed inset-0 z-50 bg-white" />
+      )}
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">{signup ? "Crea tu catálogo" : "Qué bueno verte"}</h1>
       <p className="mt-2 text-muted-foreground">{signup ? "Es gratis y no pide tarjeta." : "Entra para actualizar tus productos."}</p>
 
