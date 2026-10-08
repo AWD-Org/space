@@ -137,7 +137,7 @@ export function Onboarding({
                   <motion.div
                     className="h-full origin-left rounded-full bg-blueInk"
                     initial={false}
-                    animate={{ scaleX: step > i + 1 ? 1 : step === i + 1 ? 0.5 : 0 }}
+                    animate={{ scaleX: step >= i + 1 ? 1 : 0 }}
                     transition={{ duration: reduce ? 0 : 0.6, ease: EASE }}
                   />
                 </div>
