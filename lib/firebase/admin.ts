@@ -3,20 +3,9 @@ import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
-function privateKey() {
-  const key = process.env.FIREBASE_PRIVATE_KEY ?? "";
-  // Vercel guarda los saltos de línea escapados.
-  return key.replace(/\\n/g, "\n").replace(/^"|"$/g, "");
-}
+import { hasFirebaseAdmin, privateKey } from "./config";
 
-export const privateKeyLooksValid = () => {
-  const k = privateKey();
-  return k.includes("BEGIN PRIVATE KEY") && k.includes("\n") && k.includes("END PRIVATE KEY");
-};
-
-export const hasFirebaseAdmin = Boolean(
-  process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY
-);
+export { hasFirebaseAdmin, privateKeyLooksValid } from "./config";
 
 let app: App | undefined;
 

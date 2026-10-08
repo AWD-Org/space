@@ -2,7 +2,6 @@ import "server-only";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { isLocalMode } from "@/lib/env";
-import { adminDb } from "@/lib/firebase/admin";
 import type { ImageRef } from "@/lib/types";
 
 /**
@@ -32,6 +31,7 @@ export async function saveImage(p: string, data: Buffer, contentType: string): P
     return { path: p, url: `/media/${id}` };
   }
   const [, uid] = p.split("/");
+  const { adminDb } = await import("@/lib/firebase/admin");
   await adminDb().doc(`${COLLECTION}/${id}`).set({ ownerId: uid, path: p, contentType, size: data.length, bytes: data, createdAt: Date.now() });
   return { path: p, url: `/media/${id}` };
 }
@@ -42,7 +42,7 @@ export async function removeImages(paths: string[]) {
       try {
         const id = idFromPath(p);
         if (isLocalMode) await fs.unlink(path.join(LOCAL_DIR, id));
-        else await adminDb().doc(`${COLLECTION}/${id}`).delete();
+        else await (await import("@/lib/firebase/admin")).adminDb().doc(`${COLLECTION}/${id}`).delete();
       } catch {
         /* si ya no existe no pasa nada */
       }
@@ -59,6 +59,7 @@ export async function readImage(id: string): Promise<{ data: Buffer; contentType
       const data = await fs.readFile(path.join(LOCAL_DIR, id));
       return { data, contentType: EXT_TYPES[id.split(".").pop() ?? ""] ?? "application/octet-stream" };
     }
+    const { adminDb } = await import("@/lib/firebase/admin");
     const snap = await adminDb().doc(`${COLLECTION}/${id}`).get();
     if (!snap.exists) return null;
     const d = snap.data() as { bytes?: Buffer | Uint8Array; contentType?: string };

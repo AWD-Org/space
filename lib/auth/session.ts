@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isLocalMode } from "@/lib/env";
-import { adminAuth, hasFirebaseAdmin } from "@/lib/firebase/admin";
+import { hasFirebaseAdmin } from "@/lib/firebase/config";
 import type { SessionUser } from "@/lib/types";
 
 export const SESSION_COOKIE = "__session";
@@ -16,6 +16,7 @@ export function encodeLocalSession(user: SessionUser) {
 }
 
 export async function createFirebaseSession(idToken: string) {
+  const { adminAuth } = await import("@/lib/firebase/admin");
   // Solo se aceptan inicios de sesión recientes (menos de 5 minutos).
   const decoded = await adminAuth().verifyIdToken(idToken);
   if (Date.now() / 1000 - decoded.auth_time > 5 * 60) throw new Error("Vuelve a iniciar sesión.");
@@ -38,6 +39,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
 
   if (!hasFirebaseAdmin) return null;
   try {
+    const { adminAuth } = await import("@/lib/firebase/admin");
     const decoded = await adminAuth().verifySessionCookie(value, true);
     return { uid: decoded.uid, email: decoded.email ?? null, name: (decoded.name as string | undefined) ?? null };
   } catch {

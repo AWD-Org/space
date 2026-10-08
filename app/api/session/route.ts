@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import crypto from "node:crypto";
 import { isLocalMode } from "@/lib/env";
-import { hasFirebaseAdmin } from "@/lib/firebase/admin";
+import { hasFirebaseAdmin } from "@/lib/firebase/config";
 import { createFirebaseSession, encodeLocalSession, SESSION_COOKIE, SESSION_DAYS } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
@@ -34,8 +34,10 @@ export async function POST(req: NextRequest) {
   if (!body.idToken) return NextResponse.json({ ok: false, error: "Falta el token." }, { status: 400 });
   try {
     return withCookie(await createFirebaseSession(body.idToken));
-  } catch {
-    return NextResponse.json({ ok: false, error: "No pudimos iniciar tu sesión. Intenta de nuevo." }, { status: 401 });
+  } catch (e) {
+    console.error("[session] no se pudo crear la sesión:", e);
+    const code = (e as { code?: string }).code;
+    return NextResponse.json({ ok: false, error: "No pudimos iniciar tu sesión. Intenta de nuevo.", code }, { status: 401 });
   }
 }
 

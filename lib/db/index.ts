@@ -1,6 +1,6 @@
 import "server-only";
 import { isLocalMode } from "@/lib/env";
-import { hasFirebaseAdmin } from "@/lib/firebase/admin";
+import { hasFirebaseAdmin } from "@/lib/firebase/config";
 import type { Db } from "./types";
 
 export * from "./types";
