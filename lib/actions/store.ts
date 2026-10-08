@@ -19,12 +19,12 @@ export async function checkSlug(raw: string): Promise<{ available: boolean; mess
   return { available: true, slug };
 }
 
-export async function createStore(input: { name: string; slug: string; whatsapp: string }): Promise<ActionResult<{ slug: string }>> {
+export async function createStore(input: { name: string; slug: string; whatsapp: string; accent?: string }): Promise<ActionResult<{ slug: string }>> {
   return run(async () => {
     const user = await requireUserForAction();
     const parsed = createStoreSchema.safeParse(input);
     if (!parsed.success) throw new UserError(firstError(parsed.error));
-    const { name, whatsapp } = parsed.data;
+    const { name, whatsapp, accent } = parsed.data;
     const slug = slugify(parsed.data.slug || name);
     const problem = slugProblem(slug);
     if (problem) throw new UserError(problem);
@@ -39,7 +39,7 @@ export async function createStore(input: { name: string; slug: string; whatsapp:
         // Volver a pasar por el primer paso: actualiza nombre, link y WhatsApp.
         if (existing.slug !== slug) tx.delete(slugPath(existing.slug));
         tx.set(slugPath(slug), { storeId: user.uid });
-        tx.update(storePath(user.uid), { name, slug, whatsapp, updatedAt: now });
+        tx.update(storePath(user.uid), { name, slug, whatsapp, ...(accent ? { accent } : {}), updatedAt: now });
         return;
       }
       const store: Omit<Store, "id"> = {
@@ -51,7 +51,7 @@ export async function createStore(input: { name: string; slug: string; whatsapp:
         whatsapp,
         deliveryNote: "",
         paymentMethods: ["efectivo", "transferencia"],
-        accent: "#3B55E6",
+        accent: accent ?? "#3B55E6",
         logo: null,
         isOpen: true,
         status: "draft",

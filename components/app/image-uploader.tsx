@@ -103,7 +103,7 @@ export function ImageUploader({
       </div>
       <input ref={input} type="file" accept="image/*" multiple className="sr-only" onChange={(e) => handleFiles(e.target.files)} tabIndex={-1} aria-hidden />
       <p className="mt-2 text-sm text-muted-foreground">
-        Hasta {max} fotos. La primera es la portada. Se ajustan solas para que el catálogo cargue rápido.
+        {max === 1 ? "Una foto." : `Hasta ${max} fotos.`} La primera es la portada. Se ajustan solas para que el catálogo cargue rápido.
       </p>
     </div>
   );

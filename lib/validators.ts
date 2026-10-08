@@ -23,6 +23,7 @@ export const createStoreSchema = z.object({
   name: storeNameSchema,
   slug: z.string().trim().toLowerCase(),
   whatsapp: whatsappSchema,
+  accent: z.enum(accentValues).optional(),
 });
 
 export const updateStoreSchema = z

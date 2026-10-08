@@ -21,7 +21,8 @@ export default async function StartPage() {
     <Onboarding
       initialStep={step}
       host={SITE_URL.replace(/^https?:\/\//, "")}
-      store={store ? { name: store.name, slug: store.slug, whatsapp: store.whatsapp } : null}
+      store={store ? { name: store.name, slug: store.slug, whatsapp: store.whatsapp, accent: store.accent } : null}
+      productCount={products.length}
       maxImages={limits.imagesPerProduct}
       categoryLimit={limits.categories}
       categories={categories}

@@ -51,6 +51,8 @@ export function Catalog(props: CatalogProps) {
 function CatalogInner({ store, categories, products, initialProductSlug, track: shouldTrack = true, ownerPreview }: CatalogProps) {
   const reduce = useReducedMotion();
   const { count, lines } = useBag();
+  const [framed, setFramed] = React.useState(false);
+  React.useEffect(() => setFramed(window.self !== window.top), []);
   const [query, setQuery] = React.useState("");
   const [category, setCategory] = React.useState<string | null>(null);
   const [openId, setOpenId] = React.useState<string | null>(
@@ -107,7 +109,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
 
   return (
     <div style={{ ["--accent" as string]: store.accent }} className="min-h-dvh bg-white pb-28">
-      {ownerPreview && (
+      {ownerPreview && !framed && (
         <div className="bg-ink px-4 py-2.5 text-center text-sm text-white">
           Vista previa: solo tú puedes ver esta página hasta que la publiques.{" "}
           <Link href="/app" className="underline underline-offset-2">
