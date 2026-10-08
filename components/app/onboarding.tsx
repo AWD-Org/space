@@ -17,6 +17,7 @@ import { slugify } from "@/lib/slug";
 import { ACCENTS } from "@/lib/validators";
 import type { Category } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { ColorPicker } from "./color-picker";
 import { ProductForm } from "./product-form";
 import { StorePreview } from "./store-preview";
 
@@ -60,7 +61,7 @@ export function Onboarding({
 
   const effectiveSlug = slugTouched ? slug : slugify(name);
   const whatsappReady = /^52\d{10}$/.test(normalizeWhatsapp(whatsapp));
-  const accentLabel = ACCENTS.find((a) => a.value === accent)?.label ?? "";
+  const accentLabel = ACCENTS.find((a) => a.value.toLowerCase() === accent.toLowerCase())?.label ?? "Personalizado";
 
   React.useEffect(() => {
     if (!effectiveSlug || effectiveSlug.length < 3) {
@@ -246,28 +247,7 @@ export function Onboarding({
                       Tu color
                       <span className="font-normal text-muted-foreground">{accentLabel}</span>
                     </legend>
-                    <div role="radiogroup" aria-label="Color de tu tienda" className="flex flex-wrap gap-2.5">
-                      {ACCENTS.map((a) => {
-                        const on = a.value === accent;
-                        return (
-                          <button
-                            key={a.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={on}
-                            aria-label={a.label}
-                            onClick={() => setAccent(a.value)}
-                            style={{ backgroundColor: a.value }}
-                            className={cn(
-                              "grid h-10 w-10 place-items-center rounded-full text-white outline-offset-2 transition-transform duration-200 hover:scale-110 active:scale-95",
-                              on && "ring-2 ring-ink ring-offset-2"
-                            )}
-                          >
-                            {on && <Check className="h-4 w-4" aria-hidden />}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <ColorPicker value={accent} onChange={setAccent} />
                   </motion.fieldset>
 
                   {error && (

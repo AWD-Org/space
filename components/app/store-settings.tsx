@@ -12,7 +12,7 @@ import { changeSlug, setPublished, updateStore } from "@/lib/actions/store";
 import { uploadImage } from "@/lib/client/upload";
 import { PAYMENT_LABEL, prettyWhatsapp } from "@/lib/format";
 import { slugify } from "@/lib/slug";
-import { ACCENTS } from "@/lib/validators";
+import { ColorPicker } from "./color-picker";
 import type { PaymentMethod, Store } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Panel } from "./shell";
@@ -103,22 +103,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
             </Field>
             <div>
               <p className="mb-2 text-sm font-medium text-ink">Color de tu catálogo</p>
-              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Color de tu catálogo">
-                {ACCENTS.map((a) => (
-                  <button
-                    key={a.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={accent === a.value}
-                    aria-label={a.label}
-                    onClick={() => setAccent(a.value)}
-                    className={cn("grid h-10 w-10 place-items-center rounded-full ring-offset-2 transition", accent === a.value && "ring-2 ring-ink")}
-                    style={{ background: a.value }}
-                  >
-                    {accent === a.value && <Check className="h-4 w-4 text-white" />}
-                  </button>
-                ))}
-              </div>
+              <ColorPicker value={accent} onChange={setAccent} label="Color de tu catálogo" />
             </div>
           </div>
         </Panel>

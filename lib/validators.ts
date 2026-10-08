@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizeWhatsapp } from "./format";
+import { ensureReadable, normalizeHex } from "./color";
 
 export const ACCENTS = [
   { value: "#3B55E6", label: "Azul Space" },
@@ -10,7 +11,10 @@ export const ACCENTS = [
   { value: "#1E1F24", label: "Tinta" },
 ] as const;
 
-const accentValues = ACCENTS.map((a) => a.value) as [string, ...string[]];
+export const accentSchema = z
+  .string()
+  .refine((v) => normalizeHex(v) !== null, "Ese color no es válido.")
+  .transform((v) => ensureReadable(v).hex);
 
 export const whatsappSchema = z
   .string()
@@ -23,7 +27,7 @@ export const createStoreSchema = z.object({
   name: storeNameSchema,
   slug: z.string().trim().toLowerCase(),
   whatsapp: whatsappSchema,
-  accent: z.enum(accentValues).optional(),
+  accent: accentSchema.optional(),
 });
 
 export const updateStoreSchema = z
@@ -33,7 +37,7 @@ export const updateStoreSchema = z
     whatsapp: whatsappSchema,
     deliveryNote: z.string().trim().max(160, "Máximo 160 caracteres."),
     paymentMethods: z.array(z.enum(["efectivo", "transferencia", "tarjeta"])).max(3),
-    accent: z.enum(accentValues),
+    accent: accentSchema,
     isOpen: z.boolean(),
   })
   .partial();
