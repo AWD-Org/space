@@ -71,7 +71,7 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
   return (
     <div className="w-full max-w-sm">
       {redirecting && (
-        <RouteLoader label={signup ? "Creando tu espacio" : "Entrando a tu espacio"} />
+        <RouteLoader />
       )}
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">{signup ? "Crea tu catálogo" : "Qué bueno verte"}</h1>
       <p className="mt-2 text-muted-foreground">{signup ? "Es gratis y no pide tarjeta." : "Entra para actualizar tus productos."}</p>

@@ -1,38 +1,42 @@
 import { cn } from "@/lib/utils";
 
-const STARS = [
-  { x: "16%", y: "24%", s: 2 },
-  { x: "81%", y: "20%", s: 2 },
-  { x: "72%", y: "76%", s: 3 },
-  { x: "24%", y: "72%", s: 2 },
-  { x: "91%", y: "50%", s: 2 },
-  { x: "9%", y: "48%", s: 2 },
-];
+const LAYERS = 45;
+const DEPTH = 16; // px a cada lado del centro
+const CORE = [44, 66, 188]; // #2C42BC
+const FACE = [122, 144, 255]; // #7A90FF
 
-/** Pantalla de carga completa: un orbe sereno con una órbita fina y un solo satélite. */
-export function RouteLoader({ label, className }: { label: string; className?: string }) {
+/** Pantalla de carga completa: la estrella de Space en 3D girando sobre su propio eje. */
+export function RouteLoader({ label = "Cargando tu espacio", className }: { label?: string; className?: string }) {
   return (
     <div
-      className={cn("orbit-anim fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-[radial-gradient(ellipse_at_center,#FFFFFF_0%,#F4F6FF_60%,#E9ECFF_100%)]", className)}
-      style={{ animation: "orbit-in 0.5s ease-out both" }}
+      className={cn("loader-anim fixed inset-0 z-[100] grid place-items-center bg-white", className)}
+      style={{ animation: "loader-in 0.4s ease-out both" }}
       role="status"
       aria-live="polite"
     >
-      {STARS.map((st, i) => (
-        <span key={i} className="absolute rounded-full bg-blueInk/25" style={{ left: st.x, top: st.y, width: st.s, height: st.s }} aria-hidden />
-      ))}
-
-      <div className="flex flex-col items-center gap-14">
-        <div className="relative h-60 w-60" aria-hidden>
-          <span className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blueInk/20 blur-3xl" />
-          <span className="absolute inset-0 rounded-full border border-blueInk/15" />
-          <span className="absolute inset-10 rounded-full border border-blueInk/10" />
-          <span className="orbit-anim absolute inset-0" style={{ animation: "orbit-spin 18s linear infinite" }}>
-            <span className="absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blueInk" />
-          </span>
-          <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_32%_28%,#8EA0F7_0%,#4A64EA_42%,#3B55E6_68%,#2C42BC_100%)] shadow-[0_16px_40px_-10px_rgba(59,85,230,0.55),inset_-8px_-10px_16px_rgba(20,30,110,0.28)]" />
+      <div className="flex flex-col items-center gap-12">
+        <div className="h-28 w-28" style={{ perspective: 700 }} aria-hidden>
+          <div className="loader-anim relative h-full w-full" style={{ transformStyle: "preserve-3d", animation: "star-turn 6s linear infinite" }}>
+            {Array.from({ length: LAYERS }, (_, i) => {
+              const t = (i / (LAYERS - 1)) * 2 - 1; // -1 … 1
+              const a = Math.abs(t);
+              const c = CORE.map((v, k) => Math.round(v + (FACE[k] - v) * a ** 2.2));
+              const color = `rgb(${c[0]},${c[1]},${c[2]})`;
+              const scale = 1 - 0.16 * a ** 3;
+              return (
+                <svg
+                  key={i}
+                  viewBox="0 0 64 64"
+                  className="absolute inset-0 h-full w-full"
+                  style={{ transform: `translateZ(${(t * DEPTH).toFixed(2)}px) scale(${scale.toFixed(3)})`, backfaceVisibility: "visible" }}
+                >
+                  <path d="M32 8l8 16 16 8-16 8-8 16-8-16-16-8 16-8z" fill={color} stroke={color} strokeWidth="0.6" strokeLinejoin="round" />
+                </svg>
+              );
+            })}
+          </div>
         </div>
-        <p className="text-xs font-medium uppercase tracking-[0.22em] text-ink/50">{label}</p>
+        <p className="text-sm font-medium text-ink/60">{label}</p>
       </div>
     </div>
   );
