@@ -113,9 +113,12 @@ export function Onboarding({
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1fr_1fr]">
       <div className="flex flex-col bg-white px-5 py-6 sm:px-10 lg:px-14">
-        <div className="flex items-center justify-between gap-6">
+        <div className="flex items-center">
           <SpaceLogo variant="mark" size={28} />
-          <ol className="flex flex-1 max-w-sm gap-2" aria-label="Pasos">
+        </div>
+
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
+          <ol className="mb-10 flex w-full gap-2" aria-label="Pasos">
             {STEPS.map((label, i) => (
               <li key={label} className="flex-1" aria-current={step === i + 1 ? "step" : undefined}>
                 <div className="h-1 overflow-hidden rounded-full bg-ink/10">
@@ -130,9 +133,6 @@ export function Onboarding({
               </li>
             ))}
           </ol>
-        </div>
-
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
           {/* Vista previa compacta en pantallas chicas */}
           <div className="mb-8 flex items-center gap-3 rounded-2xl bg-spaceMist/70 p-3 lg:hidden" style={{ ["--accent" as string]: accent }}>
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition-colors duration-500" aria-hidden>
