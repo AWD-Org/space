@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -47,14 +46,8 @@ export function SaveBar({
             <button type="button" onClick={onDiscard} disabled={saving} className="rounded-full px-3 py-2 text-sm font-medium text-white/85 transition-colors hover:text-white disabled:opacity-50">
               Descartar
             </button>
-            <Button type="submit" size="sm" className="h-10 bg-white px-5 text-blueInk hover:bg-spaceMist" disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="animate-spin" aria-hidden /> Guardando…
-                </>
-              ) : (
-                saveLabel
-              )}
+            <Button type="submit" size="sm" className="h-10 bg-white px-5 text-blueInk hover:bg-spaceMist" loading={saving} loadingText="Guardando…">
+              {saveLabel}
             </Button>
           </div>
         </motion.div>

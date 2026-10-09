@@ -64,8 +64,13 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
     () => toast.warning("Revisa los campos marcados en rojo.")
   );
 
+  const [slugBusy, setSlugBusy] = React.useState(false);
+  const [pubBusy, setPubBusy] = React.useState(false);
+
   async function saveSlug() {
+    setSlugBusy(true);
     const res = await changeSlug(slug);
+    setSlugBusy(false);
     if (!res.ok) return toast.error(res.error);
     setSlug(res.data!.slug);
     toast.success("Tu link cambió. Comparte el nuevo.");
@@ -87,7 +92,9 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
   }
 
   async function togglePublished() {
+    setPubBusy(true);
     const res = await setPublished(store.status !== "published");
+    setPubBusy(false);
     if (!res.ok) return toast.error(res.error);
     toast.success(store.status === "published" ? "Tu catálogo quedó oculto." : "Tu catálogo ya está en línea.");
     router.refresh();
@@ -173,7 +180,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
             <span className="hidden pl-4 text-muted-foreground sm:inline">{host}/</span>
             <input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} aria-label="Link de tu catálogo" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="done" className="h-full min-w-0 flex-1 bg-transparent px-4 text-base text-ink focus:outline-none sm:pl-0" />
           </div>
-          <Button type="button" variant="secondary" size="lg" disabled={slug === store.slug} onClick={saveSlug}>
+          <Button type="button" variant="secondary" size="lg" disabled={slug === store.slug} loading={slugBusy} loadingText="Cambiando…" onClick={saveSlug}>
             Cambiar link
           </Button>
         </div>
@@ -184,7 +191,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
           <p className="max-w-md text-sm text-muted-foreground">
             {store.status === "published" ? "Cualquiera con tu link puede verlo. Si lo ocultas, el link muestra que no está disponible." : "Solo tú puedes verlo. Publícalo cuando tengas tus productos listos."}
           </p>
-          <Button type="button" variant={store.status === "published" ? "secondary" : "primary"} onClick={togglePublished}>
+          <Button type="button" variant={store.status === "published" ? "secondary" : "primary"} onClick={togglePublished} loading={pubBusy} loadingText={store.status === "published" ? "Ocultando…" : "Publicando…"}>
             {store.status === "published" ? "Ocultar catálogo" : "Publicar catálogo"}
           </Button>
         </div>

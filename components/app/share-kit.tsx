@@ -35,12 +35,20 @@ export function ShareKit({ url, displayUrl, storeName, accent, published }: { ur
     QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#1E1F24", light: "#FFFFFF" }, errorCorrectionLevel: "M" }).then(setQr);
   }, [url]);
 
+  const [busyQr, setBusyQr] = React.useState(false);
+  const [busySign, setBusySign] = React.useState(false);
+
   async function downloadQr() {
-    const data = await QRCode.toDataURL(url, { width: 1024, margin: 2, color: { dark: "#1E1F24", light: "#FFFFFF" } });
-    const a = document.createElement("a");
-    a.href = data;
-    a.download = `qr-${displayUrl.split("/").pop()}.png`;
-    a.click();
+    setBusyQr(true);
+    try {
+      const data = await QRCode.toDataURL(url, { width: 1024, margin: 2, color: { dark: "#1E1F24", light: "#FFFFFF" } });
+      const a = document.createElement("a");
+      a.href = data;
+      a.download = `qr-${displayUrl.split("/").pop()}.png`;
+      a.click();
+    } finally {
+      setBusyQr(false);
+    }
   }
 
   async function downloadSign() {
@@ -107,11 +115,11 @@ export function ShareKit({ url, displayUrl, storeName, accent, published }: { ur
             <div className="skeleton mx-auto aspect-square w-full max-w-[240px] rounded-xl" role="status" aria-label="Generando código QR" />
           )}
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={downloadQr}>
+            <Button variant="secondary" size="sm" onClick={downloadQr} loading={busyQr} loadingText="Preparando…">
               <Download />
               Descargar QR
             </Button>
-            <Button variant="secondary" size="sm" onClick={downloadSign}>
+            <Button variant="secondary" size="sm" onClick={async () => { setBusySign(true); try { await downloadSign(); } finally { setBusySign(false); } }} loading={busySign} loadingText="Preparando…">
               <Printer />
               Letrero para imprimir
             </Button>

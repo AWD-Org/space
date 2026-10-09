@@ -66,8 +66,8 @@ export function StoreStatus({ url, displayUrl, published, isOpen, canPublish }: 
         {published ? (
           <CopyLink url={url} />
         ) : (
-          <Button onClick={publish} disabled={busy || !canPublish}>
-            {busy ? "Publicando…" : "Publicar catálogo"}
+          <Button onClick={publish} loading={busy} loadingText="Publicando…" disabled={!canPublish}>
+            Publicar catálogo
           </Button>
         )}
       </div>

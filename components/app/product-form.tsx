@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, Check, Loader2, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
@@ -227,11 +227,11 @@ export function ProductForm({
                   placeholder="Ej. Postres, Pulseras, Bebidas"
                   aria-invalid={!!newCat.error}
                 />
-                <Button type="button" className="h-12 shrink-0 px-4" onClick={addCategory} disabled={newCat.busy} aria-label="Crear categoría">
-                  {newCat.busy ? <Loader2 className="animate-spin" aria-hidden /> : <Check aria-hidden />}
+                <Button type="button" className="h-12 shrink-0 px-4" onClick={addCategory} loading={newCat.busy} aria-label="Crear categoría">
+                  <Check aria-hidden />
                   <span className="hidden sm:inline">Crear</span>
                 </Button>
-                <Button type="button" variant="secondary" className="h-12 w-12 shrink-0 px-0" onClick={() => setNewCat(null)} disabled={newCat.busy} aria-label="Cancelar">
+                <Button type="button" variant="secondary" size="iconLg" className="shrink-0" onClick={() => setNewCat(null)} disabled={newCat.busy} aria-label="Cancelar">
                   <X aria-hidden />
                 </Button>
               </div>
@@ -274,28 +274,18 @@ export function ProductForm({
 
       <div className={compact ? "" : product ? "hidden" : "sticky bottom-20 z-20 -mx-4 flex gap-2 bg-gradient-to-t from-background via-background to-transparent px-4 pb-2 pt-6 sm:static sm:mx-0 sm:bg-none sm:p-0 lg:bottom-0"}>
         {compact ? (
-          <Button type="submit" size="lg" className="group h-14 w-full text-base" disabled={saving !== null || uploading}>
-            {uploading || saving === "save" ? (
-              <>
-                <Loader2 className="animate-spin" aria-hidden /> {uploading ? "Subiendo fotos…" : "Guardando…"}
-              </>
-            ) : (
-              <>
-                Guardar y seguir
-                <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
-              </>
-            )}
+          <Button type="submit" size="lg" className="group h-14 w-full text-base" loading={uploading || saving === "save"} loadingText={uploading ? "Subiendo fotos…" : "Guardando…"} disabled={saving !== null}>
+            Guardar y seguir
+            <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
           </Button>
         ) : (
-          <Button type="submit" size="lg" className="flex-1 sm:flex-none" disabled={saving !== null || uploading}>
-            {uploading || saving === "save" ? <Loader2 className="animate-spin" aria-hidden /> : null}
-            {uploading ? "Subiendo fotos…" : saving === "save" ? "Guardando…" : product ? "Guardar cambios" : "Guardar producto"}
+          <Button type="submit" size="lg" className="flex-1 sm:flex-none" loading={uploading || saving === "save"} loadingText={uploading ? "Subiendo fotos…" : "Guardando…"} disabled={saving !== null}>
+            {product ? "Guardar cambios" : "Guardar producto"}
           </Button>
         )}
         {!product && !compact && (
-          <Button type="button" variant="secondary" size="lg" disabled={saving !== null || uploading} onClick={submitAnother}>
-            {saving === "another" && <Loader2 className="animate-spin" aria-hidden />}
-            {saving === "another" ? "Guardando…" : "Guardar y otro"}
+          <Button type="button" variant="secondary" size="lg" loading={saving === "another"} loadingText="Guardando…" disabled={saving !== null || uploading} onClick={submitAnother}>
+            Guardar y otro
           </Button>
         )}
       </div>

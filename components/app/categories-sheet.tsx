@@ -101,8 +101,8 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
               <Field label="Nueva categoría" className="min-w-0 flex-1" error={errors.name?.message}>
                 <Input {...register("name")} placeholder="Ej. Postres, Pulseras, Bebidas" autoCapitalize="words" enterKeyHint="done" aria-invalid={!!errors.name} maxLength={30} className="h-11" />
               </Field>
-              <Button type="submit" className="mt-[1.625rem]" disabled={isSubmitting}>
-                {isSubmitting ? "Creando…" : "Agregar"}
+              <Button type="submit" className="mt-[1.625rem]" loading={isSubmitting} loadingText="Agregando…">
+                Agregar
               </Button>
             </form>
           ) : (

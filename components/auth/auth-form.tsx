@@ -82,9 +82,9 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
         <p className="mt-4 rounded-xl bg-spaceMist p-3 text-sm text-blueInk">Modo local de pruebas: cualquier correo entra sin contraseña.</p>
       )}
 
-      <Button type="button" variant="secondary" size="lg" className="mt-8 w-full" disabled={pending !== null} onClick={() => finish(signInWithGoogle, "google")}>
+      <Button type="button" variant="secondary" size="lg" className="mt-8 w-full" loading={pending === "google"} loadingText="Conectando…" disabled={pending !== null} onClick={() => finish(signInWithGoogle, "google")}>
         <GoogleGlyph />
-        {pending === "google" ? "Conectando…" : "Continuar con Google"}
+        Continuar con Google
       </Button>
 
       <div className="my-6 flex items-center gap-3 text-sm text-muted-foreground">
@@ -108,8 +108,8 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
             {error}
           </p>
         )}
-        <Button type="submit" size="lg" className="w-full" disabled={pending !== null}>
-          {pending === "email" ? "Un momento…" : signup ? "Crear mi cuenta" : "Entrar"}
+        <Button type="submit" size="lg" className="w-full" loading={pending === "email"} loadingText={signup ? "Creando tu espacio…" : "Entrando…"} disabled={pending !== null}>
+          {signup ? "Crear mi cuenta" : "Entrar"}
         </Button>
       </form>
 

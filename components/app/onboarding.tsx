@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -286,17 +286,9 @@ export function Onboarding({
                     </p>
                   )}
                   <motion.div {...item(5)}>
-                    <Button type="submit" size="lg" className="group h-14 w-full text-base" disabled={busy}>
-                      {busy ? (
-                        <>
-                          <Loader2 className="animate-spin" aria-hidden /> Creando tu tienda…
-                        </>
-                      ) : (
-                        <>
-                          Crear mi tienda
-                          <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
-                        </>
-                      )}
+                    <Button type="submit" size="lg" className="group h-14 w-full text-base" loading={busy} loadingText="Creando tu tienda…">
+                      Crear mi tienda
+                      <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
                     </Button>
                   </motion.div>
                 </form>
@@ -353,17 +345,9 @@ export function Onboarding({
                   </motion.div>
 
                   <motion.div {...item(2)} className="space-y-2">
-                    <Button size="lg" className="group h-14 w-full text-base" onClick={publish} disabled={busy}>
-                      {busy ? (
-                        <>
-                          <Loader2 className="animate-spin" aria-hidden /> Publicando…
-                        </>
-                      ) : (
-                        <>
-                          Publicar mi catálogo
-                          <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
-                        </>
-                      )}
+                    <Button size="lg" className="group h-14 w-full text-base" onClick={publish} loading={busy} loadingText="Publicando…">
+                      Publicar mi catálogo
+                      <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
                     </Button>
                     <Link href="/app" className="block w-full py-2 text-center text-sm text-muted-foreground transition-colors hover:text-ink">
                       Prefiero revisarlo primero en el panel
