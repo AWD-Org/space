@@ -37,7 +37,7 @@ export function SaveBar({
           animate={{ opacity: 1, y: 0 }}
           exit={reduce ? undefined : { opacity: 0, y: 24 }}
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          className="pointer-events-none fixed inset-x-0 bottom-[4.75rem] z-40 px-4 sm:px-6 lg:bottom-6 lg:left-[248px] lg:px-10"
+          className="pointer-events-none fixed inset-x-0 bottom-[4.75rem] z-40 px-4 sm:px-6 lg:bottom-6 lg:left-[248px] lg:px-6"
         >
           <div className="pointer-events-auto mx-auto flex max-w-xl items-center gap-3 rounded-full bg-blueInk py-2 pl-5 pr-2 text-white shadow-[0_18px_40px_-12px_rgba(59,85,230,0.55)]" role="region" aria-label="Cambios sin guardar">
             <p className="min-w-0 flex-1 truncate text-sm font-medium">
