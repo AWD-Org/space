@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { CheckCircle2, MailWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { safe } from "@/lib/client/safe-action";
 import { authErrorMessage, changeDisplayName, changePassword, hasPasswordLogin, signOut } from "@/lib/firebase/client";
@@ -121,10 +122,10 @@ export function AccountPanel({ name, email, emailVerified, pausedUntil }: { name
         <Panel title="Contraseña">
           <form onSubmit={savePassword} className="space-y-3">
             <Field label="Contraseña actual" htmlFor="acc-cur">
-              <Input id="acc-cur" type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} />
+              <PasswordInput id="acc-cur" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} />
             </Field>
             <Field label="Contraseña nueva" htmlFor="acc-new" hint="Mínimo 8 caracteres.">
-              <Input id="acc-new" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+              <PasswordInput id="acc-new" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
             </Field>
             <Button type="submit" size="sm" loading={savingPw} disabled={!cur || !next}>
               Cambiar contraseña

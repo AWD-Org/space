@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { RouteLoader } from "@/components/ui/route-loader";
 import { authFormSchema, type AuthFormValues } from "@/lib/validators";
@@ -139,7 +140,7 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
           <Input id="email" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="next" {...register("email")} aria-invalid={!!errors.email} autoComplete="email" />
         </Field>
         <Field label="Contraseña" htmlFor="password" error={errors.password?.message} hint={signup ? "Mínimo 8 caracteres." : undefined}>
-          <Input id="password" type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" {...register("password")} aria-invalid={!!errors.password} autoComplete={signup ? "new-password" : "current-password"} />
+          <PasswordInput id="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" {...register("password")} aria-invalid={!!errors.password} autoComplete={signup ? "new-password" : "current-password"} />
         </Field>
         <Button type="submit" size="lg" className="w-full" loading={pending === "email"} loadingText={signup ? "Creando tu espacio…" : "Entrando…"} disabled={pending !== null || waitSeconds > 0}>
           {signup ? "Crear mi cuenta" : "Entrar"}
