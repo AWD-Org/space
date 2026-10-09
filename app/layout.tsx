@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { SITE_URL } from "@/lib/env";
 import "./globals.css";
 
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es-MX" className={`${display.variable} ${text.variable}`}>
       <body className="min-h-dvh font-sans">
         {children}
-        <Toaster position="top-center" richColors closeButton toastOptions={{ className: "font-sans" }} />
+        <Toaster />
       </body>
     </html>
   );

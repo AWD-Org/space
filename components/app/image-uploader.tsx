@@ -30,7 +30,7 @@ export function ImageUploader({
     if (!files?.length) return;
     const room = max - latest.current.length - pending;
     const list = Array.from(files).slice(0, Math.max(0, room));
-    if (files.length > list.length) toast.info(`Cada producto lleva hasta ${max} fotos.`);
+    if (files.length > list.length) toast.warning(`Cada producto lleva hasta ${max} fotos.`);
     setPending((n) => n + list.length);
     await Promise.all(
       list.map(async (file) => {
