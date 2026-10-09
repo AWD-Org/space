@@ -34,7 +34,7 @@ export default function LandingPage() {
                 ))}
               </h1>
               <p className="mt-6 max-w-lg animate-fade-up text-pretty text-lg leading-relaxed text-muted-foreground [animation-delay:350ms] sm:text-xl">
-                Subes tus productos desde el celular y compartes un link. Tus clientes eligen, ven el total y el pedido llega a tu WhatsApp con cantidades y lugar de entrega.
+                Space® es tu espacio para vender desde el celular. Subes tus productos, compartes un link y el pedido te llega a WhatsApp con cantidades, total y lugar de entrega.
               </p>
               <div className="mt-8 flex animate-fade-up flex-wrap items-center gap-x-5 gap-y-3 [animation-delay:450ms]">
                 <CtaLink href="/registro">Crear mi catálogo gratis</CtaLink>
@@ -53,7 +53,7 @@ export default function LandingPage() {
           <div className="container">
             <ScrollWords
               className="max-w-4xl text-balance font-display text-[1.9rem] font-semibold leading-[1.12] sm:text-5xl"
-              text="Tus clientes ya te escriben por WhatsApp. Space no cambia eso: solo hace que lo primero que te llegue sea el pedido completo."
+              text="Tus clientes ya te escriben por WhatsApp. Space® no cambia eso: te da un espacio propio donde lo primero que te llega es el pedido completo."
             />
           </div>
         </section>

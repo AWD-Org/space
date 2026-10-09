@@ -177,7 +177,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             <div className="flex items-center gap-2 sm:pb-2">
               {store.whatsapp && (
                 <a
-                  href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, vi tu catálogo.`)}`}
+                  href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, vi tu catálogo en Space®.`)}`}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white transition-colors hover:bg-ink/90 sm:flex-none"
@@ -326,7 +326,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
           <svg viewBox="0 0 64 64" className="h-3.5 w-3.5" aria-hidden>
             <path d="M32 8l8 16 16 8-16 8-8 16-8-16-16-8 16-8z" fill="#4F6BFF" />
           </svg>
-          Hecho con Space. Crea tu catálogo gratis
+          Hecho en Space®. Crea tu espacio gratis
         </Link>
       </footer>
 

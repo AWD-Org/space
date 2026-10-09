@@ -20,7 +20,7 @@ const text = localFont({
 
 const title = "Space · Catálogo digital gratis para vender por WhatsApp";
 const description =
-  "Sube lo que vendes desde tu celular, comparte un link y recibe pedidos armados por WhatsApp. Gratis y sin comisiones, para emprendedores y negocios pequeños.";
+  "Crea tu espacio para vender desde el celular: sube tus productos, comparte un link y recibe pedidos armados por WhatsApp. Gratis y sin comisiones.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

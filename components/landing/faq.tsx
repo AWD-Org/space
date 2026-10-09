@@ -31,6 +31,10 @@ export const FAQ = [
     a: "Sí, desde los ajustes de tu tienda. Puedes cambiarlo una vez cada 30 días; el link anterior deja de funcionar, así que conviene avisar a tus clientes.",
   },
   {
+    q: "¿Por qué se llama Space?",
+    a: "Porque la idea es que sea tu espacio: un lugar propio en internet donde tus productos están ordenados y desde donde tu negocio puede ir creciendo. Hoy empieza con un catálogo y un link.",
+  },
+  {
     q: "¿Quién hace Space?",
     a: "AMOXTLI, un estudio de diseño y desarrollo de software en la Ciudad de México.",
   },

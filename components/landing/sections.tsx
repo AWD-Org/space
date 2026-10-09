@@ -36,7 +36,7 @@ export async function HowItWorks() {
   return (
     <section id="como-funciona" aria-labelledby="como-title" className="section-y scroll-mt-16">
       <div className="container">
-        <SectionTitle id="como-title" title="De tu celular a tu link en tres pasos">
+        <SectionTitle id="como-title" title="De tu celular a tu espacio en tres pasos">
           Creas tu cuenta, subes tu primer producto y ya tienes una dirección que compartir. Después solo cambias lo que cambie.
         </SectionTitle>
         <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-6">
@@ -61,7 +61,7 @@ const benefits = [
   { title: "Pausas cuando no vendes", body: "Un interruptor cambia tu tienda a “Hoy no está vendiendo” y apaga la bolsa. El catálogo se sigue viendo." },
   { title: "Sabes qué se mira", body: "Visitas, productos más abiertos y pedidos enviados, de los últimos 30 días, sin instalar nada más." },
   { title: "Tu link se ve bien al pegarlo", body: "En WhatsApp aparece con tu nombre y tu foto. Cada producto tiene además su propio link para mandar uno solo." },
-  { title: "Se ve como tu tienda", body: "Subes tu logo, eliges un color de acento y pones tu forma de entrega y los pagos que aceptas." },
+  { title: "Un espacio que se ve como tú", body: "Subes tu logo, eliges el color que quieras y pones tu forma de entrega y los pagos que aceptas." },
 ];
 
 export function Benefits() {
@@ -111,7 +111,7 @@ export function FreePlan() {
           <div className="grid items-center gap-10 overflow-hidden rounded-[2rem] bg-ink px-6 py-12 text-white sm:px-12 lg:grid-cols-2 lg:py-16">
             <div>
               <h2 id="gratis-title" className="text-balance font-display text-[2.1rem] font-semibold leading-[1.06] sm:text-5xl">
-                <WordsReveal text="Lo que tienes desde el primer día" />
+                <WordsReveal text="Tu espacio, con lo necesario desde el primer día" />
               </h2>
               <Reveal delay={0.2} y={14}>
                 <p className="mt-4 max-w-md text-lg leading-relaxed text-white/80">

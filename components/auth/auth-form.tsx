@@ -73,8 +73,8 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
       {redirecting && (
         <RouteLoader />
       )}
-      <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">{signup ? "Crea tu catálogo" : "Qué bueno verte"}</h1>
-      <p className="mt-2 text-muted-foreground">{signup ? "Es gratis y no pide tarjeta." : "Entra para actualizar tus productos."}</p>
+      <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">{signup ? "Crea tu espacio" : "Qué bueno verte"}</h1>
+      <p className="mt-2 text-muted-foreground">{signup ? "Es gratis y no pide tarjeta." : "Entra a tu espacio para actualizar tus productos."}</p>
 
       {localModeAuth && (
         <p className="mt-4 rounded-xl bg-spaceMist p-3 text-sm text-blueInk">Modo local de pruebas: cualquier correo entra sin contraseña.</p>

@@ -39,7 +39,7 @@ export function buildOrderMessage(opts: {
   if (delivery?.trim()) out.push(`Entrega: ${delivery.trim()}`);
   if (note?.trim()) out.push(`Nota: ${note.trim()}`);
   out.push("");
-  out.push("(Pedido armado en Space)");
+  out.push("(Pedido armado en Space®)");
   return out.join("\n");
 }
 

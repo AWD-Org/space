@@ -9,7 +9,7 @@ export function FinalCta() {
         <h2 id="final-title" className="mx-auto max-w-3xl text-balance font-display text-[2.4rem] font-semibold leading-[1.04] text-ink sm:text-6xl">
           <WordsReveal text="Que tu próximo pedido llegue ya armado" />
         </h2>
-        <p className="mx-auto mt-5 max-w-lg text-lg text-muted-foreground">Abre tu cuenta, sube tu primer producto y comparte el link hoy mismo.</p>
+        <p className="mx-auto mt-5 max-w-lg text-lg text-muted-foreground">Abre tu espacio, sube tu primer producto y comparte el link hoy mismo.</p>
         <div className="mt-8 flex flex-col items-center gap-3">
           <CtaLink href="/registro">Crear mi catálogo gratis</CtaLink>
           <p className="text-sm text-muted-foreground">Entras con Google o con tu correo.</p>
