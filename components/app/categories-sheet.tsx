@@ -76,7 +76,7 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
               {list.map((c, i) => (
                 <li key={c.id} className="flex items-center gap-2">
                   <div className="min-w-0 flex-1">
-                    <Input defaultValue={c.name} onBlur={(e) => rename(c.id, e.target.value)} aria-label={`Nombre de la categoría ${c.name}`} aria-invalid={renameError?.id === c.id} className="h-11" />
+                    <Input defaultValue={c.name} onBlur={(e) => rename(c.id, e.target.value)} aria-label={`Nombre de la categoría ${c.name}`} autoCapitalize="words" enterKeyHint="done" aria-invalid={renameError?.id === c.id} className="h-11" />
                     {renameError?.id === c.id && (
                       <p role="alert" className="mt-1 text-sm text-destructive">
                         {renameError.message}
@@ -99,7 +99,7 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
           {list.length < limit ? (
             <form onSubmit={add} className="mt-4 flex items-start gap-2" noValidate>
               <Field label="Nueva categoría" className="min-w-0 flex-1" error={errors.name?.message}>
-                <Input {...register("name")} placeholder="Ej. Postres, Pulseras, Bebidas" aria-invalid={!!errors.name} maxLength={30} className="h-11" />
+                <Input {...register("name")} placeholder="Ej. Postres, Pulseras, Bebidas" autoCapitalize="words" enterKeyHint="done" aria-invalid={!!errors.name} maxLength={30} className="h-11" />
               </Field>
               <Button type="submit" className="mt-[1.625rem]" disabled={isSubmitting}>
                 {isSubmitting ? "Creando…" : "Agregar"}

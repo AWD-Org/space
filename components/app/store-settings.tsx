@@ -120,10 +120,10 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
 
           <div className="mt-6 grid gap-4">
             <Field label="Nombre de tu tienda" htmlFor="s-name" counter={`${name.length}/40`} error={errors.name?.message}>
-              <Input id="s-name" {...register("name")} aria-invalid={!!errors.name} maxLength={40} />
+              <Input id="s-name" {...register("name")} aria-invalid={!!errors.name} maxLength={40} autoCapitalize="words" enterKeyHint="next" />
             </Field>
             <Field label="Frase corta" htmlFor="s-tag" counter={`${tagline.length}/120`} error={errors.tagline?.message} hint="Qué vendes, en una línea. Sale debajo de tu nombre.">
-              <Textarea id="s-tag" {...register("tagline")} aria-invalid={!!errors.tagline} maxLength={120} className="min-h-[72px]" placeholder="Ej. Postres hechos en casa, pedidos con un día de anticipación" />
+              <Textarea id="s-tag" enterKeyHint="enter" autoCapitalize="sentences" {...register("tagline")} aria-invalid={!!errors.tagline} maxLength={120} className="min-h-[72px]" placeholder="Ej. Postres hechos en casa, pedidos con un día de anticipación" />
             </Field>
             <div>
               <p className="mb-2 text-sm font-medium text-ink">Color de tu catálogo</p>
@@ -139,7 +139,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
               <Controller control={control} name="whatsapp" render={({ field }) => <PhoneInput id="s-wa" ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={!!errors.whatsapp} />} />
             </Field>
             <Field label="Dónde y cuándo entregas" htmlFor="s-del" counter={`${deliveryNote.length}/160`} error={errors.deliveryNote?.message}>
-              <Input id="s-del" {...register("deliveryNote")} aria-invalid={!!errors.deliveryNote} maxLength={160} placeholder="Ej. Entrego en el centro, de 12 a 3" />
+              <Input id="s-del" {...register("deliveryNote")} aria-invalid={!!errors.deliveryNote} maxLength={160} autoCapitalize="sentences" enterKeyHint="next" placeholder="Ej. Entrego en el centro, de 12 a 3" />
             </Field>
             <div>
               <p className="mb-2 text-sm font-medium text-ink">Cómo te pagan</p>
@@ -171,7 +171,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="flex h-12 w-full items-center overflow-hidden rounded-xl border sm:flex-1 border-input bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
             <span className="hidden pl-4 text-muted-foreground sm:inline">{host}/</span>
-            <input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} aria-label="Link de tu catálogo" className="h-full min-w-0 flex-1 bg-transparent px-4 text-base text-ink focus:outline-none sm:pl-0" />
+            <input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} aria-label="Link de tu catálogo" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="done" className="h-full min-w-0 flex-1 bg-transparent px-4 text-base text-ink focus:outline-none sm:pl-0" />
           </div>
           <Button type="button" variant="secondary" size="lg" disabled={slug === store.slug} onClick={saveSlug}>
             Cambiar link

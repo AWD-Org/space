@@ -69,6 +69,7 @@ export function MoneyInput({ id, value, onChange, placeholder = "45", className,
         type="text"
         inputMode="decimal"
         autoComplete="off"
+        enterKeyHint="next"
         value={shown}
         onChange={handle}
         placeholder={placeholder}

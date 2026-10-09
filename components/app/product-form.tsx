@@ -161,7 +161,7 @@ export function ProductForm({
         </div>
 
         <Field label="Nombre" htmlFor="p-name" counter={`${name.length}/60`} error={errors.name?.message}>
-          <Input id="p-name" {...register("name")} aria-invalid={!!errors.name} maxLength={60} placeholder="Ej. Brownie de nuez" />
+          <Input id="p-name" {...register("name")} aria-invalid={!!errors.name} maxLength={60} autoCapitalize="sentences" enterKeyHint="next" placeholder="Ej. Brownie de nuez" />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -179,7 +179,7 @@ export function ProductForm({
 
         {!compact && (
           <Field label="Descripción" htmlFor="p-desc" counter={`${description.length}/400`} error={errors.description?.message} hint="Qué incluye, tamaños, sabores o cuánto tardas en tenerlo.">
-            <Textarea id="p-desc" {...register("description")} aria-invalid={!!errors.description} maxLength={400} />
+            <Textarea id="p-desc" enterKeyHint="enter" autoCapitalize="sentences" {...register("description")} aria-invalid={!!errors.description} maxLength={400} />
           </Field>
         )}
       </section>
@@ -222,6 +222,8 @@ export function ProductForm({
                     if (e.key === "Escape") setNewCat(null);
                   }}
                   maxLength={30}
+                  autoCapitalize="words"
+                  enterKeyHint="done"
                   placeholder="Ej. Postres, Pulseras, Bebidas"
                   aria-invalid={!!newCat.error}
                 />

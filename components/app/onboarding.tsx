@@ -212,6 +212,8 @@ export function Onboarding({
                           placeholder="Ej. Galletas de Dani"
                           autoFocus
                           autoComplete="organization"
+                          autoCapitalize="words"
+                          enterKeyHint="next"
                           className="h-full min-w-0 flex-1 bg-transparent px-4 text-base text-ink placeholder:text-slate/80 focus:outline-none"
                         />
                       </div>
@@ -248,6 +250,9 @@ export function Onboarding({
                             },
                           })}
                           aria-invalid={!!errors.slug || slugState.ok === false}
+                          inputMode="url"
+                          autoCorrect="off"
+                          enterKeyHint="next"
                           className="h-full min-w-0 flex-1 bg-transparent pr-4 text-base text-ink focus:outline-none"
                           spellCheck={false}
                           autoCapitalize="none"

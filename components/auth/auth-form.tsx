@@ -94,14 +94,14 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
       <form onSubmit={submit} className="space-y-4" noValidate>
         {signup && (
           <Field label="Tu nombre" htmlFor="name" error={errors.name?.message}>
-            <Input id="name" {...register("name")} aria-invalid={!!errors.name} autoComplete="name" placeholder="Como te dicen" />
+            <Input id="name" {...register("name")} aria-invalid={!!errors.name} autoComplete="name" autoCapitalize="words" enterKeyHint="next" placeholder="Como te dicen" />
           </Field>
         )}
         <Field label="Correo" htmlFor="email" error={errors.email?.message}>
-          <Input id="email" type="email" inputMode="email" {...register("email")} aria-invalid={!!errors.email} autoComplete="email" />
+          <Input id="email" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="next" {...register("email")} aria-invalid={!!errors.email} autoComplete="email" />
         </Field>
         <Field label="Contraseña" htmlFor="password" error={errors.password?.message} hint={signup ? "Mínimo 8 caracteres." : undefined}>
-          <Input id="password" type="password" {...register("password")} aria-invalid={!!errors.password} autoComplete={signup ? "new-password" : "current-password"} />
+          <Input id="password" type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" {...register("password")} aria-invalid={!!errors.password} autoComplete={signup ? "new-password" : "current-password"} />
         </Field>
         {error && (
           <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">

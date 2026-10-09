@@ -89,6 +89,9 @@ export function ColorPicker({ value, onChange, label = "Color de tu tienda" }: {
                 spellCheck={false}
                 autoComplete="off"
                 inputMode="text"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                enterKeyHint="done"
                 placeholder="3B55E6"
                 className="h-full w-full bg-transparent pl-1 font-mono text-sm uppercase text-ink outline-none"
               />

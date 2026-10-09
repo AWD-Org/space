@@ -37,7 +37,8 @@ export const PhoneInput = React.forwardRef<
       id={id}
       name={name}
       type="tel"
-      inputMode="numeric"
+      inputMode="tel"
+      enterKeyHint="next"
       autoComplete={autoComplete}
       value={value}
       onChange={(e) => onChange(phoneDigits(e.target.value))}

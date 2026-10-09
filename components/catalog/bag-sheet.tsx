@@ -87,7 +87,7 @@ export function BagSheet({
 
               <div className="mt-4 space-y-3">
                 <Field label="Tu nombre" htmlFor="bag-name" error={errors.name?.message}>
-                  <Input id="bag-name" {...register("name")} aria-invalid={!!errors.name} placeholder="Para que sepa de quién es" autoComplete="given-name" maxLength={40} />
+                  <Input id="bag-name" {...register("name")} aria-invalid={!!errors.name} placeholder="Para que sepa de quién es" autoComplete="given-name" autoCapitalize="words" enterKeyHint="next" maxLength={40} />
                 </Field>
                 <Field label="¿Dónde y cuándo lo recoges?" htmlFor="bag-delivery" error={errors.delivery?.message}>
                   <Input
@@ -95,6 +95,8 @@ export function BagSheet({
                     {...register("delivery")}
                     aria-invalid={!!errors.delivery}
                     maxLength={160}
+                    autoCapitalize="sentences"
+                    enterKeyHint="next"
                     placeholder={deliveryNote ? `Entrega: ${deliveryNote}` : "Ej. salida del edificio B a las 2"}
                   />
                 </Field>
