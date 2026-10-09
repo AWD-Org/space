@@ -14,6 +14,11 @@ export default function PrivacyPage() {
         Space® es un servicio de AMOXTLI® (amoxtli.tech) para crear catálogos digitales y recibir pedidos por WhatsApp. AMOXTLI® es responsable del tratamiento de los datos personales descritos aquí, conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.
       </p>
 
+      <h2>Responsable</h2>
+      <p>
+        AMOXTLI®, con domicilio en Uhma 60-B, colonia Del Valle, alcaldía Benito Juárez, C.P. 03100, Ciudad de México. Contacto: hello@amoxtli.tech.
+      </p>
+
       <h2>Datos que recabamos</h2>
       <ul>
         <li>De quien abre una cuenta: nombre, correo electrónico y, si entra con Google, el identificador de su cuenta de Google. La contraseña la gestiona Firebase Authentication; Space no puede verla.</li>
@@ -30,7 +35,7 @@ export default function PrivacyPage() {
       <ul>
         <li>Crear y mantener tu cuenta y tu catálogo.</li>
         <li>Mostrar tu catálogo a quien tenga tu link.</li>
-        <li>Enviarte correos de la cuenta, como restablecer tu contraseña.</li>
+        <li>Enviarte correos de la cuenta, como confirmar tu correo y restablecer tu contraseña.</li>
         <li>Mostrarte estadísticas básicas de tu tienda y mejorar el servicio.</li>
       </ul>
 
@@ -44,6 +49,7 @@ export default function PrivacyPage() {
       <ul>
         <li>Google (Firebase Authentication y Firestore): cuentas y base de datos.</li>
         <li>Netlify: alojamiento del sitio.</li>
+        <li>Resend: envío de los correos de la cuenta.</li>
       </ul>
       <p>También podemos compartir datos si una autoridad competente lo requiere conforme a la ley.</p>
 
