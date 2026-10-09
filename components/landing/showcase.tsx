@@ -61,7 +61,7 @@ export function Showcase() {
                     className="translate-y-3 opacity-0 transition-[opacity,transform] duration-500 ease-out group-data-[on=true]:translate-y-0 group-data-[on=true]:opacity-100 group-data-[on=true]:[transition-delay:var(--d)]"
                   >
                     <div className="group/card">
-                      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-spaceMist">
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl skeleton-img">
                         <Image src={item.photo} alt={item.name} fill sizes="(min-width: 1024px) 260px, 45vw" className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-[1.06]" />
                         {item.note && <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-ink">{item.note}</span>}
                       </div>

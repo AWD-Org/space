@@ -29,7 +29,7 @@ interface CatalogProps {
   ownerPreview?: boolean;
 }
 
-const WRAP = "mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8";
+const WRAP = "mx-auto w-full max-w-[1360px] px-3 sm:px-6 lg:px-6";
 type Sort = "default" | "asc" | "desc";
 
 function track(storeId: string, kind: "view" | "order" | "product", productId?: string) {
@@ -133,6 +133,8 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
     if (sort === "desc") return priceOf(b, -Infinity) - priceOf(a, -Infinity);
     return 0;
   });
+  const countFor = (id: string | null) =>
+    products.filter((p) => (id === null ? true : id === "__none" ? !p.categoryId : p.categoryId === id) && !(onlyAvailable && p.availability === "soldout")).length;
   const hasSoldOut = products.some((p) => p.availability === "soldout");
   const filtering = Boolean(normalized) || category !== null || onlyAvailable;
   function clearFilters() {
@@ -318,6 +320,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                     )}
                   >
                     {c.name}
+                    <span className={cn("ml-1.5 tabular-nums", category === c.id ? "text-white/70" : "text-slate")}>{countFor(c.id)}</span>
                   </button>
                 ))}
               {hasSoldOut && (
@@ -386,7 +389,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-2.5 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-x-2.5 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {visible.map((p, i) => (
               <ProductCard key={p.id} product={p} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
             ))}

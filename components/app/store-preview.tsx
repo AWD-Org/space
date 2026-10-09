@@ -80,6 +80,7 @@ export function StorePreview({
   liveSlug?: string;
 }) {
   const reduce = useReducedMotion();
+  const [frameReady, setFrameReady] = React.useState(false);
   const caption = step === 1 ? "Así va quedando tu tienda" : step === 2 ? "Tus productos aparecen aquí" : "Esto es lo que verán tus clientes";
   return (
     <div className="relative hidden overflow-hidden bg-spaceMist lg:block" aria-hidden={step !== 3}>
@@ -103,13 +104,17 @@ export function StorePreview({
       <div className="relative flex h-full min-h-dvh flex-col items-center justify-center gap-6 px-8 py-10">
         <PhoneFrame label="Vista previa de tu catálogo">
           {step === 3 && liveSlug ? (
+            <>
+            {!frameReady && <div className="skeleton-img absolute inset-0" aria-hidden />}
             <iframe
+              onLoad={() => setFrameReady(true)}
               src={`/${liveSlug}`}
               title="Vista previa de tu catálogo"
               className="absolute left-0 top-[18px] h-[810px] w-[390px] origin-top-left border-0 bg-white"
               style={{ transform: "scale(0.718)" }}
               loading="lazy"
             />
+            </>
           ) : (
             <Sketch name={name} slug={slug} host={host} accent={accent} whatsappReady={whatsappReady} highlightFirst={step === 2} />
           )}

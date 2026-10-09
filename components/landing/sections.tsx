@@ -71,7 +71,7 @@ export function Benefits() {
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">
             <SectionTitle id="beneficios-title" title="Lo que cambia en tu día a día" />
-            <Reveal delay={0.1} className="relative mt-8 hidden aspect-[4/5] max-w-sm overflow-hidden rounded-3xl bg-spaceMist lg:block">
+            <Reveal delay={0.1} className="relative mt-8 hidden aspect-[4/5] max-w-sm overflow-hidden rounded-3xl skeleton-img lg:block">
               <ParallaxFill>
                 <Image src={stallPhoto} alt="Pulseras y collares de chaquira acomodados en un puesto" fill sizes="384px" className="object-cover" />
               </ParallaxFill>

@@ -29,7 +29,7 @@ function Row({ product, category, onAvailability }: { product: Product; category
         <GripVertical className="h-5 w-5" />
       </button>
       <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-spaceMist">
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
           {product.images[0] && <Image src={product.images[0].url} alt="" fill sizes="56px" className="object-cover" />}
         </div>
         <div className="min-w-0">

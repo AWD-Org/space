@@ -10,6 +10,7 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
@@ -228,7 +229,7 @@ export function Onboarding({
                       hint={
                         slugState.checking ? (
                           <span className="inline-flex items-center gap-1.5">
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Revisando…
+                            <Skeleton className="h-3.5 w-3.5 rounded-full" /> Revisando tu link…
                           </span>
                         ) : slugState.ok ? (
                           <span className="inline-flex items-center gap-1.5 text-[#146C3B]">

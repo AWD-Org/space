@@ -13,7 +13,7 @@ export function ProductCard({
   product,
   onOpen,
   canOrder,
-  sizes = "(min-width: 1280px) 19vw, (min-width: 1024px) 23vw, (min-width: 640px) 30vw, 46vw",
+  sizes = "(min-width: 1536px) 15vw, (min-width: 1280px) 19vw, (min-width: 1024px) 23vw, (min-width: 640px) 30vw, 46vw",
   priority,
   headingLevel = "h3",
 }: {
@@ -37,7 +37,7 @@ export function ProductCard({
       <button
         type="button"
         onClick={onOpen}
-        className="relative block aspect-[4/5] w-full overflow-hidden rounded-[1.375rem] bg-spaceMist text-left"
+        className={cn("relative block aspect-[4/5] w-full overflow-hidden rounded-[1.375rem] text-left", image ? "skeleton-img" : "bg-spaceMist")}
         aria-label={`Ver ${product.name}`}
       >
         {image ? (

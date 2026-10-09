@@ -67,7 +67,7 @@ export function ProductSheet({
                 const el = e.currentTarget;
                 setSlide(Math.round(el.scrollLeft / el.clientWidth));
               }}
-              className="no-scrollbar flex h-[min(56dvh,480px)] snap-x snap-mandatory overflow-x-auto bg-spaceMist sm:h-auto sm:aspect-[4/5] sm:rounded-2xl"
+              className="no-scrollbar flex h-[min(56dvh,480px)] snap-x snap-mandatory overflow-x-auto skeleton-img sm:h-auto sm:aspect-[4/5] sm:rounded-2xl"
             >
               {product.images.length ? (
                 product.images.map((img, i) => (

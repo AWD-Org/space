@@ -98,3 +98,22 @@ html.lenis body {
 @media (prefers-reduced-motion: reduce) {
   .loader-anim { animation: none !important; }
 }
+
+/* Skeletons: barrido de brillo (shimmer). .skeleton para bloques, .skeleton-img para fondos de imagen. */
+@keyframes skeleton-sweep { to { transform: translateX(100%); } }
+@keyframes skeleton-slide { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.skeleton { position: relative; overflow: hidden; background-color: rgba(30, 31, 36, 0.07); }
+.skeleton::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+.skeleton-img {
+  background-color: #EDEFF8;
+  background-image: linear-gradient(100deg, #EDEFF8 35%, #F8F9FD 50%, #EDEFF8 65%);
+  background-size: 200% 100%;
+  animation: skeleton-slide 1.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after, .skeleton-img { animation: none; }
+}

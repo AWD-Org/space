@@ -101,7 +101,11 @@ export function ShareKit({ url, displayUrl, storeName, accent, published }: { ur
 
       <div className="grid gap-4 sm:grid-cols-[1fr_1.2fr]">
         <Panel title="Código QR">
-          <div className="mx-auto aspect-square w-full max-w-[240px] rounded-xl bg-white p-2 ring-1 ring-ink/10" dangerouslySetInnerHTML={{ __html: qr }} role="img" aria-label={`Código QR de ${displayUrl}`} />
+          {qr ? (
+            <div className="mx-auto aspect-square w-full max-w-[240px] rounded-xl bg-white p-2 ring-1 ring-ink/10" dangerouslySetInnerHTML={{ __html: qr }} role="img" aria-label={`Código QR de ${displayUrl}`} />
+          ) : (
+            <div className="skeleton mx-auto aspect-square w-full max-w-[240px] rounded-xl" role="status" aria-label="Generando código QR" />
+          )}
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={downloadQr}>
               <Download />

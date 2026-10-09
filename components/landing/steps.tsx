@@ -32,7 +32,7 @@ export function PriceStep({ image, name, price }: { image: string; name: string;
 
   return (
     <div ref={ref} className="flex w-full max-w-[240px] items-center gap-3 rounded-2xl bg-white p-3 shadow-sm">
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-spaceMist">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl skeleton-img">
         <Image src={image} alt="" fill sizes="64px" className="object-cover" />
       </div>
       <div className="min-w-0 flex-1 space-y-1.5">

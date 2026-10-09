@@ -73,7 +73,7 @@ export function BagSheet({
               <ul className="divide-y divide-ink/10">
                 {items.map((item) => (
                   <li key={item.productId} className="flex items-center gap-3 py-3">
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-spaceMist">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
                       {item.image && <Image src={item.image} alt="" fill sizes="56px" className="object-cover" />}
                     </div>
                     <div className="min-w-0 flex-1">

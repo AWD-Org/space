@@ -60,7 +60,7 @@ export function ImageUploader({
     <div>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {value.map((img, i) => (
-          <div key={img.path} className="group relative aspect-square overflow-hidden rounded-xl bg-spaceMist">
+          <div key={img.path} className="group relative aspect-square overflow-hidden rounded-xl skeleton-img">
             <Image src={img.url} alt={`Foto ${i + 1}`} fill sizes="160px" className="object-cover" />
             {i === 0 && <span className="absolute left-1.5 top-1.5 rounded-full bg-white/95 px-2 py-0.5 text-[0.7rem] font-medium text-ink">Portada</span>}
             <button
@@ -84,9 +84,7 @@ export function ImageUploader({
           </div>
         ))}
         {Array.from({ length: pending }).map((_, i) => (
-          <div key={`p${i}`} className="grid aspect-square place-items-center rounded-xl bg-spaceMist text-blueInk">
-            <Loader2 className="h-6 w-6 animate-spin" aria-label="Subiendo foto" />
-          </div>
+          <div key={`p${i}`} role="status" aria-label="Subiendo foto" className="skeleton aspect-square rounded-xl" />
         ))}
         {value.length + pending < max && (
           <button
