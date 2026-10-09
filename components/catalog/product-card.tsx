@@ -13,7 +13,7 @@ export function ProductCard({
   product,
   onOpen,
   canOrder,
-  sizes = "(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 46vw",
+  sizes = "(min-width: 1280px) 19vw, (min-width: 1024px) 23vw, (min-width: 640px) 30vw, 46vw",
   priority,
   headingLevel = "h3",
 }: {

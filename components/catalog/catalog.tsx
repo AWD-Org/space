@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, MapPin, MessageCircle, Search, Share2, ShoppingBag, Wallet, X } from "lucide-react";
+import { ArrowUpDown, Check, MapPin, MessageCircle, Search, Share2, ShoppingBag, Wallet, X } from "lucide-react";
 import { formatPrice, PAYMENT_LABEL, storeInitials } from "@/lib/format";
 import { bagTotal } from "@/lib/whatsapp";
 import type { Category, Product, Store } from "@/lib/types";
@@ -28,6 +28,9 @@ interface CatalogProps {
   track?: boolean;
   ownerPreview?: boolean;
 }
+
+const WRAP = "mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8";
+type Sort = "default" | "asc" | "desc";
 
 function track(storeId: string, kind: "view" | "order" | "product", productId?: string) {
   try {
@@ -83,7 +86,8 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   const [framed, setFramed] = React.useState(false);
   React.useEffect(() => setFramed(window.self !== window.top), []);
   const [query, setQuery] = React.useState("");
-  const [searching, setSearching] = React.useState(false);
+  const [sort, setSort] = React.useState<Sort>("default");
+  const [onlyAvailable, setOnlyAvailable] = React.useState(false);
   const [category, setCategory] = React.useState<string | null>(null);
   const [openId, setOpenId] = React.useState<string | null>(
     () => products.find((p) => p.slug === initialProductSlug)?.id ?? null
@@ -114,13 +118,28 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
     .toLowerCase()
     .trim();
   const visible = products.filter((p) => {
+    if (onlyAvailable && p.availability === "soldout") return false;
     if (category === "__none" ? p.categoryId : category && p.categoryId !== category) return false;
     if (!normalized) return true;
     const hay = `${p.name} ${p.description}`.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     return hay.includes(normalized);
   });
   // Lo agotado va al final
-  visible.sort((a, b) => Number(a.availability === "soldout") - Number(b.availability === "soldout"));
+  const priceOf = (p: Product, empty: number) => (typeof p.price === "number" ? p.price : empty);
+  visible.sort((a, b) => {
+    const sold = Number(a.availability === "soldout") - Number(b.availability === "soldout");
+    if (sold) return sold;
+    if (sort === "asc") return priceOf(a, Infinity) - priceOf(b, Infinity);
+    if (sort === "desc") return priceOf(b, -Infinity) - priceOf(a, -Infinity);
+    return 0;
+  });
+  const hasSoldOut = products.some((p) => p.availability === "soldout");
+  const filtering = Boolean(normalized) || category !== null || onlyAvailable;
+  function clearFilters() {
+    setQuery("");
+    setCategory(null);
+    setOnlyAvailable(false);
+  }
 
   const openProduct = products.find((p) => p.id === openId) ?? null;
   const { total, partial } = bagTotal(lines);
@@ -165,7 +184,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
           />
         </div>
 
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className={WRAP}>
           <div className="-mt-10 flex flex-col gap-3 sm:-mt-14 sm:flex-row sm:items-end sm:gap-6">
             <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-3xl bg-[var(--accent)] font-display text-2xl font-semibold text-white shadow-[0_12px_32px_-8px_rgba(0,0,0,0.35)] ring-4 ring-white sm:h-28 sm:w-28 sm:rounded-[1.75rem] sm:text-4xl">
               {store.logo ? <Image src={store.logo.url} alt={`Logo de ${store.name}`} fill sizes="112px" className="object-cover" priority /> : storeInitials(store.name)}
@@ -246,74 +265,128 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
       </header>
 
       <div className="sticky top-0 z-20 mt-5 border-b border-ink/5 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
-        <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3 sm:px-6">
-          {searching ? (
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate" aria-hidden />
+        <div className={cn(WRAP, "py-2.5")}>
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate" aria-hidden />
               <input
-                autoFocus
                 type="search"
+                inputMode="search"
+                enterKeyHint="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={`Buscar en ${store.name}`}
                 aria-label="Buscar productos"
-                className="h-11 w-full rounded-full bg-cloud pl-10 pr-11 text-[0.95rem] text-ink placeholder:text-slate focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="h-12 w-full rounded-full bg-cloud pl-11 pr-11 text-base text-ink placeholder:text-slate focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] [&::-webkit-search-cancel-button]:hidden"
               />
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  setSearching(false);
-                }}
-                className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate hover:text-ink"
-                aria-label="Cerrar búsqueda"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <>
-              {products.length > 4 && (
-                <button type="button" onClick={() => setSearching(true)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cloud text-ink hover:bg-ink/10" aria-label="Buscar productos">
-                  <Search className="h-[18px] w-[18px]" />
+              {query && (
+                <button type="button" onClick={() => setQuery("")} className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-ink/10 text-ink hover:bg-ink/15" aria-label="Borrar búsqueda">
+                  <X className="h-4 w-4" />
                 </button>
               )}
-              {usedCategories.length > 0 ? (
-                <div className="no-scrollbar -mr-4 flex flex-1 gap-2 overflow-x-auto pr-4 sm:mr-0 sm:pr-0" role="tablist" aria-label="Categorías">
-                  {[{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
-                    <button
-                      key={c.id ?? "all"}
-                      type="button"
-                      role="tab"
-                      aria-selected={category === c.id}
-                      onClick={() => setCategory(c.id)}
-                      className={cn(
-                        "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                        category === c.id ? "bg-ink text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
-                      )}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground tabular-nums">
-                  {products.length} {products.length === 1 ? "producto" : "productos"}
-                </p>
+            </div>
+            {products.length > 1 && (
+              <label className="relative shrink-0">
+                <span className="sr-only">Ordenar por</span>
+                <ArrowUpDown className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink" aria-hidden />
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as Sort)}
+                  className="h-12 w-12 cursor-pointer appearance-none rounded-full bg-cloud text-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent)] sm:w-auto sm:pl-10 sm:pr-5 sm:text-sm sm:font-medium sm:text-ink"
+                >
+                  <option value="default">Destacados</option>
+                  <option value="asc">Precio: menor a mayor</option>
+                  <option value="desc">Precio: mayor a menor</option>
+                </select>
+              </label>
+            )}
+          </div>
+
+          {(usedCategories.length > 0 || hasSoldOut) && (
+            <div className="no-scrollbar -mr-3 mt-2.5 flex gap-2 overflow-x-auto pr-3 sm:mr-0 sm:pr-0" role="tablist" aria-label="Filtros">
+              {usedCategories.length > 0 &&
+                [{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
+                  <button
+                    key={c.id ?? "all"}
+                    type="button"
+                    role="tab"
+                    aria-selected={category === c.id}
+                    onClick={() => setCategory(c.id)}
+                    className={cn(
+                      "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                      category === c.id ? "bg-ink text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              {hasSoldOut && (
+                <button
+                  type="button"
+                  aria-pressed={onlyAvailable}
+                  onClick={() => setOnlyAvailable((v) => !v)}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    onlyAvailable ? "bg-[var(--accent)] text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
+                  )}
+                >
+                  {onlyAvailable && <Check className="h-4 w-4" aria-hidden />}
+                  Solo disponibles
+                </button>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
 
-      <main className="mx-auto max-w-5xl px-4 pt-6 sm:px-6">
+      <main className={cn(WRAP, "pt-5")}>
         <h2 className="sr-only">Productos</h2>
+        {products.length > 1 && (
+          <div className="mb-4 flex min-h-8 items-center justify-between gap-3 text-sm text-muted-foreground">
+            <p className="tabular-nums" aria-live="polite">
+              {filtering ? `${visible.length} de ${products.length} productos` : `${products.length} productos`}
+            </p>
+            {filtering && (
+              <button type="button" onClick={clearFilters} className="rounded-full px-3 py-1.5 font-medium text-ink underline underline-offset-4 hover:bg-cloud">
+                Limpiar
+              </button>
+            )}
+          </div>
+        )}
         {visible.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">
-            {products.length === 0 ? "Esta tienda todavía no tiene productos." : "No encontramos nada con esa búsqueda."}
-          </p>
+          <div className="mx-auto max-w-sm py-16 text-center">
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-cloud text-slate">
+              <Search className="h-6 w-6" aria-hidden />
+            </span>
+            <p className="mt-4 font-display text-xl font-medium text-ink">
+              {products.length === 0 ? "Aún no hay productos" : query.trim() ? `Nada para “${query.trim()}”` : "Nada con esos filtros"}
+            </p>
+            {products.length === 0 ? (
+              <p className="mt-1 text-muted-foreground">Esta tienda todavía no sube productos. Vuelve pronto.</p>
+            ) : (
+              <>
+                <p className="mt-1 text-muted-foreground">Prueba con otra palabra o pregúntale directo a la tienda.</p>
+                <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                  <button type="button" onClick={clearFilters} className="h-11 rounded-full bg-ink px-6 text-sm font-medium text-white hover:bg-ink/90">
+                    Ver todo el catálogo
+                  </button>
+                  {store.whatsapp && (
+                    <a
+                      href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, busco ${query.trim() || "un producto"} y no lo encontré en tu catálogo de Space®.`)}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-full px-6 text-sm font-medium text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
+                    >
+                      <MessageCircle className="h-4 w-4" aria-hidden />
+                      Preguntar por WhatsApp
+                    </a>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-10 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-2.5 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4 xl:grid-cols-5">
             {visible.map((p, i) => (
               <ProductCard key={p.id} product={p} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
             ))}
@@ -321,7 +394,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         )}
       </main>
 
-      <footer className="mx-auto mt-16 max-w-5xl px-4 text-center text-sm text-muted-foreground sm:px-6">
+      <footer className={cn(WRAP, "mt-16 text-center text-sm text-muted-foreground")}>
         <Link href="/?ref=catalogo" className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 hover:text-ink">
           <svg viewBox="0 0 64 64" className="h-3.5 w-3.5" aria-hidden>
             <path d="M32 8l8 16 16 8-16 8-8 16-8-16-16-8 16-8z" fill="#4F6BFF" />
