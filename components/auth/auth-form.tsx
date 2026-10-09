@@ -3,11 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { RouteLoader } from "@/components/ui/route-loader";
+import { authFormSchema, type AuthFormValues } from "@/lib/validators";
 import { authErrorMessage, localModeAuth, resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase/client";
 
 function GoogleGlyph() {
@@ -26,10 +29,15 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
   const [pending, setPending] = React.useState<"email" | "google" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [redirecting, setRedirecting] = React.useState(false);
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
   const signup = mode === "signup";
+  const schema = React.useMemo(() => authFormSchema(signup, localModeAuth), [signup]);
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    trigger,
+    formState: { errors },
+  } = useForm<AuthFormValues>({ resolver: zodResolver(schema), mode: "onTouched", defaultValues: { name: "", email: "", password: "" } });
   const destination = next && next.startsWith("/app") ? next : "/app";
 
   async function finish(fn: () => Promise<void>, kind: "email" | "google") {
@@ -46,22 +54,16 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
     }
   }
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (signup && password.length < 8 && !localModeAuth) {
-      setError("Usa una contraseña de al menos 8 caracteres.");
-      return;
-    }
-    void finish(() => (signup ? signUpWithEmail(name, email, password) : signInWithEmail(email, password)), "email");
-  }
+  const submit = handleSubmit(
+    (v) => void finish(() => (signup ? signUpWithEmail(v.name, v.email, v.password) : signInWithEmail(v.email, v.password)), "email"),
+    () => setError(null)
+  );
 
   async function forgot() {
-    if (!email) {
-      setError("Escribe tu correo arriba y vuelve a tocar el enlace.");
-      return;
-    }
+    setError(null);
+    if (!(await trigger("email"))) return;
     try {
-      await resetPassword(email);
+      await resetPassword(getValues("email").trim());
       toast.success("Te mandamos un correo para crear una contraseña nueva.");
     } catch (err) {
       setError(authErrorMessage(err));
@@ -91,22 +93,15 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
 
       <form onSubmit={submit} className="space-y-4" noValidate>
         {signup && (
-          <Field label="Tu nombre" htmlFor="name">
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Como te dicen" />
+          <Field label="Tu nombre" htmlFor="name" error={errors.name?.message}>
+            <Input id="name" {...register("name")} aria-invalid={!!errors.name} autoComplete="name" placeholder="Como te dicen" />
           </Field>
         )}
-        <Field label="Correo" htmlFor="email">
-          <Input id="email" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+        <Field label="Correo" htmlFor="email" error={errors.email?.message}>
+          <Input id="email" type="email" inputMode="email" {...register("email")} aria-invalid={!!errors.email} autoComplete="email" />
         </Field>
-        <Field label="Contraseña" htmlFor="password" hint={signup ? "Mínimo 8 caracteres." : undefined}>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={signup ? "new-password" : "current-password"}
-            required={!localModeAuth}
-          />
+        <Field label="Contraseña" htmlFor="password" error={errors.password?.message} hint={signup ? "Mínimo 8 caracteres." : undefined}>
+          <Input id="password" type="password" {...register("password")} aria-invalid={!!errors.password} autoComplete={signup ? "new-password" : "current-password"} />
         </Field>
         {error && (
           <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">

@@ -49,9 +49,19 @@ export function normalizeWhatsapp(input: string) {
   return d;
 }
 
+/** Deja solo los 10 dígitos del celular: quita espacios, guiones y el +52 si lo pegan. */
+export function phoneDigits(input: string) {
+  let d = input.replace(/\D/g, "");
+  if (d.length > 10) {
+    if (d.startsWith("521") && d.length >= 13) d = d.slice(3);
+    else if (d.startsWith("52")) d = d.slice(2);
+  }
+  return d.slice(0, 10);
+}
+
 export function prettyWhatsapp(digits: string) {
   const d = digits.startsWith("52") ? digits.slice(2) : digits;
-  return d.length === 10 ? `${d.slice(0, 2)} ${d.slice(2, 6)} ${d.slice(6)}` : digits;
+  return d.length === 10 ? d : digits;
 }
 
 export function todayKey(date = new Date()) {

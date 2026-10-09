@@ -3,18 +3,21 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
 import { WordsReveal } from "@/components/landing/motion";
 import { checkSlug, createStore, setPublished } from "@/lib/actions/store";
-import { normalizeWhatsapp, storeInitials } from "@/lib/format";
+import { storeInitials } from "@/lib/format";
 import { slugify } from "@/lib/slug";
-import { ACCENTS } from "@/lib/validators";
+import { ACCENTS, onboardingFormSchema, type OnboardingFormValues } from "@/lib/validators";
 import type { Category } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ColorPicker } from "./color-picker";
@@ -26,7 +29,7 @@ const PUBLISH_STEPS = ["Guardando tu tienda", "Armando tu link", "Acomodando tus
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 const fieldShell =
-  "flex h-12 items-center overflow-hidden rounded-xl border border-input bg-white transition-shadow focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10";
+  "flex h-12 items-center overflow-hidden rounded-xl border border-input bg-white transition-shadow focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:focus-within:ring-destructive/10";
 
 export function Onboarding({
   initialStep,
@@ -48,19 +51,36 @@ export function Onboarding({
   const router = useRouter();
   const reduce = useReducedMotion();
   const [step, setStep] = React.useState(initialStep);
-  const [name, setName] = React.useState(store?.name ?? "");
-  const [slug, setSlug] = React.useState(store?.slug ?? "");
   const [slugTouched, setSlugTouched] = React.useState(Boolean(store));
-  const [whatsapp, setWhatsapp] = React.useState(store?.whatsapp ? store.whatsapp.slice(2) : "");
-  const [accent, setAccent] = React.useState<string>(store?.accent ?? ACCENTS[0].value);
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    setError: setFieldError,
+    watch,
+    formState: { errors },
+  } = useForm<OnboardingFormValues>({
+    resolver: zodResolver(onboardingFormSchema),
+    mode: "onTouched",
+    defaultValues: {
+      name: store?.name ?? "",
+      slug: store?.slug ?? "",
+      whatsapp: store?.whatsapp ? store.whatsapp.slice(2) : "",
+      accent: store?.accent ?? ACCENTS[0].value,
+    },
+  });
+  const name = watch("name");
+  const effectiveSlug = watch("slug");
+  const whatsapp = watch("whatsapp");
+  const accent = watch("accent");
   const [slugState, setSlugState] = React.useState<{ checking: boolean; ok?: boolean; message?: string }>({ checking: false });
   const [busy, setBusy] = React.useState(false);
   const [publishing, setPublishing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [created, setCreated] = React.useState(Boolean(store));
 
-  const effectiveSlug = slugTouched ? slug : slugify(name);
-  const whatsappReady = /^52\d{10}$/.test(normalizeWhatsapp(whatsapp));
+  const whatsappReady = /^\d{10}$/.test(whatsapp);
   const accentLabel = ACCENTS.find((a) => a.value.toLowerCase() === accent.toLowerCase())?.label ?? "Personalizado";
 
   React.useEffect(() => {
@@ -80,18 +100,28 @@ export function Onboarding({
     return () => clearTimeout(t);
   }, [effectiveSlug]);
 
-  async function submitStore(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setBusy(true);
-    const res = await createStore({ name, slug: effectiveSlug, whatsapp, accent });
-    setBusy(false);
-    if (!res.ok) return setError(res.error);
-    setSlug(res.data!.slug);
-    setSlugTouched(true);
-    setCreated(true);
-    setStep(2);
-  }
+  const submitStore = handleSubmit(
+    async (v) => {
+      setError(null);
+      if (slugState.checking) return toast.info("Estamos revisando tu link. Un segundo.");
+      if (slugState.ok === false) {
+        setFieldError("slug", { message: slugState.message ?? "Ese link ya está ocupado. Prueba otro." }, { shouldFocus: true });
+        return;
+      }
+      setBusy(true);
+      const res = await createStore({ name: v.name, slug: v.slug, whatsapp: v.whatsapp, accent: v.accent });
+      setBusy(false);
+      if (!res.ok) return setError(res.error);
+      setValue("slug", res.data!.slug);
+      setSlugTouched(true);
+      setCreated(true);
+      setStep(2);
+    },
+    () => {
+      setError(null);
+      toast.warning("Completa los campos marcados para seguir.");
+    }
+  );
 
   async function publish() {
     setBusy(true);
@@ -172,12 +202,12 @@ export function Onboarding({
                   </div>
 
                   <motion.div {...item(1)}>
-                    <Field label="Nombre" htmlFor="o-name" counter={`${name.length}/40`}>
+                    <Field label="Nombre" htmlFor="o-name" counter={`${name.length}/40`} error={errors.name?.message}>
                       <div className={fieldShell}>
                         <input
                           id="o-name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          {...register("name", { onChange: (e) => !slugTouched && setValue("slug", slugify(e.target.value), { shouldValidate: Boolean(errors.slug) }) })}
+                          aria-invalid={!!errors.name}
                           maxLength={40}
                           placeholder="Ej. Galletas de Dani"
                           autoFocus
@@ -192,7 +222,7 @@ export function Onboarding({
                     <Field
                       label="Tu link"
                       htmlFor="o-slug"
-                      error={slugState.ok === false ? slugState.message : null}
+                      error={errors.slug?.message ?? (slugState.ok === false ? slugState.message : null)}
                       hint={
                         slugState.checking ? (
                           <span className="inline-flex items-center gap-1.5">
@@ -211,11 +241,13 @@ export function Onboarding({
                         <span className="pl-4 text-muted-foreground">{host}/</span>
                         <input
                           id="o-slug"
-                          value={effectiveSlug}
-                          onChange={(e) => {
-                            setSlugTouched(true);
-                            setSlug(slugify(e.target.value));
-                          }}
+                          {...register("slug", {
+                            onChange: (e) => {
+                              setSlugTouched(true);
+                              setValue("slug", slugify(e.target.value), { shouldValidate: true });
+                            },
+                          })}
+                          aria-invalid={!!errors.slug || slugState.ok === false}
                           className="h-full min-w-0 flex-1 bg-transparent pr-4 text-base text-ink focus:outline-none"
                           spellCheck={false}
                           autoCapitalize="none"
@@ -225,20 +257,12 @@ export function Onboarding({
                   </motion.div>
 
                   <motion.div {...item(3)}>
-                    <Field label="WhatsApp para recibir pedidos" htmlFor="o-wa" hint="10 dígitos. Solo lo usamos para armar el botón de pedido.">
-                      <div className={fieldShell}>
-                        <span className="border-r border-input pl-4 pr-3 text-muted-foreground">+52</span>
-                        <input
-                          id="o-wa"
-                          inputMode="tel"
-                          autoComplete="tel-national"
-                          value={whatsapp}
-                          onChange={(e) => setWhatsapp(e.target.value)}
-                          placeholder="55 1234 5678"
-                          className="h-full min-w-0 flex-1 bg-transparent px-3 text-base text-ink placeholder:text-slate/80 focus:outline-none"
-                        />
-                        {whatsappReady && <Check className="mr-4 h-4 w-4 text-[#1A8D4A]" aria-label="Número completo" />}
-                      </div>
+                    <Field label="WhatsApp para recibir pedidos" htmlFor="o-wa" error={errors.whatsapp?.message} hint="10 dígitos, sin espacios. Solo lo usamos para armar el botón de pedido.">
+                      <Controller
+                        control={control}
+                        name="whatsapp"
+                        render={({ field }) => <PhoneInput id="o-wa" ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={!!errors.whatsapp} />}
+                      />
                     </Field>
                   </motion.div>
 
@@ -247,7 +271,7 @@ export function Onboarding({
                       Tu color
                       <span className="font-normal text-muted-foreground">{accentLabel}</span>
                     </legend>
-                    <ColorPicker value={accent} onChange={setAccent} />
+                    <ColorPicker value={accent} onChange={(v) => setValue("accent", v, { shouldValidate: true })} />
                   </motion.fieldset>
 
                   {error && (
@@ -256,7 +280,7 @@ export function Onboarding({
                     </p>
                   )}
                   <motion.div {...item(5)}>
-                    <Button type="submit" size="lg" className="group h-14 w-full text-base" disabled={busy || name.trim().length < 2 || slugState.ok === false || !whatsappReady}>
+                    <Button type="submit" size="lg" className="group h-14 w-full text-base" disabled={busy}>
                       {busy ? (
                         <>
                           <Loader2 className="animate-spin" aria-hidden /> Creando tu tienda…
@@ -305,7 +329,7 @@ export function Onboarding({
                   <motion.div {...item(1)} className="rounded-2xl bg-cloud p-5">
                     <p className="text-sm text-muted-foreground">Tu link</p>
                     <p className="mt-1 break-all font-display text-xl font-semibold text-ink">
-                      {host}/{slug}
+                      {host}/{effectiveSlug}
                     </p>
                     <ul className="mt-4 space-y-2 border-t border-ink/10 pt-4 text-[0.95rem]">
                       {summary.map((s) => (
@@ -317,7 +341,7 @@ export function Onboarding({
                         </li>
                       ))}
                     </ul>
-                    <a href={`/${slug}`} target="_blank" rel="noopener" className="mt-4 inline-block text-sm font-medium text-blueInk underline-offset-4 hover:underline lg:hidden">
+                    <a href={`/${effectiveSlug}`} target="_blank" rel="noopener" className="mt-4 inline-block text-sm font-medium text-blueInk underline-offset-4 hover:underline lg:hidden">
                       Ver cómo se ve antes
                     </a>
                   </motion.div>
@@ -347,7 +371,7 @@ export function Onboarding({
       </div>
 
       <MultiStepLoader steps={PUBLISH_STEPS} loading={publishing} />
-      <StorePreview step={step} name={name} slug={effectiveSlug} host={host} accent={accent} whatsappReady={whatsappReady} liveSlug={created && slug ? slug : undefined} />
+      <StorePreview step={step} name={name} slug={effectiveSlug} host={host} accent={accent} whatsappReady={whatsappReady} liveSlug={created && effectiveSlug ? effectiveSlug : undefined} />
     </div>
   );
 }

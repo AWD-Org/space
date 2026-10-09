@@ -2,42 +2,54 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { categoryFormSchema, categoryNameSchema, type CategoryFormValues } from "@/lib/validators";
 import { createCategory, deleteCategory, renameCategory, reorderCategories } from "@/lib/actions/category";
 import type { Category } from "@/lib/types";
 
 export function CategoriesSheet({ open, onOpenChange, categories, limit }: { open: boolean; onOpenChange: (o: boolean) => void; categories: Category[]; limit: number }) {
   const router = useRouter();
   const [list, setList] = React.useState(categories);
-  const [name, setName] = React.useState("");
-  const [busy, setBusy] = React.useState(false);
+  const [toDelete, setToDelete] = React.useState<Category | null>(null);
+  const [renameError, setRenameError] = React.useState<{ id: string; message: string } | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError: setFieldError,
+    formState: { errors, isSubmitting },
+  } = useForm<CategoryFormValues>({ resolver: zodResolver(categoryFormSchema), mode: "onSubmit", defaultValues: { name: "" } });
   React.useEffect(() => setList(categories), [categories]);
 
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    const res = await createCategory(name);
-    setBusy(false);
-    if (!res.ok) return toast.error(res.error);
-    setName("");
+  const add = handleSubmit(async (v) => {
+    const res = await createCategory(v.name);
+    if (!res.ok) return setFieldError("name", { message: res.error }, { shouldFocus: true });
+    reset({ name: "" });
     setList((l) => [...l, res.data!]);
+    toast.success(`Categoría “${res.data!.name}” creada.`);
     router.refresh();
-  }
+  });
 
   async function rename(id: string, value: string) {
     const current = list.find((c) => c.id === id);
-    if (!current || current.name === value.trim()) return;
+    if (!current || current.name === value.trim()) return setRenameError(null);
+    const parsed = categoryNameSchema.safeParse(value);
+    if (!parsed.success) return setRenameError({ id, message: parsed.error.issues[0]?.message ?? "Revisa el nombre." });
+    setRenameError(null);
     const res = await renameCategory(id, value);
     if (!res.ok) toast.error(res.error);
     router.refresh();
   }
 
   async function remove(c: Category) {
-    if (!confirm(`¿Borrar la categoría “${c.name}”? Sus productos quedan sin categoría.`)) return;
     setList((l) => l.filter((x) => x.id !== c.id));
     const res = await deleteCategory(c.id);
     if (!res.ok) toast.error(res.error);
@@ -63,14 +75,21 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
             <ul className="space-y-2">
               {list.map((c, i) => (
                 <li key={c.id} className="flex items-center gap-2">
-                  <Input defaultValue={c.name} onBlur={(e) => rename(c.id, e.target.value)} aria-label={`Nombre de la categoría ${c.name}`} className="h-11" />
+                  <div className="min-w-0 flex-1">
+                    <Input defaultValue={c.name} onBlur={(e) => rename(c.id, e.target.value)} aria-label={`Nombre de la categoría ${c.name}`} aria-invalid={renameError?.id === c.id} className="h-11" />
+                    {renameError?.id === c.id && (
+                      <p role="alert" className="mt-1 text-sm text-destructive">
+                        {renameError.message}
+                      </p>
+                    )}
+                  </div>
                   <Button type="button" variant="ghost" size="icon" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Subir ${c.name}`}>
                     <ArrowUp />
                   </Button>
                   <Button type="button" variant="ghost" size="icon" onClick={() => move(i, 1)} disabled={i === list.length - 1} aria-label={`Bajar ${c.name}`}>
                     <ArrowDown />
                   </Button>
-                  <Button type="button" variant="danger" size="icon" onClick={() => remove(c)} aria-label={`Borrar ${c.name}`}>
+                  <Button type="button" variant="danger" size="icon" onClick={() => setToDelete(c)} aria-label={`Borrar ${c.name}`}>
                     <Trash2 />
                   </Button>
                 </li>
@@ -78,10 +97,12 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
             </ul>
           )}
           {list.length < limit ? (
-            <form onSubmit={add} className="mt-4 flex gap-2">
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Postres, Pulseras, Bebidas" aria-label="Nueva categoría" className="h-11" />
-              <Button type="submit" disabled={busy || name.trim().length < 2}>
-                Agregar
+            <form onSubmit={add} className="mt-4 flex items-start gap-2" noValidate>
+              <Field label="Nueva categoría" className="min-w-0 flex-1" error={errors.name?.message}>
+                <Input {...register("name")} placeholder="Ej. Postres, Pulseras, Bebidas" aria-invalid={!!errors.name} maxLength={30} className="h-11" />
+              </Field>
+              <Button type="submit" className="mt-[1.625rem]" disabled={isSubmitting}>
+                {isSubmitting ? "Creando…" : "Agregar"}
               </Button>
             </form>
           ) : (
@@ -89,6 +110,16 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
           )}
         </div>
       </SheetContent>
+      <ConfirmDialog
+        open={Boolean(toDelete)}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        title={`¿Borrar “${toDelete?.name ?? ""}”?`}
+        description="Sus productos quedan sin categoría."
+        confirmLabel="Sí, borrar"
+        onConfirm={async () => {
+          if (toDelete) await remove(toDelete);
+        }}
+      />
     </Sheet>
   );
 }

@@ -3,9 +3,14 @@
 import * as React from "react";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Input, Textarea } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
 import { formatPrice } from "@/lib/format";
+import { orderFormSchema, type OrderFormValues } from "@/lib/validators";
 import { bagTotal, buildOrderMessage, whatsappLink } from "@/lib/whatsapp";
 import { useBag } from "./bag";
 import { QtyStepper } from "./product-sheet";
@@ -36,17 +41,21 @@ export function BagSheet({
   demo?: boolean;
 }) {
   const { items, setQty, clear, lines } = useBag();
-  const [name, setName] = React.useState("");
-  const [delivery, setDelivery] = React.useState("");
-  const [note, setNote] = React.useState("");
   const { total, partial } = bagTotal(lines);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<OrderFormValues>({ resolver: zodResolver(orderFormSchema), mode: "onTouched", defaultValues: { name: "", delivery: "", note: "" } });
 
-  const message = buildOrderMessage({ storeName, lines, customerName: name, delivery, note });
-
-  function send() {
-    onSend?.(message);
-    if (!demo) window.open(whatsappLink(whatsapp, message), "_blank", "noopener");
-  }
+  const send = handleSubmit(
+    (v) => {
+      const message = buildOrderMessage({ storeName, lines, customerName: v.name, delivery: v.delivery, note: v.note });
+      onSend?.(message);
+      if (!demo) window.open(whatsappLink(whatsapp, message), "_blank", "noopener");
+    },
+    () => toast.warning("Falta tu nombre y dónde lo recoges.")
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -77,30 +86,21 @@ export function BagSheet({
               </ul>
 
               <div className="mt-4 space-y-3">
-                <div>
-                  <label htmlFor="bag-name" className="text-sm font-medium text-ink">
-                    Tu nombre
-                  </label>
-                  <Input id="bag-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Para que sepa de quién es" autoComplete="given-name" className="mt-1.5" />
-                </div>
-                <div>
-                  <label htmlFor="bag-delivery" className="text-sm font-medium text-ink">
-                    ¿Dónde y cuándo lo recoges?
-                  </label>
+                <Field label="Tu nombre" htmlFor="bag-name" error={errors.name?.message}>
+                  <Input id="bag-name" {...register("name")} aria-invalid={!!errors.name} placeholder="Para que sepa de quién es" autoComplete="given-name" maxLength={40} />
+                </Field>
+                <Field label="¿Dónde y cuándo lo recoges?" htmlFor="bag-delivery" error={errors.delivery?.message}>
                   <Input
                     id="bag-delivery"
-                    value={delivery}
-                    onChange={(e) => setDelivery(e.target.value)}
+                    {...register("delivery")}
+                    aria-invalid={!!errors.delivery}
+                    maxLength={160}
                     placeholder={deliveryNote ? `Entrega: ${deliveryNote}` : "Ej. salida del edificio B a las 2"}
-                    className="mt-1.5"
                   />
-                </div>
-                <div>
-                  <label htmlFor="bag-note" className="text-sm font-medium text-ink">
-                    Nota (opcional)
-                  </label>
-                  <Textarea id="bag-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Sabor, talla o lo que haga falta" className="mt-1.5 min-h-[72px]" />
-                </div>
+                </Field>
+                <Field label="Nota (opcional)" htmlFor="bag-note" error={errors.note?.message}>
+                  <Textarea id="bag-note" {...register("note")} maxLength={300} placeholder="Sabor, talla o lo que haga falta" className="min-h-[72px]" />
+                </Field>
               </div>
             </div>
 
@@ -111,7 +111,7 @@ export function BagSheet({
               </div>
               <button
                 type="button"
-                onClick={send}
+                onClick={() => void send()}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-whatsapp font-medium text-white transition-colors hover:bg-[#157540]"
               >
                 <WhatsAppGlyph className="h-5 w-5" />
