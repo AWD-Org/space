@@ -94,7 +94,7 @@ export function ShareKit({ url, displayUrl, storeName, accent, published }: { ur
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {!published && (
         <p className="rounded-xl bg-[#FEF3E2] px-4 py-3 text-sm text-[#7C2D12]">Tu catálogo sigue en borrador. Publícalo desde Inicio para que el link funcione con otras personas.</p>
       )}
@@ -107,7 +107,7 @@ export function ShareKit({ url, displayUrl, storeName, accent, published }: { ur
         <p className="mt-2 text-sm text-muted-foreground">Ponlo en tu bio de Instagram, en tu estado de WhatsApp y en los grupos de tu salón.</p>
       </Panel>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_1.2fr]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1.2fr]">
         <Panel title="Código QR">
           {qr ? (
             <div className="mx-auto aspect-square w-full max-w-[240px] rounded-xl bg-white p-2 ring-1 ring-ink/10" dangerouslySetInnerHTML={{ __html: qr }} role="img" aria-label={`Código QR de ${displayUrl}`} />

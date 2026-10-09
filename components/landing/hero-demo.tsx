@@ -97,19 +97,19 @@ function ChatPreview() {
                   transition={{ type: "spring", stiffness: 500, damping: 34 }}
                 >
                   • {l.qty} × {l.name}
-                  {l.price != null && <span className="text-[#54656F]"> · {formatPrice(l.price * l.qty)}</span>}
+                  {l.price != null && <span className="text-[#44545C]"> · {formatPrice(l.price * l.qty)}</span>}
                 </motion.li>
               ))}
             </AnimatePresence>
-            {lines.length === 0 && <li className="text-[#54656F]">(toca el + en un producto)</li>}
+            {lines.length === 0 && <li className="text-[#44545C]">(toca el + en un producto)</li>}
           </ul>
           <p className="mt-2 font-semibold">
             Total{partial ? " aproximado" : ""}: <NumberTicker value={total} format={format} />
           </p>
           <p>A nombre de: Diego</p>
           <p>Entrega: Centro, a la 1</p>
-          <p className="mt-2 text-[#54656F]">(Pedido armado en Space®)</p>
-          <p className="mt-1 flex items-center justify-end gap-1 text-[0.7rem] text-[#54656F]">
+          <p className="mt-2 text-[#44545C]">(Pedido armado en Space®)</p>
+          <p className="mt-1 flex items-center justify-end gap-1 text-[0.7rem] text-[#44545C]">
             1:02 p.m. <CheckCheck className="h-3.5 w-3.5 text-[#53BDEB]" aria-hidden />
           </p>
         </div>

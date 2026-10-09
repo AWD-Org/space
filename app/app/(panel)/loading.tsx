@@ -7,7 +7,7 @@ export default function Loading() {
         <Skeleton className="h-9 w-56" />
         <Skeleton className="h-4 w-36" />
       </div>
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <SkeletonPanel>
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-2.5">
@@ -30,7 +30,7 @@ export default function Loading() {
             ))}
           </div>
         </SkeletonPanel>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <SkeletonPanel>
             <Skeleton className="h-5 w-32" />
             <div className="mt-5 grid grid-cols-2 gap-4">

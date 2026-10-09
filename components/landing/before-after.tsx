@@ -27,7 +27,7 @@ function Bubble({ side, children, time, i }: { side: "in" | "out"; children: Rea
     <Pop i={i} className={side === "out" ? "flex justify-end" : undefined}>
       <div className={cn("max-w-[82%] rounded-2xl px-3 py-2 text-[0.9rem] leading-snug text-[#111B21] shadow-sm", side === "out" ? "rounded-tr-md bg-[#D9FDD3]" : "rounded-tl-md bg-white")}>
         {children}
-        <span className="mt-0.5 flex items-center justify-end gap-1 text-[0.68rem] text-[#54656F]">
+        <span className="mt-0.5 flex items-center justify-end gap-1 text-[0.68rem] text-[#44545C]">
           {time}
           {side === "out" && <CheckCheck className="h-3 w-3 text-[#53BDEB]" aria-hidden />}
         </span>
@@ -70,7 +70,7 @@ function After() {
         <div className="max-w-[82%] overflow-hidden rounded-2xl rounded-tl-md bg-white shadow-sm">
           <div className="rounded-xl bg-[#F0F2F5] p-3 text-[0.82rem]">
             <p className="font-semibold text-[#111B21]">Antojos de Vale</p>
-            <p className="text-[#54656F]">Postres hechos en casa. Mira el catálogo y pide por WhatsApp.</p>
+            <p className="text-[#44545C]">Postres hechos en casa. Mira el catálogo y pide por WhatsApp.</p>
           </div>
           <div className="px-3 py-2 text-[0.9rem] leading-snug text-[#111B21]">
             <p>Hola Antojos de Vale, quiero hacer un pedido:</p>
@@ -78,8 +78,8 @@ function After() {
             <p>• 1 × Café frío · $45 MXN</p>
             <p className="mt-1 font-semibold">Total aproximado: $95 MXN</p>
             <p>Entrega: Centro, a la 1</p>
-            <p className="mt-1 text-[#54656F]">(Pedido armado en Space®)</p>
-            <span className="mt-0.5 block text-right text-[0.68rem] text-[#54656F]">11:51</span>
+            <p className="mt-1 text-[#44545C]">(Pedido armado en Space®)</p>
+            <span className="mt-0.5 block text-right text-[0.68rem] text-[#44545C]">11:51</span>
           </div>
         </div>
       </Pop>

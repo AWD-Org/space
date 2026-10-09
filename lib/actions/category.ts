@@ -7,11 +7,20 @@ import { categoryNameSchema, firstError } from "@/lib/validators";
 import type { ActionResult, Category, Product, Store } from "@/lib/types";
 import { refreshStore, run, UserError } from "./helpers";
 
+const norm = (v: string) => v.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+async function assertUniqueName(uid: string, name: string, exceptId?: string) {
+  const db = await getDb();
+  const all = await db.list<{ name: string }>(categoriesPath(uid));
+  if (all.some((c) => c.id !== exceptId && norm(c.name) === norm(name))) throw new UserError("Ya tienes una categoría con ese nombre.");
+}
+
 export async function createCategory(name: string): Promise<ActionResult<Category>> {
   return run(async () => {
     const user = await requireUserForAction();
     const parsed = categoryNameSchema.safeParse(name);
     if (!parsed.success) throw new UserError(firstError(parsed.error));
+    await assertUniqueName(user.uid, parsed.data);
     const limits = await getLimits();
     const db = await getDb();
     const id = db.newId();
@@ -39,6 +48,7 @@ export async function renameCategory(id: string, name: string): Promise<ActionRe
     if (!parsed.success) throw new UserError(firstError(parsed.error));
     const db = await getDb();
     if (!(await db.get(`${categoriesPath(user.uid)}/${id}`))) throw new UserError("Esa categoría ya no existe.");
+    await assertUniqueName(user.uid, parsed.data, id);
     await db.update(`${categoriesPath(user.uid)}/${id}`, { name: parsed.data });
     const store = await getStore(user.uid);
     refreshStore(store?.slug);

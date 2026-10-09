@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Catalog } from "@/components/catalog/catalog";
-import { catalogJsonLd, describeStore, loadCatalog } from "./data";
+import { catalogJsonLd, describeStore, loadCatalog } from "../data";
 
 type Props = { params: Promise<{ slug: string }> };
 

@@ -165,7 +165,7 @@ export function ProductForm({
           <Input id="p-name" {...register("name")} aria-invalid={!!errors.name} maxLength={60} autoCapitalize="sentences" enterKeyHint="next" placeholder="Ej. Brownie de nuez" />
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Precio" htmlFor="p-price" error={errors.price?.message} hint="En pesos mexicanos (MXN). Déjalo vacío si prefieres que te pregunten.">
             <Controller control={control} name="price" render={({ field }) => <MoneyInput id="p-price" value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-invalid={!!errors.price} />} />
           </Field>
@@ -273,7 +273,7 @@ export function ProductForm({
 
       {product && !compact && <SaveBar dirty={changed} saving={saving !== null} onDiscard={discard} />}
 
-      <div className={compact ? "" : product ? "hidden" : "sticky bottom-20 z-20 -mx-4 flex gap-2 bg-gradient-to-t from-background via-background to-transparent px-4 pb-2 pt-6 sm:static sm:mx-0 sm:bg-none sm:p-0 lg:bottom-0"}>
+      <div className={compact ? "" : product ? "hidden" : "sticky bottom-20 z-20 -mx-3 flex flex-wrap gap-2 bg-gradient-to-t from-background via-background to-transparent px-3 pb-2 pt-6 sm:static sm:mx-0 sm:bg-none sm:p-0 lg:bottom-0"}>
         {compact ? (
           <Button type="submit" size="lg" className="group h-14 w-full text-base" loading={uploading || saving === "save"} loadingText={uploading ? "Subiendo fotos…" : "Guardando…"} disabled={saving !== null}>
             Guardar y seguir

@@ -102,8 +102,8 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
   }
 
   return (
-    <div className="grid gap-4">
-      <form onSubmit={save} className="grid gap-4" noValidate>
+    <div className="grid grid-cols-1 gap-4">
+      <form onSubmit={save} className="grid grid-cols-1 gap-4" noValidate>
         <Panel title="Cómo te ven">
           <div className="flex items-center gap-4">
             <button
@@ -142,7 +142,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
         </Panel>
 
         <Panel title="Pedidos y entrega">
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <Field label="WhatsApp para pedidos" htmlFor="s-wa" error={errors.whatsapp?.message} hint="10 dígitos, sin espacios. Ahí te llegan los pedidos.">
               <Controller control={control} name="whatsapp" render={({ field }) => <PhoneInput id="s-wa" ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={!!errors.whatsapp} />} />
             </Field>

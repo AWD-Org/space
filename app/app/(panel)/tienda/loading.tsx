@@ -4,7 +4,7 @@ export default function Loading() {
   return (
     <SkeletonPage>
       <SkeletonHeader />
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <SkeletonPanel className="space-y-5">
           <div className="flex items-center gap-4">
             <Skeleton className="h-20 w-20 shrink-0 rounded-2xl" />

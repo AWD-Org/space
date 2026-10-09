@@ -17,6 +17,7 @@ import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
 import { WordsReveal } from "@/components/landing/motion";
 import { checkSlug, createStore, setPublished } from "@/lib/actions/store";
+import { signOut } from "@/lib/firebase/client";
 import { storeInitials } from "@/lib/format";
 import { slugify } from "@/lib/slug";
 import { ACCENTS, onboardingFormSchema, type OnboardingFormValues } from "@/lib/validators";
@@ -157,8 +158,19 @@ export function Onboarding({
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1fr_1fr]">
       <div className="flex flex-col bg-white px-5 py-6 sm:px-10 lg:px-14">
-        <div className="flex items-center">
+        <div className="flex items-center justify-between">
           <SpaceLogo variant="mark" size={28} />
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              router.replace("/entrar");
+              router.refresh();
+            }}
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            Salir
+          </button>
         </div>
 
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">

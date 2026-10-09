@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import crypto from "node:crypto";
 import { isLocalMode } from "@/lib/env";
 import { hasFirebaseAdmin } from "@/lib/firebase/config";
+import { clientIp, rateLimited } from "@/lib/rate-limit";
 import { createFirebaseSession, encodeLocalSession, SESSION_COOKIE, SESSION_DAYS } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
@@ -19,6 +20,9 @@ function withCookie(value: string) {
 }
 
 export async function POST(req: NextRequest) {
+  if (rateLimited(`session:${clientIp(req)}`, 20, 60_000)) {
+    return NextResponse.json({ ok: false, error: "Demasiados intentos. Espera un minuto e intenta de nuevo." }, { status: 429 });
+  }
   const body = (await req.json().catch(() => ({}))) as { idToken?: string; local?: { email?: string; name?: string } };
 
   if (body.local && isLocalMode) {

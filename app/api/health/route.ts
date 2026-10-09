@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { hasFirebaseAdmin, privateKeyLooksValid } from "@/lib/firebase/config";
 import { hasFirebaseClient, isLocalMode } from "@/lib/env";
 
@@ -11,7 +11,12 @@ function brief(e: unknown) {
 }
 
 /** Diagnóstico de la conexión con Firebase. No muestra ningún valor secreto. */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // En producción el detalle solo se entrega con ?token=<HEALTH_TOKEN>; sin token solo se informa que el servicio responde.
+  const token = process.env.HEALTH_TOKEN;
+  if (process.env.NODE_ENV === "production" && !(token && req.nextUrl.searchParams.get("token") === token)) {
+    return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  }
   const out: Record<string, unknown> = {
     node: process.version,
     localMode: isLocalMode,

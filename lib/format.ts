@@ -1,11 +1,12 @@
 import type { Availability, PaymentMethod } from "./types";
 
 const mxn = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 2, minimumFractionDigits: 0 });
+const mxnCents = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** Centavos a "$45 MXN", "$4,000 MXN" o "$45.50 MXN". Space solo maneja pesos mexicanos. */
 export function formatPrice(cents: number | null | undefined, from = false) {
   if (cents == null) return "Precio a consultar";
-  const text = `${mxn.format(cents / 100)} MXN`;
+  const text = `${(cents % 100 === 0 ? mxn : mxnCents).format(cents / 100)} MXN`;
   return from ? `Desde ${text}` : text;
 }
 

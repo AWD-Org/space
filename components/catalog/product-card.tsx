@@ -50,7 +50,7 @@ export function ProductCard({
             className={cn("object-cover transition-transform duration-500 group-hover:scale-[1.03]", soldOut && "opacity-60 grayscale-[40%]")}
           />
         ) : (
-          <span className="absolute inset-0 grid place-items-center px-4 text-center font-display text-lg font-medium text-blueInk/70">
+          <span className="absolute inset-0 grid place-items-center px-4 text-center font-display text-lg font-medium text-[#2F43B8]">
             {product.name}
           </span>
         )}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Catalog } from "@/components/catalog/catalog";
+import { SITE_URL } from "@/lib/env";
 import { describeProduct, loadCatalog } from "../../data";
 
 type Props = { params: Promise<{ slug: string; product: string }> };
@@ -27,8 +28,30 @@ export default async function ProductPage({ params }: Props) {
   const result = await loadCatalog(slug);
   if (!result || !result.catalog.products.some((p) => p.slug === product)) notFound();
   const { catalog, ownerPreview } = result;
+  const item = catalog.products.find((p) => p.slug === product)!;
+  const url = `${SITE_URL}/${catalog.store.slug}/p/${item.slug}`;
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: item.name,
+    url,
+    description: item.description || undefined,
+    image: item.images.map((i) => (i.url.startsWith("/") ? `${SITE_URL}${i.url}` : i.url)),
+    offers:
+      item.price != null
+        ? {
+            "@type": "Offer",
+            price: (item.price / 100).toFixed(2),
+            priceCurrency: "MXN",
+            availability: item.availability === "soldout" ? "https://schema.org/OutOfStock" : item.availability === "onrequest" ? "https://schema.org/PreOrder" : "https://schema.org/InStock",
+            url,
+          }
+        : undefined,
+  };
   return (
-    <Catalog
+    <>
+      {!ownerPreview && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />}
+      <Catalog
       store={catalog.store}
       categories={catalog.categories}
       products={catalog.products}
@@ -36,5 +59,6 @@ export default async function ProductPage({ params }: Props) {
       track={!ownerPreview}
       ownerPreview={ownerPreview}
     />
+    </>
   );
 }

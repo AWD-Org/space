@@ -104,8 +104,8 @@ export function OrderStep() {
       <motion.p variants={line} transition={t}>• 1 × Café frío</motion.p>
       <motion.p variants={line} transition={t} className="font-semibold">Total aproximado: $95 MXN</motion.p>
       <motion.p variants={line} transition={t}>Entrega: Centro, a la 1</motion.p>
-      <motion.p variants={line} transition={t} className="text-[#54656F]">(Pedido armado en Space®)</motion.p>
-      <motion.p variants={line} transition={t} className="flex items-center justify-end gap-1 text-[0.7rem] text-[#54656F]">
+      <motion.p variants={line} transition={t} className="text-[#44545C]">(Pedido armado en Space®)</motion.p>
+      <motion.p variants={line} transition={t} className="flex items-center justify-end gap-1 text-[0.7rem] text-[#44545C]">
         1:02 p.m. <CheckCheck className="h-3.5 w-3.5 text-[#53BDEB]" aria-hidden />
       </motion.p>
     </motion.div>

@@ -29,7 +29,7 @@ const config: Config = {
         cloud: "#F4F5F8",
         // Tono oscuro de la paleta para texto y botones (contraste AA)
         blueInk: "#3B55E6",
-        whatsapp: "#1A8D4A",
+        whatsapp: "#17803F",
       },
       fontFamily: {
         sans: ["var(--font-text)", "system-ui", "sans-serif"],

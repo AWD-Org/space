@@ -76,7 +76,7 @@ export function ProductSheet({
                   </div>
                 ))
               ) : (
-                <div className="grid w-full place-items-center p-8 text-center font-display text-2xl text-blueInk/70">{product.name}</div>
+                <div className="grid w-full place-items-center p-8 text-center font-display text-2xl text-[#2F43B8]">{product.name}</div>
               )}
             </div>
             {product.images.length > 1 && (

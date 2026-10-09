@@ -75,7 +75,7 @@ export default async function HomePage() {
           </Button>
         }
       />
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <StoreStatus url={url} displayUrl={url.replace(/^https?:\/\//, "")} published={store.status === "published"} isOpen={store.isOpen} canPublish={products.some((p) => p.visible)} />
 
         {pending.length > 0 && (
@@ -97,7 +97,7 @@ export default async function HomePage() {
           </Panel>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Panel title="Últimos 7 días">
             <dl className="grid grid-cols-2 gap-4">
               <div>
@@ -136,7 +136,7 @@ export default async function HomePage() {
         </div>
 
         <Panel title="Tu plan gratis">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Meter label="Productos" used={products.length} max={limits.products} />
             <Meter label="Categorías" used={store.counts?.categories ?? 0} max={limits.categories} />
           </div>

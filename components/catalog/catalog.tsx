@@ -245,39 +245,39 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             )}
           </div>
 
-          <dl className="mt-6 hidden overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-ink/[0.08] sm:flex sm:divide-x sm:divide-ink/[0.07]">
-            <div className="flex flex-1 items-center gap-3 px-4 py-3.5">
+          <ul className="mt-6 hidden overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-ink/[0.08] sm:flex sm:divide-x sm:divide-ink/[0.07]">
+            <li className="flex flex-1 items-center gap-3 px-4 py-3.5">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", store.isOpen ? "bg-[#E7F6EE]" : "bg-cloud")}>
                 <span className={cn("h-2.5 w-2.5 rounded-full", store.isOpen ? "bg-[#1A8D4A]" : "bg-slate")} aria-hidden />
               </span>
               <div>
-                <dt className="text-xs text-muted-foreground">Pedidos</dt>
-                <dd className="font-medium text-ink">{store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}</dd>
+                <p className="text-xs text-muted-foreground">Pedidos</p>
+                <p className="font-medium text-ink">{store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}</p>
               </div>
-            </div>
+            </li>
             {store.deliveryNote && (
-              <div className="flex flex-1 items-center gap-3 px-4 py-3.5">
+              <li className="flex flex-1 items-center gap-3 px-4 py-3.5">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cloud">
                   <MapPin className="h-4 w-4 text-ink" aria-hidden />
                 </span>
                 <div className="min-w-0">
-                  <dt className="text-xs text-muted-foreground">Entrega</dt>
-                  <dd className="font-medium leading-snug text-ink">{store.deliveryNote}</dd>
+                  <p className="text-xs text-muted-foreground">Entrega</p>
+                  <p className="font-medium leading-snug text-ink">{store.deliveryNote}</p>
                 </div>
-              </div>
+              </li>
             )}
             {store.paymentMethods.length > 0 && (
-              <div className="flex flex-1 items-center gap-3 px-4 py-3.5">
+              <li className="flex flex-1 items-center gap-3 px-4 py-3.5">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cloud">
                   <Wallet className="h-4 w-4 text-ink" aria-hidden />
                 </span>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Pago</dt>
-                  <dd className="font-medium text-ink">{store.paymentMethods.map((m) => PAYMENT_LABEL[m]).join(" · ")}</dd>
+                  <p className="text-xs text-muted-foreground">Pago</p>
+                  <p className="font-medium text-ink">{store.paymentMethods.map((m) => PAYMENT_LABEL[m]).join(" · ")}</p>
                 </div>
-              </div>
+              </li>
             )}
-          </dl>
+          </ul>
         </div>
       </header>
 
@@ -320,14 +320,13 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
           </div>
 
           {(usedCategories.length > 0 || hasSoldOut) && (
-            <div className="no-scrollbar -mr-3 mt-2.5 flex gap-2 overflow-x-auto pr-3 sm:mr-0 sm:pr-0 lg:hidden" role="tablist" aria-label="Filtros">
+            <div className="no-scrollbar -mr-3 mt-2.5 flex gap-2 overflow-x-auto pr-3 sm:mr-0 sm:pr-0 lg:hidden" role="group" aria-label="Filtros">
               {usedCategories.length > 0 &&
                 [{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
                   <button
                     key={c.id ?? "all"}
                     type="button"
-                    role="tab"
-                    aria-selected={c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id}
+                    aria-pressed={c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id}
                     onClick={() => setCats(c.id === null ? [] : [c.id])}
                     className={cn(
                       "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",

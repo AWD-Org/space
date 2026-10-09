@@ -28,7 +28,7 @@ function NavLink({ href, label, icon: Icon, active }: { href: string; label: str
   );
 }
 
-export function AppShell({ storeName, slug, email, children }: { storeName: string; slug: string; email: string | null; children: React.ReactNode }) {
+export function AppShell({ storeName, slug, email, atLimit = false, children }: { storeName: string; slug: string; email: string | null; atLimit?: boolean; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -96,12 +96,21 @@ export function AppShell({ storeName, slug, email, children }: { storeName: stri
           {NAV.slice(0, 2).map((n) => (
             <NavLink key={n.href} {...n} active={isActive(pathname, n.href)} />
           ))}
-          <Link href="/app/productos/nuevo" className="flex flex-col items-center gap-0.5 text-[0.72rem] font-medium text-blueInk" aria-label="Agregar producto">
-            <span className="-mt-6 grid h-14 w-14 place-items-center rounded-full bg-blueInk text-white shadow-[0_10px_24px_-6px_rgba(59,85,230,0.6)] ring-4 ring-white transition-transform active:scale-95">
-              <Plus className="h-7 w-7" aria-hidden />
+          {atLimit ? (
+            <span aria-disabled="true" title="Llegaste al máximo de productos de tu plan" className="flex flex-col items-center gap-0.5 text-[0.72rem] font-medium text-muted-foreground">
+              <span className="-mt-6 grid h-14 w-14 place-items-center rounded-full bg-cloud text-slate ring-4 ring-white">
+                <Plus className="h-7 w-7" aria-hidden />
+              </span>
+              Máximo
             </span>
-            Agregar
-          </Link>
+          ) : (
+            <Link href="/app/productos/nuevo" className="flex flex-col items-center gap-0.5 text-[0.72rem] font-medium text-blueInk" aria-label="Agregar producto">
+              <span className="-mt-6 grid h-14 w-14 place-items-center rounded-full bg-blueInk text-white shadow-[0_10px_24px_-6px_rgba(59,85,230,0.6)] ring-4 ring-white transition-transform active:scale-95">
+                <Plus className="h-7 w-7" aria-hidden />
+              </span>
+              Agregar
+            </Link>
+          )}
           {NAV.slice(2).map((n) => (
             <NavLink key={n.href} {...n} active={isActive(pathname, n.href)} />
           ))}

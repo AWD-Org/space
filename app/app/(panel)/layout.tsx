@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { backendReady } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
-import { getStore } from "@/lib/data/queries";
+import { getLimits, getStore } from "@/lib/data/queries";
 import { AppShell } from "@/components/app/shell";
 import { NotConfigured } from "@/components/app/not-configured";
 
@@ -15,7 +15,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const store = await getStore(user.uid);
   if (!store) redirect("/app/empezar");
   return (
-    <AppShell storeName={store.name} slug={store.slug} email={user.email}>
+    <AppShell storeName={store.name} slug={store.slug} email={user.email} atLimit={store.counts.products >= (await getLimits()).products}>
       {children}
     </AppShell>
   );

@@ -41,10 +41,10 @@ export function LandingHeader() {
 
   return (
     <header className={cn("sticky top-0 z-40 transition-colors", scrolled ? "border-b border-ink/5 bg-background/90 backdrop-blur" : "bg-transparent")}>
-      <div className="container flex h-16 items-center justify-between gap-4">
+      <div className="container flex h-16 items-center justify-between gap-2 sm:gap-4">
         <Link href="/" className="flex items-center gap-2" aria-label="Space, inicio">
           <SpaceLogo variant="mark" size={28} />
-          <span className="font-display text-xl font-semibold text-ink">Space</span>
+          <span className="font-display text-xl font-semibold text-ink max-[360px]:sr-only">Space</span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Secciones">
           {LINKS.map((l) => (
