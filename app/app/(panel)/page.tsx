@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, Circle, ExternalLink, MessageCircle, Plus } from "lucide-react";
+import { ChevronRight, Circle, Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { getLimits, getStats, getStore, listProducts } from "@/lib/data/queries";
 import { SITE_URL } from "@/lib/env";
 import { todayKey } from "@/lib/format";
+import { Button } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/app/shell";
 import { StoreStatus } from "@/components/app/store-status";
 import { cn } from "@/lib/utils";
@@ -62,38 +63,33 @@ export default async function HomePage() {
 
   return (
     <>
-      <PageHeader title={firstName ? `Hola, ${firstName}` : "Tu tienda"} description={store.name} />
-      <div className="grid gap-4">
-        <nav aria-label="Acciones rápidas" className="grid grid-cols-3 gap-2.5 sm:max-w-xl">
-          {[
-            { href: "/app/productos/nuevo", label: "Agregar producto", icon: Plus, primary: true },
-            { href: `https://wa.me/?text=${encodeURIComponent(`Mira mi catálogo: ${url}`)}`, label: "Enviar por WhatsApp", icon: MessageCircle, external: true },
-            { href: `/${store.slug}`, label: "Ver mi catálogo", icon: ExternalLink, external: true },
-          ].map(({ href, label, icon: Icon, primary, external }) => (
-            <Link
-              key={label}
-              href={href}
-              {...(external ? { target: "_blank", rel: "noopener" } : {})}
-              className={cn(
-                "flex min-h-[5.25rem] flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center text-[0.8rem] font-medium leading-tight transition-transform active:scale-[0.97]",
-                primary ? "bg-blueInk text-white" : "bg-white text-ink ring-1 ring-ink/10"
-              )}
-            >
-              <Icon className="h-6 w-6" aria-hidden />
-              {label}
+      <PageHeader
+        title={firstName ? `Hola, ${firstName}` : "Tu tienda"}
+        description={store.name}
+        action={
+          <Button asChild size="lg" className="hidden lg:inline-flex">
+            <Link href="/app/productos/nuevo">
+              <Plus />
+              Agregar producto
             </Link>
-          ))}
-        </nav>
+          </Button>
+        }
+      />
+      <div className="grid gap-4">
         <StoreStatus url={url} displayUrl={url.replace(/^https?:\/\//, "")} published={store.status === "published"} isOpen={store.isOpen} canPublish={products.some((p) => p.visible)} />
 
         {pending.length > 0 && (
-          <Panel title="Para que tu catálogo venda" description={`Te faltan ${pending.length} de ${checklist.length}.`}>
+          <Panel title="Termina de armar tu catálogo" description={`${checklist.length - pending.length} de ${checklist.length} listos`}>
+            <div className="-mt-1 mb-3 h-1.5 overflow-hidden rounded-full bg-cloud" role="progressbar" aria-label="Avance" aria-valuenow={checklist.length - pending.length} aria-valuemax={checklist.length}>
+              <div className="h-full rounded-full bg-spaceBlue transition-[width] duration-500" style={{ width: `${((checklist.length - pending.length) / checklist.length) * 100}%` }} />
+            </div>
             <ul className="divide-y divide-ink/5">
-              {checklist.map((c) => (
+              {pending.map((c) => (
                 <li key={c.label}>
-                  <Link href={c.href} className="flex items-center gap-3 py-3 text-[0.95rem]">
-                    {c.done ? <CheckCircle2 className="h-5 w-5 text-[#1A8D4A]" aria-label="Hecho" /> : <Circle className="h-5 w-5 text-spaceLavender" aria-label="Pendiente" />}
-                    <span className={cn(c.done ? "text-muted-foreground line-through" : "text-ink")}>{c.label}</span>
+                  <Link href={c.href} className="group flex items-center gap-3 py-3 text-[0.95rem] text-ink">
+                    <Circle className="h-5 w-5 shrink-0 text-spaceLavender" aria-hidden />
+                    <span className="flex-1">{c.label}</span>
+                    <ChevronRight className="h-4 w-4 text-slate transition-transform group-hover:translate-x-0.5" aria-hidden />
                   </Link>
                 </li>
               ))}

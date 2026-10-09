@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy } from "lucide-react";
+import Link from "next/link";
+import { Check, Copy, Eye, MessageCircle, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -63,12 +64,36 @@ export function StoreStatus({ url, displayUrl, published, isOpen, canPublish }: 
             {displayUrl}
           </a>
         </div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
         {published ? (
-          <CopyLink url={url} />
+          <>
+            <Button asChild variant="whatsapp" size="sm" className="flex-1 sm:flex-none">
+              <a href={`https://wa.me/?text=${encodeURIComponent(`Mira mi catálogo en Space®: ${url}`)}`} target="_blank" rel="noopener">
+                <MessageCircle />
+                Enviar por WhatsApp
+              </a>
+            </Button>
+            <CopyLink url={url} />
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/app/compartir">
+                <QrCode />
+                QR y letrero
+              </Link>
+            </Button>
+          </>
         ) : (
-          <Button onClick={publish} loading={busy} loadingText="Publicando…" disabled={!canPublish}>
-            Publicar catálogo
-          </Button>
+          <>
+            <Button size="sm" onClick={publish} loading={busy} loadingText="Publicando…" disabled={!canPublish}>
+              Publicar catálogo
+            </Button>
+            <Button asChild variant="secondary" size="sm">
+              <a href={url} target="_blank" rel="noopener">
+                <Eye />
+                Vista previa
+              </a>
+            </Button>
+          </>
         )}
       </div>
       {!published && !canPublish && <p className="mt-3 text-sm text-muted-foreground">Agrega tu primer producto para poder publicarlo.</p>}
