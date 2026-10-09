@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Copy, Eye, MessageCircle, QrCode } from "lucide-react";
 import { toast } from "sonner";
+import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { setPublished, updateStore } from "@/lib/actions/store";
@@ -39,7 +40,7 @@ export function StoreStatus({ url, displayUrl, published, isOpen, canPublish }: 
 
   async function toggleOpen(v: boolean) {
     setOpen(v);
-    const res = await updateStore({ isOpen: v });
+    const res = await safe(() => updateStore({ isOpen: v }));
     if (!res.ok) {
       setOpen(!v);
       toast.error(res.error);
@@ -48,7 +49,7 @@ export function StoreStatus({ url, displayUrl, published, isOpen, canPublish }: 
 
   async function publish() {
     setBusy(true);
-    const res = await setPublished(true);
+    const res = await safe(() => setPublished(true));
     setBusy(false);
     if (!res.ok) return toast.error(res.error);
     toast.success("Tu catálogo ya está en línea.");

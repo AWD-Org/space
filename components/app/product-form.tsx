@@ -7,6 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -82,7 +83,7 @@ export function ProductForm({
     setError(null);
     if (uploading) return toast.info("Espera a que terminen de subir las fotos.");
     setSaving(another ? "another" : "save");
-    const res = await saveProduct({
+    const res = await safe(() => saveProduct({
       id: product?.id,
       name: v.name,
       description: v.description,
@@ -92,7 +93,7 @@ export function ProductForm({
       visible: v.visible,
       categoryId: v.categoryId,
       images,
-    });
+    }));
     setSaving(null);
     if (!res.ok) return setError(res.error);
     toast.success(product ? "Cambios guardados." : "Producto agregado a tu catálogo.");
@@ -115,7 +116,7 @@ export function ProductForm({
 
   async function remove() {
     if (!product) return;
-    const res = await deleteProduct(product.id);
+    const res = await safe(() => deleteProduct(product.id));
     if (!res.ok) return toast.error(res.error);
     toast.success("Producto borrado.");
     router.push("/app/productos");
@@ -127,7 +128,7 @@ export function ProductForm({
     const parsed = categoryNameSchema.safeParse(newCat.value);
     if (!parsed.success) return setNewCat({ ...newCat, error: parsed.error.issues[0]?.message ?? "Revisa el nombre." });
     setNewCat({ ...newCat, busy: true, error: null });
-    const res = await createCategory(parsed.data);
+    const res = await safe(() => createCategory(parsed.data));
     if (!res.ok) return setNewCat({ value: newCat.value, busy: false, error: res.error });
     setCategories((c) => [...c, res.data!]);
     setValue("categoryId", res.data!.id, { shouldDirty: true });

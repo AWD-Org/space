@@ -49,7 +49,7 @@ export const productSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(2, "El nombre necesita al menos 2 letras.").max(60, "Máximo 60 caracteres."),
   description: z.string().trim().max(400, "Máximo 400 caracteres."),
-  price: z.number().int().min(0).max(10_000_000, "Revisa el precio.").nullable(),
+  price: z.number().int().min(0).max(10_000_000 * 100, "Revisa el precio.").nullable(),
   priceFrom: z.boolean(),
   availability: z.enum(["available", "soldout", "onrequest"]),
   visible: z.boolean(),

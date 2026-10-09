@@ -7,6 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { SaveBar } from "./save-bar";
@@ -55,7 +56,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
 
   const save = handleSubmit(
     async (v) => {
-      const res = await updateStore({ ...v, paymentMethods: v.paymentMethods });
+      const res = await safe(() => updateStore({ ...v, paymentMethods: v.paymentMethods }));
       if (!res.ok) return toast.error(res.error);
       reset(v);
       toast.success("Tu tienda quedó actualizada.");
@@ -69,7 +70,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
 
   async function saveSlug() {
     setSlugBusy(true);
-    const res = await changeSlug(slug);
+    const res = await safe(() => changeSlug(slug));
     setSlugBusy(false);
     if (!res.ok) return toast.error(res.error);
     setSlug(res.data!.slug);
@@ -93,7 +94,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
 
   async function togglePublished() {
     setPubBusy(true);
-    const res = await setPublished(store.status !== "published");
+    const res = await safe(() => setPublished(store.status !== "published"));
     setPubBusy(false);
     if (!res.ok) return toast.error(res.error);
     toast.success(store.status === "published" ? "Tu catálogo quedó oculto." : "Tu catálogo ya está en línea.");

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
+import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -110,7 +111,7 @@ export function Onboarding({
         return;
       }
       setBusy(true);
-      const res = await createStore({ name: v.name, slug: v.slug, whatsapp: v.whatsapp, accent: v.accent });
+      const res = await safe(() => createStore({ name: v.name, slug: v.slug, whatsapp: v.whatsapp, accent: v.accent }));
       setBusy(false);
       if (!res.ok) return setError(res.error);
       setValue("slug", res.data!.slug);
@@ -129,7 +130,7 @@ export function Onboarding({
     setPublishing(true);
     toast.dismiss();
     const started = Date.now();
-    const res = await setPublished(true);
+    const res = await safe(() => setPublished(true));
     if (!res.ok) {
       setBusy(false);
       setPublishing(false);

@@ -125,6 +125,20 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
         </Button>
       </form>
 
+      {signup && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Al crear tu cuenta aceptas los{" "}
+          <Link href="/terminos" className="font-medium text-blueInk underline-offset-4 hover:underline">
+            Términos
+          </Link>{" "}
+          y el{" "}
+          <Link href="/privacidad" className="font-medium text-blueInk underline-offset-4 hover:underline">
+            Aviso de privacidad
+          </Link>
+          .
+        </p>
+      )}
+
       {!signup && (
         <button type="button" onClick={forgot} className="mt-4 text-sm text-blueInk underline-offset-4 hover:underline">
           Olvidé mi contraseña

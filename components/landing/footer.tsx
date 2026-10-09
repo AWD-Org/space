@@ -38,6 +38,12 @@ export function LandingFooter() {
           <a href="#preguntas" className="text-ink/80 hover:text-ink">
             Preguntas
           </a>
+          <Link href="/privacidad" className="text-ink/80 hover:text-ink">
+            Aviso de privacidad
+          </Link>
+          <Link href="/terminos" className="text-ink/80 hover:text-ink">
+            Términos
+          </Link>
         </nav>
         <p className="text-sm text-muted-foreground">
           Desarrollado por{" "}

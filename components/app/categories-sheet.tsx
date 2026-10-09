@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -30,7 +31,7 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
   React.useEffect(() => setList(categories), [categories]);
 
   const add = handleSubmit(async (v) => {
-    const res = await createCategory(v.name);
+    const res = await safe(() => createCategory(v.name));
     if (!res.ok) return setFieldError("name", { message: res.error }, { shouldFocus: true });
     reset({ name: "" });
     setList((l) => [...l, res.data!]);
@@ -44,14 +45,14 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
     const parsed = categoryNameSchema.safeParse(value);
     if (!parsed.success) return setRenameError({ id, message: parsed.error.issues[0]?.message ?? "Revisa el nombre." });
     setRenameError(null);
-    const res = await renameCategory(id, value);
+    const res = await safe(() => renameCategory(id, value));
     if (!res.ok) toast.error(res.error);
     router.refresh();
   }
 
   async function remove(c: Category) {
     setList((l) => l.filter((x) => x.id !== c.id));
-    const res = await deleteCategory(c.id);
+    const res = await safe(() => deleteCategory(c.id));
     if (!res.ok) toast.error(res.error);
     router.refresh();
   }
@@ -62,7 +63,7 @@ export function CategoriesSheet({ open, onOpenChange, categories, limit }: { ope
     const next = [...list];
     [next[i], next[j]] = [next[j], next[i]];
     setList(next);
-    const res = await reorderCategories(next.map((c) => c.id));
+    const res = await safe(() => reorderCategories(next.map((c) => c.id)));
     if (!res.ok) toast.error(res.error);
     router.refresh();
   }

@@ -76,7 +76,7 @@ export function AppShell({ storeName, slug, email, children }: { storeName: stri
       </aside>
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-ink/10 bg-white/95 px-4 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-1 border-b border-ink/10 bg-white/95 px-4 backdrop-blur lg:hidden">
           <Link href="/app" className="flex min-w-0 items-center gap-2">
             <SpaceLogo variant="mark" size={22} />
             <span className="truncate font-display font-semibold text-ink">{storeName}</span>
@@ -85,6 +85,9 @@ export function AppShell({ storeName, slug, email, children }: { storeName: stri
             Ver catálogo
             <ExternalLink className="h-4 w-4" aria-hidden />
           </a>
+          <button type="button" onClick={logout} aria-label="Cerrar sesión" className="ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <LogOut className="h-5 w-5" aria-hidden />
+          </button>
         </header>
 
         <main className="mx-auto w-full max-w-[1440px] px-3 pb-28 pt-5 sm:px-5 lg:px-6 lg:pb-12 lg:pt-8">{children}</main>

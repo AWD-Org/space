@@ -10,6 +10,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { EyeOff, GripVertical, Plus, Tags } from "lucide-react";
 import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
+import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { reorderProducts, setAvailability } from "@/lib/actions/product";
 import { AVAILABILITY_LABEL, formatPrice } from "@/lib/format";
@@ -81,13 +82,13 @@ export function ProductsManager({ products: initial, categories, limit, category
     const to = products.findIndex((p) => p.id === e.over!.id);
     const next = arrayMove(products, from, to);
     setProducts(next);
-    const res = await reorderProducts(next.map((p) => p.id));
+    const res = await safe(() => reorderProducts(next.map((p) => p.id)));
     if (!res.ok) toast.error(res.error);
   }
 
   async function changeAvailability(id: string, a: Availability) {
     setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, availability: a } : p)));
-    const res = await setAvailability(id, a);
+    const res = await safe(() => setAvailability(id, a));
     if (!res.ok) {
       toast.error(res.error);
       router.refresh();
