@@ -15,7 +15,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const store = await getStore(user.uid);
   if (!store) redirect("/app/empezar");
   return (
-    <AppShell storeName={store.name} slug={store.slug} email={user.email} atLimit={store.counts.products >= (await getLimits()).products}>
+    <AppShell storeName={store.name} slug={store.slug} email={user.email} atLimit={store.counts.products >= (await getLimits()).products} emailVerified={user.emailVerified !== false}>
       {children}
     </AppShell>
   );

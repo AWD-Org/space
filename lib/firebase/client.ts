@@ -3,10 +3,14 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
   getAuth,
   GoogleAuthProvider,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  connectAuthEmulator,
   getRedirectResult,
   signInWithRedirect,
   signOut as fbSignOut,
@@ -16,6 +20,7 @@ import {
 import { firebaseClientConfig, hasFirebaseClient, isLocalMode } from "@/lib/env";
 
 let app: FirebaseApp | undefined;
+let emulatorConnected = false;
 function clientAuth() {
   if (!hasFirebaseClient) throw new Error("Space todavía no está conectado a su sistema de cuentas.");
   // El acceso con Google redirige y vuelve a este mismo dominio (el handler de Firebase se
@@ -23,6 +28,12 @@ function clientAuth() {
   app = app ?? getApps()[0] ?? initializeApp({ ...firebaseClientConfig, authDomain: typeof window !== "undefined" ? window.location.host : firebaseClientConfig.authDomain });
   const auth = getAuth(app);
   auth.languageCode = "es";
+  // Solo para pruebas: apunta al emulador de Firebase Auth (nunca se define en producción).
+  const emu = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_URL;
+  if (emu && !emulatorConnected) {
+    connectAuthEmulator(auth, emu, { disableWarnings: true });
+    emulatorConnected = true;
+  }
   return auth;
 }
 
@@ -79,6 +90,8 @@ export async function signUpWithEmail(name: string, email: string, password: str
   const cred = await createUserWithEmailAndPassword(clientAuth(), email, password);
   if (name) await updateProfile(cred.user, { displayName: name });
   await startSession(cred.user);
+  // Confirmación de correo (solo registro con contraseña; Google ya viene verificado). Sin bloquear el registro.
+  void fetch("/api/verify-email", { method: "POST" }).catch(() => {});
 }
 
 export async function signInWithGoogle(): Promise<"away" | void> {
@@ -127,4 +140,24 @@ export async function resetPassword(email: string) {
 export async function signOut() {
   await fetch("/api/session", { method: "DELETE" });
   if (hasFirebaseClient) await fbSignOut(clientAuth()).catch(() => {});
+}
+
+/** ¿La cuenta entra con contraseña? (las de Google no tienen una que cambiar). */
+export function hasPasswordLogin() {
+  if (localModeAuth || !hasFirebaseClient) return false;
+  return Boolean(clientAuth().currentUser?.providerData.some((p) => p.providerId === "password"));
+}
+
+export async function changeDisplayName(name: string) {
+  if (localModeAuth) return;
+  const user = clientAuth().currentUser;
+  if (!user) throw Object.assign(new Error("Vuelve a entrar para cambiar tu nombre."), { code: "space/no-user" });
+  await updateProfile(user, { displayName: name });
+}
+
+export async function changePassword(current: string, next: string) {
+  const user = clientAuth().currentUser;
+  if (!user?.email) throw Object.assign(new Error("Vuelve a entrar para cambiar tu contraseña."), { code: "space/no-user" });
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, current));
+  await updatePassword(user, next);
 }

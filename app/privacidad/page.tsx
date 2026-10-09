@@ -49,7 +49,7 @@ export default function PrivacyPage() {
 
       <h2>Tus derechos ARCO</h2>
       <p>
-        Puedes solicitar el acceso, la rectificación o la cancelación de tus datos, y oponerte a su tratamiento, escribiendo a hello@amoxtli.tech desde el correo de tu cuenta. Responderemos en un máximo de 20 días hábiles. Para eliminar tu cuenta y tu catálogo, pídelo por el mismo medio.
+        Puedes solicitar el acceso, la rectificación o la cancelación de tus datos, y oponerte a su tratamiento, escribiendo a hello@amoxtli.tech desde el correo de tu cuenta. Responderemos en un máximo de 20 días hábiles. También puedes pausar o eliminar tu cuenta y tu catálogo tú mismo desde Mi cuenta, en el panel.
       </p>
 
       <h2>Cambios a este aviso</h2>

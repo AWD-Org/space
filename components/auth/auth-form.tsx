@@ -28,6 +28,16 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
   const router = useRouter();
   const [pending, setPending] = React.useState<"email" | "google" | null>(null);
   const [returning, setReturning] = React.useState(false);
+  // Frenos contra adivinar contraseñas: 5 fallos seguidos en el acceso con correo bloquean el botón 60 s.
+  const failures = React.useRef(0);
+  const [lockedUntil, setLockedUntil] = React.useState(0);
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (lockedUntil <= Date.now()) return;
+    const id = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(id);
+  }, [lockedUntil]);
+  const waitSeconds = Math.max(0, Math.ceil((lockedUntil - now) / 1000));
   const [redirecting, setRedirecting] = React.useState(false);
   const signup = mode === "signup";
   const schema = React.useMemo(() => authFormSchema(signup, localModeAuth), [signup]);
@@ -51,6 +61,17 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
       router.refresh();
     } catch (err) {
       setPending(null);
+      if (kind === "email" && !signup && !isSilentAuthError(err)) {
+        failures.current += 1;
+        if (failures.current >= 5 || (err as { code?: string })?.code === "auth/too-many-requests") {
+          failures.current = 0;
+          const until = Date.now() + 60_000;
+          setLockedUntil(until);
+          setNow(Date.now());
+          toast.error("Demasiados intentos. Espera un minuto antes de volver a probar.");
+          return;
+        }
+      }
       if (!isSilentAuthError(err)) toast.error(authErrorMessage(err));
     }
   }
@@ -120,9 +141,14 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
         <Field label="Contraseña" htmlFor="password" error={errors.password?.message} hint={signup ? "Mínimo 8 caracteres." : undefined}>
           <Input id="password" type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" {...register("password")} aria-invalid={!!errors.password} autoComplete={signup ? "new-password" : "current-password"} />
         </Field>
-        <Button type="submit" size="lg" className="w-full" loading={pending === "email"} loadingText={signup ? "Creando tu espacio…" : "Entrando…"} disabled={pending !== null}>
+        <Button type="submit" size="lg" className="w-full" loading={pending === "email"} loadingText={signup ? "Creando tu espacio…" : "Entrando…"} disabled={pending !== null || waitSeconds > 0}>
           {signup ? "Crear mi cuenta" : "Entrar"}
         </Button>
+        {waitSeconds > 0 && (
+          <p role="status" className="text-center text-sm text-muted-foreground">
+            Demasiados intentos. Podrás volver a probar en {waitSeconds} s.
+          </p>
+        )}
       </form>
 
       {signup && (

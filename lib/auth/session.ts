@@ -31,7 +31,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (value.startsWith(LOCAL_PREFIX)) {
     if (!isLocalMode) return null;
     try {
-      return JSON.parse(Buffer.from(value.slice(LOCAL_PREFIX.length), "base64url").toString()) as SessionUser;
+      return { ...(JSON.parse(Buffer.from(value.slice(LOCAL_PREFIX.length), "base64url").toString()) as SessionUser), emailVerified: true };
     } catch {
       return null;
     }
@@ -41,7 +41,10 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   try {
     const { adminAuth } = await import("@/lib/firebase/admin");
     const decoded = await adminAuth().verifySessionCookie(value, true);
-    return { uid: decoded.uid, email: decoded.email ?? null, name: (decoded.name as string | undefined) ?? null };
+    let emailVerified = decoded.email_verified === true;
+    // La cookie guarda el estado del momento en que entró; si ya confirmó su correo, se lee al día.
+    if (!emailVerified) emailVerified = (await adminAuth().getUser(decoded.uid)).emailVerified;
+    return { uid: decoded.uid, email: decoded.email ?? null, name: (decoded.name as string | undefined) ?? null, emailVerified };
   } catch {
     return null;
   }

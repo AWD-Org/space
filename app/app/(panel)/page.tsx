@@ -117,6 +117,9 @@ export default async function HomePage() {
               ))}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Visitas por día, últimas dos semanas. Un pedido enviado es cuando alguien toca “Mandar pedido por WhatsApp”.</p>
+            <Link href="/app/estadisticas" className="mt-3 inline-block text-sm font-medium text-blueInk hover:underline">
+              Ver 30 y 90 días
+            </Link>
           </Panel>
 
           <Panel title="Lo más visto">

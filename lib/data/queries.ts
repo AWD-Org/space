@@ -65,7 +65,8 @@ async function loadCatalogBySlug(slug: string, includeDraft: boolean): Promise<P
     db.list<Category>(categoriesPath(store.id), { orderBy: ["order", "asc"] }),
     db.list<Product>(productsPath(store.id), { orderBy: ["order", "asc"] }),
   ]);
-  return { store, categories, products: products.filter((p) => p.visible) };
+  const paused = typeof store.pausedUntil === "number" && store.pausedUntil > Date.now();
+  return { store: paused ? { ...store, isOpen: false } : store, categories, products: products.filter((p) => p.visible) };
 }
 
 /** Catálogo publicado, en caché hasta que el vendedor cambie algo. */

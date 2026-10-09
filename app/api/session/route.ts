@@ -32,10 +32,10 @@ export async function POST(req: NextRequest) {
     return withCookie(encodeLocalSession({ uid, email, name: body.local.name?.trim() || null }));
   }
 
+  if (typeof body.idToken !== "string" || !body.idToken) return NextResponse.json({ ok: false, error: "Falta el token." }, { status: 400 });
   if (!hasFirebaseAdmin) {
     return NextResponse.json({ ok: false, error: "Space todavía no está conectado a su sistema de cuentas." }, { status: 503 });
   }
-  if (!body.idToken) return NextResponse.json({ ok: false, error: "Falta el token." }, { status: 400 });
   try {
     return withCookie(await createFirebaseSession(body.idToken));
   } catch (e) {

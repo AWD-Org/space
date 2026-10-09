@@ -19,6 +19,8 @@ export interface Store {
   accent: string; // color de acento del catálogo
   logo: ImageRef | null;
   isOpen: boolean;
+  /** Pausa temporal pedida por el dueño (ms). Mientras no pase, el catálogo no toma pedidos. */
+  pausedUntil?: number | null;
   status: "draft" | "published";
   plan: "free";
   counts: { products: number; categories: number };
@@ -61,6 +63,7 @@ export interface SessionUser {
   uid: string;
   email: string | null;
   name: string | null;
+  emailVerified?: boolean;
 }
 
 export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };

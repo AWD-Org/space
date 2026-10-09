@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ExternalLink, Home, LogOut, Package, Plus, QrCode, Store as StoreIcon } from "lucide-react";
+import { BarChart3, ExternalLink, Home, LogOut, MailWarning, Package, Plus, QrCode, Store as StoreIcon, UserRound } from "lucide-react";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
 import { signOut } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/app/tienda", label: "Mi tienda", icon: StoreIcon },
   { href: "/app/compartir", label: "Compartir", icon: QrCode },
 ];
+
 
 function isActive(pathname: string, href: string) {
   return href === "/app" ? pathname === "/app" : pathname.startsWith(href);
@@ -28,7 +29,7 @@ function NavLink({ href, label, icon: Icon, active }: { href: string; label: str
   );
 }
 
-export function AppShell({ storeName, slug, email, atLimit = false, children }: { storeName: string; slug: string; email: string | null; atLimit?: boolean; children: React.ReactNode }) {
+export function AppShell({ storeName, slug, email, atLimit = false, emailVerified = true, children }: { storeName: string; slug: string; email: string | null; atLimit?: boolean; emailVerified?: boolean; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -63,6 +64,10 @@ export function AppShell({ storeName, slug, email, atLimit = false, children }: 
           ))}
         </nav>
         <div className="mt-auto space-y-1">
+          <Link href="/app/estadisticas" aria-current={pathname.startsWith("/app/estadisticas") ? "page" : undefined} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
+            <BarChart3 className="h-5 w-5" aria-hidden />
+            Estadísticas
+          </Link>
           <a href={`/${slug}`} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
             <ExternalLink className="h-5 w-5" aria-hidden />
             Ver mi catálogo
@@ -71,6 +76,10 @@ export function AppShell({ storeName, slug, email, atLimit = false, children }: 
             <LogOut className="h-5 w-5" aria-hidden />
             Salir
           </button>
+          <Link href="/app/cuenta" aria-current={pathname.startsWith("/app/cuenta") ? "page" : undefined} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
+            <UserRound className="h-5 w-5" aria-hidden />
+            Mi cuenta
+          </Link>
           {email && <p className="truncate px-3 pt-2 text-xs text-muted-foreground">{email}</p>}
         </div>
       </aside>
@@ -85,12 +94,23 @@ export function AppShell({ storeName, slug, email, atLimit = false, children }: 
             Ver catálogo
             <ExternalLink className="h-4 w-4" aria-hidden />
           </a>
+          <Link href="/app/cuenta" aria-label="Mi cuenta" className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <UserRound className="h-5 w-5" aria-hidden />
+          </Link>
           <button type="button" onClick={logout} aria-label="Cerrar sesión" className="ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <LogOut className="h-5 w-5" aria-hidden />
           </button>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] px-3 pb-28 pt-5 sm:px-5 lg:px-6 lg:pb-12 lg:pt-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1440px] px-3 pb-28 pt-5 sm:px-5 lg:px-6 lg:pb-12 lg:pt-8">
+          {!emailVerified && !pathname.startsWith("/app/cuenta") && (
+            <Link href="/app/cuenta" className="mb-5 flex items-center gap-2 rounded-xl bg-[#FFF3D6] px-4 py-3 text-sm text-[#7A4B00] hover:bg-[#FFEDC2]">
+              <MailWarning className="h-4 w-4 shrink-0" aria-hidden />
+              <span>Confirma tu correo: te mandamos un mensaje. Si no llegó, reenvíalo desde Mi cuenta.</span>
+            </Link>
+          )}
+          {children}
+        </main>
 
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-ink/10 bg-white pb-safe pt-1.5 lg:hidden" aria-label="Panel">
           {NAV.slice(0, 2).map((n) => (

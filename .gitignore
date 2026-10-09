@@ -37,3 +37,4 @@ next-env.d.ts
 
 # datos del modo local
 /.local-data/
+.next-emu
