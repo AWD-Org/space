@@ -19,7 +19,7 @@ import { WordsReveal } from "@/components/landing/motion";
 import { checkSlug, createStore, setPublished } from "@/lib/actions/store";
 import { signOut } from "@/lib/firebase/client";
 import { storeInitials } from "@/lib/format";
-import { slugify } from "@/lib/slug";
+import { slugify, slugifyInput } from "@/lib/slug";
 import { ACCENTS, onboardingFormSchema, type OnboardingFormValues } from "@/lib/validators";
 import type { Category } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -260,8 +260,9 @@ export function Onboarding({
                           {...register("slug", {
                             onChange: (e) => {
                               setSlugTouched(true);
-                              setValue("slug", slugify(e.target.value), { shouldValidate: true });
+                              setValue("slug", slugifyInput(e.target.value), { shouldValidate: true });
                             },
+                            onBlur: (e) => setValue("slug", slugify(e.target.value), { shouldValidate: true }),
                           })}
                           aria-invalid={!!errors.slug || slugState.ok === false}
                           inputMode="url"

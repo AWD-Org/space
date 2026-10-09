@@ -17,7 +17,7 @@ import { changeSlug, setPublished, updateStore } from "@/lib/actions/store";
 import { uploadImage } from "@/lib/client/upload";
 import { PAYMENT_LABEL, prettyWhatsapp } from "@/lib/format";
 import { settingsFormSchema, type SettingsFormValues } from "@/lib/validators";
-import { slugify } from "@/lib/slug";
+import { slugify, slugifyInput } from "@/lib/slug";
 import { ColorPicker } from "./color-picker";
 import type { PaymentMethod, Store } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -179,7 +179,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="flex h-12 w-full items-center overflow-hidden rounded-xl border sm:flex-1 border-input bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10">
             <span className="hidden pl-4 text-muted-foreground sm:inline">{host}/</span>
-            <input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} aria-label="Link de tu catálogo" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="done" className="h-full min-w-0 flex-1 bg-transparent px-4 text-base text-ink focus:outline-none sm:pl-0" />
+            <input value={slug} onChange={(e) => setSlug(slugifyInput(e.target.value))} onBlur={() => setSlug((s) => slugify(s))} aria-label="Link de tu catálogo" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="done" className="h-full min-w-0 flex-1 bg-transparent px-4 text-base text-ink focus:outline-none sm:pl-0" />
           </div>
           <Button type="button" variant="secondary" size="lg" disabled={slug === store.slug} loading={slugBusy} loadingText="Cambiando…" onClick={saveSlug}>
             Cambiar link
