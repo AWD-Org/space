@@ -19,6 +19,15 @@ const nextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  // Handler de Firebase Auth bajo nuestro propio dominio (necesario para el acceso con Google por redirección).
+  async rewrites() {
+    const project = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!project) return [];
+    return [
+      { source: "/__/auth/:path*", destination: `https://${project}.firebaseapp.com/__/auth/:path*` },
+      { source: "/__/firebase/:path*", destination: `https://${project}.firebaseapp.com/__/firebase/:path*` },
+    ];
+  },
   async redirects() {
     return [
       { source: "/login", destination: "/entrar", permanent: true },

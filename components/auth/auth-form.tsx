@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { RouteLoader } from "@/components/ui/route-loader";
 import { authFormSchema, type AuthFormValues } from "@/lib/validators";
-import { authErrorMessage, localModeAuth, resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase/client";
+import { authErrorMessage, completeGoogleRedirect, googleRedirectPending, isSilentAuthError, localModeAuth, resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase/client";
 
 function GoogleGlyph() {
   return (
@@ -27,7 +27,7 @@ function GoogleGlyph() {
 export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: string }) {
   const router = useRouter();
   const [pending, setPending] = React.useState<"email" | "google" | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const [returning, setReturning] = React.useState(false);
   const [redirecting, setRedirecting] = React.useState(false);
   const signup = mode === "signup";
   const schema = React.useMemo(() => authFormSchema(signup, localModeAuth), [signup]);
@@ -40,41 +40,58 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
   } = useForm<AuthFormValues>({ resolver: zodResolver(schema), mode: "onTouched", defaultValues: { name: "", email: "", password: "" } });
   const destination = next && next.startsWith("/app") ? next : "/app";
 
-  async function finish(fn: () => Promise<void>, kind: "email" | "google") {
-    setError(null);
+  async function finish(fn: () => Promise<void | "away">, kind: "email" | "google") {
     setPending(kind);
     try {
-      await fn();
+      const result = await fn();
       setRedirecting(true);
+      // Con Google la página navega a Google; no hay nada más que hacer aquí.
+      if (result === "away") return;
       router.replace(destination);
       router.refresh();
     } catch (err) {
-      setError(authErrorMessage(err));
       setPending(null);
+      if (!isSilentAuthError(err)) toast.error(authErrorMessage(err));
     }
   }
 
+  // Al volver de Google (acceso por redirección) se completa la sesión aquí.
+  React.useEffect(() => {
+    if (!googleRedirectPending()) return;
+    setReturning(true);
+    completeGoogleRedirect()
+      .then((ok) => {
+        if (ok) {
+          setRedirecting(true);
+          router.replace(destination);
+          router.refresh();
+        } else setReturning(false);
+      })
+      .catch((err) => {
+        setReturning(false);
+        if (!isSilentAuthError(err)) toast.error(authErrorMessage(err));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const submit = handleSubmit(
     (v) => void finish(() => (signup ? signUpWithEmail(v.name, v.email, v.password) : signInWithEmail(v.email, v.password)), "email"),
-    () => setError(null)
+    undefined
   );
 
   async function forgot() {
-    setError(null);
     if (!(await trigger("email"))) return;
     try {
       await resetPassword(getValues("email").trim());
       toast.success("Te mandamos un correo para crear una contraseña nueva.");
     } catch (err) {
-      setError(authErrorMessage(err));
+      toast.error(authErrorMessage(err));
     }
   }
 
   return (
     <div className="w-full max-w-sm">
-      {redirecting && (
-        <RouteLoader />
-      )}
+      {(redirecting || returning) && <RouteLoader />}
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">{signup ? "Crea tu espacio" : "Qué bueno verte"}</h1>
       <p className="mt-2 text-muted-foreground">{signup ? "Es gratis y no pide tarjeta." : "Entra a tu espacio para actualizar tus productos."}</p>
 
@@ -103,11 +120,6 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
         <Field label="Contraseña" htmlFor="password" error={errors.password?.message} hint={signup ? "Mínimo 8 caracteres." : undefined}>
           <Input id="password" type="password" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="go" {...register("password")} aria-invalid={!!errors.password} autoComplete={signup ? "new-password" : "current-password"} />
         </Field>
-        {error && (
-          <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
-        )}
         <Button type="submit" size="lg" className="w-full" loading={pending === "email"} loadingText={signup ? "Creando tu espacio…" : "Entrando…"} disabled={pending !== null}>
           {signup ? "Crear mi cuenta" : "Entrar"}
         </Button>
