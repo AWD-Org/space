@@ -21,8 +21,8 @@ export function LegalPage({ title, updated, children }: { title: string; updated
         {children}
         <p className="mt-10 text-sm text-muted-foreground">
           ¿Dudas? Escríbenos a{" "}
-          <a href="mailto:hello@amoxtli.tech" className="font-medium text-blueInk underline-offset-4 hover:underline">
-            hello@amoxtli.tech
+          <a href="mailto:space@amoxtli.tech" className="font-medium text-blueInk underline-offset-4 hover:underline">
+            space@amoxtli.tech
           </a>
           .
         </p>

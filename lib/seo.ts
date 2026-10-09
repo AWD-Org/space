@@ -9,7 +9,7 @@ export function landingJsonLd(faq: { q: string; a: string }[]) {
         "@id": `${SITE_URL}/#amoxtli`,
         name: "AMOXTLI",
         url: "https://amoxtli.tech",
-        email: "hello@amoxtli.tech",
+        email: "space@amoxtli.tech",
       },
       {
         "@type": "WebSite",
