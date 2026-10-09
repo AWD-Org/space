@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ExternalLink, Home, LogOut, Package, QrCode, Store as StoreIcon } from "lucide-react";
+import { ExternalLink, Home, LogOut, Package, Plus, QrCode, Store as StoreIcon } from "lucide-react";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
 import { signOut } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,15 @@ const NAV = [
 
 function isActive(pathname: string, href: string) {
   return href === "/app" ? pathname === "/app" : pathname.startsWith(href);
+}
+
+function NavLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>; active: boolean }) {
+  return (
+    <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-0.5 py-1 text-[0.72rem] font-medium", active ? "text-blueInk" : "text-muted-foreground")}>
+      <Icon className="h-[22px] w-[22px]" aria-hidden />
+      {label}
+    </Link>
+  );
 }
 
 export function AppShell({ storeName, slug, email, children }: { storeName: string; slug: string; email: string | null; children: React.ReactNode }) {
@@ -80,17 +89,18 @@ export function AppShell({ storeName, slug, email, children }: { storeName: stri
 
         <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10">{children}</main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-ink/10 bg-white pb-safe pt-1.5 lg:hidden" aria-label="Panel">
-          {NAV.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              aria-current={isActive(pathname, href) ? "page" : undefined}
-              className={cn("flex flex-col items-center gap-0.5 py-1 text-[0.72rem] font-medium", isActive(pathname, href) ? "text-blueInk" : "text-muted-foreground")}
-            >
-              <Icon className="h-[22px] w-[22px]" aria-hidden />
-              {label}
-            </Link>
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-ink/10 bg-white pb-safe pt-1.5 lg:hidden" aria-label="Panel">
+          {NAV.slice(0, 2).map((n) => (
+            <NavLink key={n.href} {...n} active={isActive(pathname, n.href)} />
+          ))}
+          <Link href="/app/productos/nuevo" className="flex flex-col items-center gap-0.5 text-[0.72rem] font-medium text-blueInk" aria-label="Agregar producto">
+            <span className="-mt-6 grid h-14 w-14 place-items-center rounded-full bg-blueInk text-white shadow-[0_10px_24px_-6px_rgba(59,85,230,0.6)] ring-4 ring-white transition-transform active:scale-95">
+              <Plus className="h-7 w-7" aria-hidden />
+            </span>
+            Agregar
+          </Link>
+          {NAV.slice(2).map((n) => (
+            <NavLink key={n.href} {...n} active={isActive(pathname, n.href)} />
           ))}
         </nav>
       </div>

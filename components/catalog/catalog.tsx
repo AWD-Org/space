@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MapPin, Search, ShoppingBag, Wallet, X } from "lucide-react";
+import { Check, MapPin, MessageCircle, Search, Share2, ShoppingBag, Wallet, X } from "lucide-react";
 import { formatPrice, PAYMENT_LABEL, storeInitials } from "@/lib/format";
 import { bagTotal } from "@/lib/whatsapp";
 import type { Category, Product, Store } from "@/lib/types";
@@ -39,6 +39,35 @@ function track(storeId: string, kind: "view" | "order" | "product", productId?: 
   }
 }
 
+function ShareButton({ name, slug }: { name: string; slug: string }) {
+  const [copied, setCopied] = React.useState(false);
+  async function share() {
+    const url = `${window.location.origin}/${slug}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: name, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* cancelado */
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={share}
+      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cloud text-ink ring-1 ring-inset ring-ink/10 transition-colors hover:bg-ink/10"
+      aria-label={copied ? "Link copiado" : `Compartir ${name}`}
+      title={copied ? "Link copiado" : "Compartir"}
+    >
+      {copied ? <Check className="h-[18px] w-[18px]" aria-hidden /> : <Share2 className="h-[18px] w-[18px]" aria-hidden />}
+    </button>
+  );
+}
+
 export function Catalog(props: CatalogProps) {
   return (
     <BagProvider storageKey={`space-bag-${props.store.id}`} validIds={props.products.map((p) => p.id)}>
@@ -50,10 +79,11 @@ export function Catalog(props: CatalogProps) {
 
 function CatalogInner({ store, categories, products, initialProductSlug, track: shouldTrack = true, ownerPreview }: CatalogProps) {
   const reduce = useReducedMotion();
-  const { count, lines } = useBag();
+  const { count, lines, items } = useBag();
   const [framed, setFramed] = React.useState(false);
   React.useEffect(() => setFramed(window.self !== window.top), []);
   const [query, setQuery] = React.useState("");
+  const [searching, setSearching] = React.useState(false);
   const [category, setCategory] = React.useState<string | null>(null);
   const [openId, setOpenId] = React.useState<string | null>(
     () => products.find((p) => p.slug === initialProductSlug)?.id ?? null
@@ -108,7 +138,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   }
 
   return (
-    <div style={{ ["--accent" as string]: store.accent }} className="min-h-dvh bg-white pb-28">
+    <div style={{ ["--accent" as string]: store.accent }} className="min-h-dvh bg-white pb-32">
       {ownerPreview && !framed && (
         <div className="bg-ink px-4 py-2.5 text-center text-sm text-white">
           Vista previa: solo tú puedes ver esta página hasta que la publiques.{" "}
@@ -118,92 +148,172 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         </div>
       )}
 
-      <header className="mx-auto max-w-5xl px-4 pb-4 pt-8 sm:px-6 sm:pt-12">
-        <div className="flex items-start gap-4">
-          <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[var(--accent)] text-xl font-semibold text-white sm:h-20 sm:w-20">
-            {store.logo ? <Image src={store.logo.url} alt={`Logo de ${store.name}`} fill sizes="80px" className="object-cover" priority /> : storeInitials(store.name)}
-          </div>
-          <div className="min-w-0 pt-1">
-            <h1 className="font-display text-[1.75rem] font-semibold leading-tight text-ink sm:text-4xl">{store.name}</h1>
-            {store.tagline && <p className="mt-1 text-[1.0625rem] text-muted-foreground">{store.tagline}</p>}
-          </div>
+      <header>
+        <div
+          className="relative h-32 overflow-hidden sm:h-60"
+          style={{ background: "linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 52%, #0B0C10))" }}
+          aria-hidden
+        >
+          {store.logo && <Image src={store.logo.url} alt="" fill sizes="100vw" className="scale-125 object-cover opacity-40 blur-2xl" priority />}
+          <div
+            className="absolute inset-0"
+            style={{ backgroundImage: "radial-gradient(60% 90% at 88% 0%, rgba(255,255,255,0.32), transparent 62%), radial-gradient(50% 80% at 0% 100%, rgba(255,255,255,0.16), transparent 62%)" }}
+          />
+          <div
+            className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
+            style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")" }}
+          />
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2 text-sm">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium",
-              store.isOpen ? "bg-[#E7F6EE] text-[#146C3B]" : "bg-cloud text-muted-foreground"
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="-mt-10 flex flex-col gap-3 sm:-mt-14 sm:flex-row sm:items-end sm:gap-6">
+            <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-3xl bg-[var(--accent)] font-display text-2xl font-semibold text-white shadow-[0_12px_32px_-8px_rgba(0,0,0,0.35)] ring-4 ring-white sm:h-28 sm:w-28 sm:rounded-[1.75rem] sm:text-4xl">
+              {store.logo ? <Image src={store.logo.url} alt={`Logo de ${store.name}`} fill sizes="112px" className="object-cover" priority /> : storeInitials(store.name)}
+            </div>
+            <div className="min-w-0 flex-1 sm:pb-1">
+              <h1 className="text-balance font-display text-[2rem] font-semibold leading-[1.05] tracking-tight text-ink sm:text-5xl">{store.name}</h1>
+              {store.tagline && <p className="mt-2 max-w-xl text-[1.0625rem] leading-snug text-muted-foreground">{store.tagline}</p>}
+            </div>
+            <div className="flex items-center gap-2 sm:pb-2">
+              {store.whatsapp && (
+                <a
+                  href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, vi tu catálogo.`)}`}
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white transition-colors hover:bg-ink/90 sm:flex-none"
+                >
+                  <MessageCircle className="h-[18px] w-[18px]" aria-hidden />
+                  Escribir
+                </a>
+              )}
+              <ShareButton name={store.name} slug={store.slug} />
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2 text-sm sm:hidden">
+            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium", store.isOpen ? "bg-[#E7F6EE] text-[#146C3B]" : "bg-cloud text-muted-foreground")}>
+              <span className={cn("h-2 w-2 rounded-full", store.isOpen ? "bg-[#1A8D4A]" : "bg-slate")} aria-hidden />
+              {store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}
+            </span>
+            {store.deliveryNote && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-cloud px-3 py-1.5 text-ink">
+                <MapPin className="h-4 w-4 text-slate" aria-hidden />
+                {store.deliveryNote}
+              </span>
             )}
-          >
-            <span className={cn("h-2 w-2 rounded-full", store.isOpen ? "bg-[#1A8D4A]" : "bg-slate")} aria-hidden />
-            {store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}
-          </span>
-          {store.deliveryNote && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-cloud px-3 py-1.5 text-ink">
-              <MapPin className="h-4 w-4 text-slate" aria-hidden />
-              {store.deliveryNote}
-            </span>
-          )}
-          {store.paymentMethods.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-cloud px-3 py-1.5 text-ink">
-              <Wallet className="h-4 w-4 text-slate" aria-hidden />
-              {store.paymentMethods.map((m) => PAYMENT_LABEL[m]).join(" · ")}
-            </span>
-          )}
+            {store.paymentMethods.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-cloud px-3 py-1.5 text-ink">
+                <Wallet className="h-4 w-4 text-slate" aria-hidden />
+                {store.paymentMethods.map((m) => PAYMENT_LABEL[m]).join(" · ")}
+              </span>
+            )}
+          </div>
+
+          <dl className="mt-6 hidden overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-ink/[0.08] sm:flex sm:divide-x sm:divide-ink/[0.07]">
+            <div className="flex flex-1 items-center gap-3 px-4 py-3.5">
+              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", store.isOpen ? "bg-[#E7F6EE]" : "bg-cloud")}>
+                <span className={cn("h-2.5 w-2.5 rounded-full", store.isOpen ? "bg-[#1A8D4A]" : "bg-slate")} aria-hidden />
+              </span>
+              <div>
+                <dt className="text-xs text-muted-foreground">Pedidos</dt>
+                <dd className="font-medium text-ink">{store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}</dd>
+              </div>
+            </div>
+            {store.deliveryNote && (
+              <div className="flex flex-1 items-center gap-3 px-4 py-3.5">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cloud">
+                  <MapPin className="h-4 w-4 text-ink" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">Entrega</dt>
+                  <dd className="font-medium leading-snug text-ink">{store.deliveryNote}</dd>
+                </div>
+              </div>
+            )}
+            {store.paymentMethods.length > 0 && (
+              <div className="flex flex-1 items-center gap-3 px-4 py-3.5">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cloud">
+                  <Wallet className="h-4 w-4 text-ink" aria-hidden />
+                </span>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Pago</dt>
+                  <dd className="font-medium text-ink">{store.paymentMethods.map((m) => PAYMENT_LABEL[m]).join(" · ")}</dd>
+                </div>
+              </div>
+            )}
+          </dl>
         </div>
       </header>
 
-      <div className="sticky top-0 z-20 border-b border-ink/5 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
-        <div className="mx-auto max-w-5xl px-4 py-3 sm:px-6">
-          {products.length > 6 && (
-            <div className="relative mb-3">
+      <div className="sticky top-0 z-20 mt-5 border-b border-ink/5 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3 sm:px-6">
+          {searching ? (
+            <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate" aria-hidden />
               <input
+                autoFocus
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={`Buscar en ${store.name}`}
                 aria-label="Buscar productos"
-                className="h-11 w-full rounded-full bg-cloud pl-10 pr-10 text-[0.95rem] text-ink placeholder:text-slate focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="h-11 w-full rounded-full bg-cloud pl-10 pr-11 text-[0.95rem] text-ink placeholder:text-slate focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               />
-              {query && (
-                <button type="button" onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate hover:text-ink" aria-label="Borrar búsqueda">
-                  <X className="h-4 w-4" />
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setSearching(false);
+                }}
+                className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate hover:text-ink"
+                aria-label="Cerrar búsqueda"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              {products.length > 4 && (
+                <button type="button" onClick={() => setSearching(true)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cloud text-ink hover:bg-ink/10" aria-label="Buscar productos">
+                  <Search className="h-[18px] w-[18px]" />
                 </button>
               )}
-            </div>
-          )}
-          {usedCategories.length > 0 && (
-            <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="tablist" aria-label="Categorías">
-              {[{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
-                <button
-                  key={c.id ?? "all"}
-                  type="button"
-                  role="tab"
-                  aria-selected={category === c.id}
-                  onClick={() => setCategory(c.id)}
-                  className={cn(
-                    "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                    category === c.id ? "bg-ink text-white" : "bg-cloud text-ink hover:bg-ink/10"
-                  )}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
+              {usedCategories.length > 0 ? (
+                <div className="no-scrollbar -mr-4 flex flex-1 gap-2 overflow-x-auto pr-4 sm:mr-0 sm:pr-0" role="tablist" aria-label="Categorías">
+                  {[{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
+                    <button
+                      key={c.id ?? "all"}
+                      type="button"
+                      role="tab"
+                      aria-selected={category === c.id}
+                      onClick={() => setCategory(c.id)}
+                      className={cn(
+                        "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                        category === c.id ? "bg-ink text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
+                      )}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground tabular-nums">
+                  {products.length} {products.length === 1 ? "producto" : "productos"}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      <main className="mx-auto max-w-5xl px-4 pt-5 sm:px-6">
+      <main className="mx-auto max-w-5xl px-4 pt-6 sm:px-6">
         <h2 className="sr-only">Productos</h2>
         {visible.length === 0 ? (
           <p className="py-16 text-center text-muted-foreground">
             {products.length === 0 ? "Esta tienda todavía no tiene productos." : "No encontramos nada con esa búsqueda."}
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-10 lg:grid-cols-4">
             {visible.map((p, i) => (
               <ProductCard key={p.id} product={p} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
             ))}
@@ -232,14 +342,24 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             <button
               type="button"
               onClick={() => setBagOpen(true)}
-              className="mx-auto flex h-14 w-full max-w-md items-center gap-3 rounded-full bg-[var(--accent)] pl-5 pr-2 text-white shadow-lg shadow-black/15"
+              className="mx-auto flex h-16 w-full max-w-md items-center gap-3 rounded-full bg-[var(--accent)] pl-3 pr-2.5 text-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.45)] ring-1 ring-white/20"
+              aria-label={`Ver pedido: ${count} ${count === 1 ? "producto" : "productos"}`}
             >
-              <ShoppingBag className="h-5 w-5" aria-hidden />
-              <span className="font-medium">
-                {count} {count === 1 ? "producto" : "productos"}
+              <span className="flex -space-x-2.5" aria-hidden>
+                {items.slice(0, 3).map((it) => (
+                  <span key={it.productId} className="relative h-10 w-10 overflow-hidden rounded-full bg-white/25 ring-2 ring-[var(--accent)]">
+                    {it.image && <Image src={it.image} alt="" fill sizes="40px" className="object-cover" />}
+                  </span>
+                ))}
               </span>
-              <span className="ml-auto rounded-full bg-white/15 px-4 py-2 font-semibold tabular-nums">
-                {total > 0 ? `${partial ? "≈ " : ""}${formatPrice(total)}` : "Ver pedido"}
+              <span className="min-w-0 text-left leading-tight">
+                <span className="block text-[0.95rem] font-semibold">Ver mi pedido</span>
+                <span className="block text-xs text-white/80">
+                  {count} {count === 1 ? "producto" : "productos"}
+                </span>
+              </span>
+              <span className="ml-auto rounded-full bg-white px-4 py-2.5 font-semibold tabular-nums text-ink">
+                {total > 0 ? `${partial ? "≈ " : ""}${formatPrice(total)}` : "Ver"}
               </span>
             </button>
           </motion.div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import * as React from "react";
 import { formatPrice, AVAILABILITY_LABEL } from "@/lib/format";
 import type { Product } from "@/lib/types";
@@ -25,7 +25,7 @@ export function ProductCard({
   headingLevel?: "h3" | "p";
 }) {
   const Title = headingLevel;
-  const { add, items } = useBag();
+  const { add, setQty, items } = useBag();
   const reduce = useReducedMotion();
   const inBag = items.find((i) => i.productId === product.id)?.qty ?? 0;
   const soldOut = product.availability === "soldout";
@@ -37,7 +37,7 @@ export function ProductCard({
       <button
         type="button"
         onClick={onOpen}
-        className="relative block aspect-[4/5] w-full overflow-hidden rounded-2xl bg-spaceMist text-left"
+        className="relative block aspect-[4/5] w-full overflow-hidden rounded-[1.375rem] bg-spaceMist text-left"
         aria-label={`Ver ${product.name}`}
       >
         {image ? (
@@ -62,27 +62,36 @@ export function ProductCard({
       </button>
 
       {canOrder && !soldOut && (
-        <motion.button
-          type="button"
-          onClick={() => add(product)}
-          whileTap={reduce ? undefined : { scale: 0.85 }}
-          className={cn(
-            "absolute bottom-2 right-2 grid h-10 w-10 place-items-center rounded-full shadow-md ring-1 ring-black/5 transition-colors",
-            inBag ? "bg-[var(--accent)] text-white" : "bg-white text-ink hover:bg-cloud"
-          )}
-          aria-label={inBag ? `${inBag} en la bolsa. Agregar otro ${product.name}` : `Agregar ${product.name} a la bolsa`}
-        >
+        <div className="absolute bottom-2.5 right-2.5">
           {inBag ? (
-            <span className="text-sm font-semibold tabular-nums">{inBag}</span>
+            <div className="flex items-center rounded-full bg-white p-1 shadow-[0_6px_18px_-4px_rgba(0,0,0,0.3)] ring-1 ring-black/5">
+              <button type="button" onClick={() => setQty(product.id, inBag - 1)} className="grid h-9 w-9 place-items-center rounded-full text-ink active:bg-cloud" aria-label={`Quitar uno de ${product.name}`}>
+                <Minus className="h-4 w-4" aria-hidden />
+              </button>
+              <span className="w-6 text-center text-sm font-semibold tabular-nums text-ink" aria-live="polite">
+                {inBag}
+              </span>
+              <button type="button" onClick={() => add(product)} className="grid h-9 w-9 place-items-center rounded-full bg-[var(--accent)] text-white active:brightness-90" aria-label={`Agregar otro ${product.name}`}>
+                <Plus className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
           ) : (
-            <Plus className="h-5 w-5" aria-hidden />
+            <motion.button
+              type="button"
+              onClick={() => add(product)}
+              whileTap={reduce ? undefined : { scale: 0.85 }}
+              className="grid h-11 w-11 place-items-center rounded-full bg-white text-ink shadow-[0_6px_18px_-4px_rgba(0,0,0,0.3)] ring-1 ring-black/5 transition-colors hover:bg-cloud"
+              aria-label={`Agregar ${product.name} a la bolsa`}
+            >
+              <Plus className="h-5 w-5" aria-hidden />
+            </motion.button>
           )}
-        </motion.button>
+        </div>
       )}
       </div>
 
       <button type="button" onClick={onOpen} className="mt-2.5 text-left">
-        <Title className="line-clamp-2 font-sans text-[0.95rem] font-medium leading-snug text-ink">{product.name}</Title>
+        <Title className="line-clamp-2 font-display text-[1rem] font-medium leading-snug text-ink">{product.name}</Title>
         <p className="mt-0.5 text-[0.95rem] font-semibold tabular-nums text-ink">{formatPrice(product.price, product.priceFrom)}</p>
       </button>
     </article>

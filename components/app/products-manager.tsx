@@ -51,7 +51,7 @@ function Row({ product, category, onAvailability }: { product: Product; category
         value={product.availability}
         onChange={(e) => onAvailability(e.target.value as Availability)}
         aria-label={`Disponibilidad de ${product.name}`}
-        className={cn("w-[8.5rem] sm:w-auto", product.availability === "soldout" && "text-[#9A3412]")}
+        className={cn("w-[7.4rem] pl-3 pr-8 text-[0.8rem] sm:w-auto sm:pl-4 sm:pr-10 sm:text-sm", product.availability === "soldout" && "text-[#9A3412]")}
       >
         {(Object.keys(AVAILABILITY_LABEL) as Availability[]).map((a) => (
           <option key={a} value={a}>
@@ -164,15 +164,6 @@ export function ProductsManager({ products: initial, categories, limit, category
         </div>
       )}
 
-      {!atLimit && (
-        <Link
-          href="/app/productos/nuevo"
-          className="fixed bottom-24 right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 sm:hidden"
-          aria-label="Agregar producto"
-        >
-          <Plus className="h-6 w-6" />
-        </Link>
-      )}
 
       <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />
     </>

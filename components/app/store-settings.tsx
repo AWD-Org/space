@@ -174,16 +174,15 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               className="pointer-events-none fixed inset-x-0 bottom-[4.75rem] z-40 px-4 sm:px-6 lg:bottom-6 lg:left-[248px] lg:px-10"
             >
-              <div className="pointer-events-auto mx-auto flex max-w-xl items-center gap-3 rounded-full bg-ink py-2 pl-5 pr-2 text-white shadow-xl shadow-black/20" role="region" aria-label="Cambios sin guardar">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-[#F2A93B]" aria-hidden />
+              <div className="pointer-events-auto mx-auto flex max-w-xl items-center gap-3 rounded-full bg-blueInk py-2 pl-5 pr-2 text-white shadow-[0_18px_40px_-12px_rgba(59,85,230,0.55)]" role="region" aria-label="Cambios sin guardar">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium">
                   <span className="sm:hidden">Sin guardar</span>
                   <span className="hidden sm:inline">Tienes cambios sin guardar</span>
                 </p>
-                <button type="button" onClick={discard} disabled={saving} className="rounded-full px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:text-white disabled:opacity-50">
+                <button type="button" onClick={discard} disabled={saving} className="rounded-full px-3 py-2 text-sm font-medium text-white/85 transition-colors hover:text-white disabled:opacity-50">
                   Descartar
                 </button>
-                <Button type="submit" size="sm" className="h-10 bg-white px-5 text-ink hover:bg-spaceMist" disabled={saving}>
+                <Button type="submit" size="sm" className="h-10 bg-white px-5 text-blueInk hover:bg-spaceMist" disabled={saving}>
                   {saving ? (
                     <>
                       <Loader2 className="animate-spin" aria-hidden /> Guardando…

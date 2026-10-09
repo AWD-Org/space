@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, ExternalLink, MessageCircle, Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { getLimits, getStats, getStore, listProducts } from "@/lib/data/queries";
 import { SITE_URL } from "@/lib/env";
@@ -64,6 +64,26 @@ export default async function HomePage() {
     <>
       <PageHeader title={firstName ? `Hola, ${firstName}` : "Tu tienda"} description={store.name} />
       <div className="grid gap-4">
+        <nav aria-label="Acciones rápidas" className="grid grid-cols-3 gap-2.5 sm:max-w-xl">
+          {[
+            { href: "/app/productos/nuevo", label: "Agregar producto", icon: Plus, primary: true },
+            { href: `https://wa.me/?text=${encodeURIComponent(`Mira mi catálogo: ${url}`)}`, label: "Enviar por WhatsApp", icon: MessageCircle, external: true },
+            { href: `/${store.slug}`, label: "Ver mi catálogo", icon: ExternalLink, external: true },
+          ].map(({ href, label, icon: Icon, primary, external }) => (
+            <Link
+              key={label}
+              href={href}
+              {...(external ? { target: "_blank", rel: "noopener" } : {})}
+              className={cn(
+                "flex min-h-[5.25rem] flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center text-[0.8rem] font-medium leading-tight transition-transform active:scale-[0.97]",
+                primary ? "bg-blueInk text-white" : "bg-white text-ink ring-1 ring-ink/10"
+              )}
+            >
+              <Icon className="h-6 w-6" aria-hidden />
+              {label}
+            </Link>
+          ))}
+        </nav>
         <StoreStatus url={url} displayUrl={url.replace(/^https?:\/\//, "")} published={store.status === "published"} isOpen={store.isOpen} canPublish={products.some((p) => p.visible)} />
 
         {pending.length > 0 && (

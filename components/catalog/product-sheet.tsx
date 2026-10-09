@@ -67,7 +67,7 @@ export function ProductSheet({
                 const el = e.currentTarget;
                 setSlide(Math.round(el.scrollLeft / el.clientWidth));
               }}
-              className="no-scrollbar flex h-[min(50dvh,420px)] snap-x snap-mandatory overflow-x-auto bg-spaceMist sm:h-auto sm:aspect-[4/5] sm:rounded-2xl"
+              className="no-scrollbar flex h-[min(56dvh,480px)] snap-x snap-mandatory overflow-x-auto bg-spaceMist sm:h-auto sm:aspect-[4/5] sm:rounded-2xl"
             >
               {product.images.length ? (
                 product.images.map((img, i) => (
@@ -79,6 +79,11 @@ export function ProductSheet({
                 <div className="grid w-full place-items-center p-8 text-center font-display text-2xl text-blueInk/70">{product.name}</div>
               )}
             </div>
+            {product.images.length > 1 && (
+              <span className="absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium tabular-nums text-white backdrop-blur" aria-hidden>
+                {slide + 1}/{product.images.length}
+              </span>
+            )}
             {product.images.length > 1 && (
               <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5" aria-hidden>
                 {product.images.map((img, i) => (
@@ -116,7 +121,8 @@ export function ProductSheet({
                     }}
                     className="h-12 flex-1 rounded-full bg-[var(--accent)] px-5 font-medium text-white transition-[filter] hover:brightness-110"
                   >
-                    Agregar a la bolsa
+                    Agregar
+                    {product.price != null && <span className="tabular-nums"> · {formatPrice(product.price * qty)}</span>}
                   </button>
                 </div>
               )}
