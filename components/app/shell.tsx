@@ -13,7 +13,12 @@ const NAV = [
   { href: "/app/productos", label: "Productos", icon: Package },
   { href: "/app/tienda", label: "Mi tienda", icon: StoreIcon },
   { href: "/app/compartir", label: "Compartir", icon: QrCode },
+  { href: "/app/estadisticas", label: "Estadísticas", icon: BarChart3 },
+  { href: "/app/cuenta", label: "Mi cuenta", icon: UserRound },
 ];
+
+/** En el celular caben cuatro destinos más el botón de agregar; Compartir vive en Inicio y Mi cuenta en el encabezado. */
+const MOBILE_NAV = [NAV[0], NAV[1], NAV[4], NAV[2]];
 
 
 function isActive(pathname: string, href: string) {
@@ -64,10 +69,6 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
           ))}
         </nav>
         <div className="mt-auto space-y-1">
-          <Link href="/app/estadisticas" aria-current={pathname.startsWith("/app/estadisticas") ? "page" : undefined} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
-            <BarChart3 className="h-5 w-5" aria-hidden />
-            Estadísticas
-          </Link>
           <a href={`/${slug}`} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
             <ExternalLink className="h-5 w-5" aria-hidden />
             Ver mi catálogo
@@ -76,10 +77,6 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
             <LogOut className="h-5 w-5" aria-hidden />
             Salir
           </button>
-          <Link href="/app/cuenta" aria-current={pathname.startsWith("/app/cuenta") ? "page" : undefined} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
-            <UserRound className="h-5 w-5" aria-hidden />
-            Mi cuenta
-          </Link>
           {email && <p className="truncate px-3 pt-2 text-xs text-muted-foreground">{email}</p>}
         </div>
       </aside>
@@ -113,7 +110,7 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
         </main>
 
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-ink/10 bg-white pb-safe pt-1.5 lg:hidden" aria-label="Panel">
-          {NAV.slice(0, 2).map((n) => (
+          {MOBILE_NAV.slice(0, 2).map((n) => (
             <NavLink key={n.href} {...n} active={isActive(pathname, n.href)} />
           ))}
           {atLimit ? (
@@ -131,7 +128,7 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
               Agregar
             </Link>
           )}
-          {NAV.slice(2).map((n) => (
+          {MOBILE_NAV.slice(2).map((n) => (
             <NavLink key={n.href} {...n} active={isActive(pathname, n.href)} />
           ))}
         </nav>

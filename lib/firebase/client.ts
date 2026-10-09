@@ -158,6 +158,8 @@ export async function changeDisplayName(name: string) {
 export async function changePassword(current: string, next: string) {
   const user = clientAuth().currentUser;
   if (!user?.email) throw Object.assign(new Error("Vuelve a entrar para cambiar tu contraseña."), { code: "space/no-user" });
+  await user.reload();
+  if (!user.emailVerified) throw Object.assign(new Error("Confirma tu correo antes de cambiar tu contraseña."), { code: "space/email-not-verified" });
   await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, current));
   await updatePassword(user, next);
 }

@@ -112,7 +112,12 @@ export function AccountPanel({ name, email, emailVerified, pausedUntil }: { name
         </form>
       </Panel>
 
-      {canPassword && (
+      {canPassword && !emailVerified && (
+        <Panel title="Contraseña">
+          <p className="text-sm text-muted-foreground">Confirma tu correo para poder cambiar tu contraseña. Usa el botón de reenviar de arriba si no te llegó el mensaje.</p>
+        </Panel>
+      )}
+      {canPassword && emailVerified && (
         <Panel title="Contraseña">
           <form onSubmit={savePassword} className="space-y-3">
             <Field label="Contraseña actual" htmlFor="acc-cur">
