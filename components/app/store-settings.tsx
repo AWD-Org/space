@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Camera, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { changeSlug, setPublished, updateStore } from "@/lib/actions/store";
 import { uploadImage } from "@/lib/client/upload";
-import { PAYMENT_LABEL, prettyWhatsapp } from "@/lib/format";
+import { PAYMENT_LABEL, normalizeWhatsapp, prettyWhatsapp } from "@/lib/format";
 import { slugify } from "@/lib/slug";
 import { ColorPicker } from "./color-picker";
 import type { PaymentMethod, Store } from "@/lib/types";
@@ -29,6 +30,30 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
   const [logoBusy, setLogoBusy] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const logoInput = React.useRef<HTMLInputElement>(null);
+  const reduce = useReducedMotion();
+  const snapshot = (v: { name: string; tagline: string; whatsapp: string; deliveryNote: string; payments: PaymentMethod[]; accent: string }) =>
+    JSON.stringify({ ...v, whatsapp: normalizeWhatsapp(v.whatsapp), name: v.name.trim(), tagline: v.tagline.trim(), deliveryNote: v.deliveryNote.trim(), payments: [...v.payments].sort(), accent: v.accent.toUpperCase() });
+  const [baseline, setBaseline] = React.useState(() =>
+    snapshot({ name: store.name, tagline: store.tagline, whatsapp: prettyWhatsapp(store.whatsapp), deliveryNote: store.deliveryNote, payments: store.paymentMethods, accent: store.accent })
+  );
+  const dirty = snapshot({ name, tagline, whatsapp, deliveryNote, payments, accent }) !== baseline;
+
+  React.useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  function discard() {
+    const b = JSON.parse(baseline) as { name: string; tagline: string; deliveryNote: string; payments: PaymentMethod[]; accent: string };
+    setName(b.name);
+    setTagline(b.tagline);
+    setWhatsapp(prettyWhatsapp(store.whatsapp));
+    setDeliveryNote(b.deliveryNote);
+    setPayments(b.payments);
+    setAccent(b.accent);
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +61,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
     const res = await updateStore({ name, tagline, whatsapp, deliveryNote, paymentMethods: payments, accent });
     setSaving(false);
     if (!res.ok) return toast.error(res.error);
+    setBaseline(snapshot({ name, tagline, whatsapp, deliveryNote, payments, accent }));
     toast.success("Tu tienda quedó actualizada.");
     router.refresh();
   }
@@ -139,11 +165,37 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
           </div>
         </Panel>
 
-        <div>
-          <Button type="submit" size="lg" disabled={saving}>
-            {saving ? "Guardando…" : "Guardar cambios"}
-          </Button>
-        </div>
+        <AnimatePresence>
+          {dirty && (
+            <motion.div
+              initial={reduce ? false : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? undefined : { opacity: 0, y: 24 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="pointer-events-none fixed inset-x-0 bottom-[4.75rem] z-40 px-4 sm:px-6 lg:bottom-6 lg:left-[248px] lg:px-10"
+            >
+              <div className="pointer-events-auto mx-auto flex max-w-xl items-center gap-3 rounded-full bg-ink py-2 pl-5 pr-2 text-white shadow-xl shadow-black/20" role="region" aria-label="Cambios sin guardar">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[#F2A93B]" aria-hidden />
+                <p className="min-w-0 flex-1 truncate text-sm font-medium">
+                  <span className="sm:hidden">Sin guardar</span>
+                  <span className="hidden sm:inline">Tienes cambios sin guardar</span>
+                </p>
+                <button type="button" onClick={discard} disabled={saving} className="rounded-full px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:text-white disabled:opacity-50">
+                  Descartar
+                </button>
+                <Button type="submit" size="sm" className="h-10 bg-white px-5 text-ink hover:bg-spaceMist" disabled={saving}>
+                  {saving ? (
+                    <>
+                      <Loader2 className="animate-spin" aria-hidden /> Guardando…
+                    </>
+                  ) : (
+                    "Guardar cambios"
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </form>
 
       <Panel title="Tu link" description={store.status === "published" ? `Si lo cambias, el anterior deja de funcionar y no podrás cambiarlo otra vez en ${slugDays} días.` : "Puedes cambiarlo libremente mientras no publiques."}>

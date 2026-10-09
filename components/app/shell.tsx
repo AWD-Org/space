@@ -78,7 +78,7 @@ export function AppShell({ storeName, slug, email, children }: { storeName: stri
           </a>
         </header>
 
-        <main className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 sm:px-6 lg:pb-12 lg:pt-10">{children}</main>
+        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10">{children}</main>
 
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-ink/10 bg-white pb-safe pt-1.5 lg:hidden" aria-label="Panel">
           {NAV.map(({ href, label, icon: Icon }) => (

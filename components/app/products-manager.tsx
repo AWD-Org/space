@@ -8,6 +8,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, 
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { EyeOff, GripVertical, Plus, Tags } from "lucide-react";
+import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { reorderProducts, setAvailability } from "@/lib/actions/product";
@@ -44,21 +45,20 @@ function Row({ product, category, onAvailability }: { product: Product; category
           </p>
         </div>
       </Link>
-      <select
+      <Select
+        variant="pill"
+        wrapperClassName="shrink-0"
         value={product.availability}
         onChange={(e) => onAvailability(e.target.value as Availability)}
         aria-label={`Disponibilidad de ${product.name}`}
-        className={cn(
-          "h-9 w-[7.25rem] shrink-0 rounded-full border-0 bg-cloud pl-3 pr-7 text-[0.8rem] font-medium sm:w-auto sm:text-sm ring-1 ring-inset ring-border focus:ring-2 focus:ring-primary",
-          product.availability === "soldout" ? "text-[#9A3412]" : "text-ink"
-        )}
+        className={cn("w-[8.5rem] sm:w-auto", product.availability === "soldout" && "text-[#9A3412]")}
       >
         {(Object.keys(AVAILABILITY_LABEL) as Availability[]).map((a) => (
           <option key={a} value={a}>
             {AVAILABILITY_LABEL[a]}
           </option>
         ))}
-      </select>
+      </Select>
     </li>
   );
 }
@@ -132,6 +132,13 @@ export function ProductsManager({ products: initial, categories, limit, category
         </p>
       )}
 
+      {products.length > 1 && (
+        <p className="mb-3 flex items-center gap-1.5 text-[0.8rem] text-muted-foreground">
+          <GripVertical className="h-3.5 w-3.5" aria-hidden />
+          Arrastra los productos para cambiar el orden en que se ven en tu catálogo.
+        </p>
+      )}
+
       {products.length === 0 ? (
         <div className="rounded-2xl bg-white px-6 py-14 text-center ring-1 ring-ink/5">
           <p className="font-display text-xl font-semibold text-ink">Aquí van tus productos</p>
@@ -154,7 +161,6 @@ export function ProductsManager({ products: initial, categories, limit, category
               </ul>
             </SortableContext>
           </DndContext>
-          <p className="px-3 pb-4 pt-2 text-xs text-muted-foreground">Arrastra desde los puntos para cambiar el orden en tu catálogo.</p>
         </div>
       )}
 

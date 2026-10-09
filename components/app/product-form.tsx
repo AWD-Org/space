@@ -3,10 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { MoneyInput } from "@/components/ui/money-input";
 import { Field } from "@/components/ui/field";
 import { Segmented } from "@/components/ui/segmented";
@@ -167,19 +168,14 @@ export function ProductForm({
 
           <Field label="Categoría" htmlFor="p-cat">
             <div className="flex gap-2">
-              <select
-                id="p-cat"
-                value={categoryId ?? ""}
-                onChange={(e) => setCategoryId(e.target.value || null)}
-                className="h-12 w-full rounded-xl border border-input bg-white px-4 text-base text-ink focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
-              >
+              <Select id="p-cat" value={categoryId ?? ""} onChange={(e) => setCategoryId(e.target.value || null)}>
                 <option value="">Sin categoría</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               {categories.length < categoryLimit && (
                 <Button type="button" variant="secondary" className="h-12 shrink-0" onClick={addCategory}>
                   Nueva
@@ -205,11 +201,28 @@ export function ProductForm({
       )}
 
       <div className={compact ? "" : "sticky bottom-20 z-20 -mx-4 flex gap-2 bg-gradient-to-t from-background via-background to-transparent px-4 pb-2 pt-6 sm:static sm:mx-0 sm:bg-none sm:p-0 lg:bottom-0"}>
-        <Button type="submit" size="lg" className="flex-1 sm:flex-none" disabled={saving !== null || uploading}>
-          {uploading ? "Subiendo fotos…" : saving === "save" ? "Guardando…" : product ? "Guardar cambios" : compact ? "Guardar y seguir" : "Guardar producto"}
-        </Button>
+        {compact ? (
+          <Button type="submit" size="lg" className="group h-14 w-full text-base" disabled={saving !== null || uploading}>
+            {uploading || saving === "save" ? (
+              <>
+                <Loader2 className="animate-spin" aria-hidden /> {uploading ? "Subiendo fotos…" : "Guardando…"}
+              </>
+            ) : (
+              <>
+                Guardar y seguir
+                <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button type="submit" size="lg" className="flex-1 sm:flex-none" disabled={saving !== null || uploading}>
+            {uploading || saving === "save" ? <Loader2 className="animate-spin" aria-hidden /> : null}
+            {uploading ? "Subiendo fotos…" : saving === "save" ? "Guardando…" : product ? "Guardar cambios" : "Guardar producto"}
+          </Button>
+        )}
         {!product && !compact && (
           <Button type="button" variant="secondary" size="lg" disabled={saving !== null || uploading} onClick={() => submit(true)}>
+            {saving === "another" && <Loader2 className="animate-spin" aria-hidden />}
             {saving === "another" ? "Guardando…" : "Guardar y otro"}
           </Button>
         )}
