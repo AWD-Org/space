@@ -11,6 +11,7 @@ import type { Category, Product, Store } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BagProvider, useBag } from "./bag";
 import { ProductCard } from "./product-card";
+import { FilterSidebar } from "./filter-sidebar";
 import { ProductSheet } from "./product-sheet";
 import { BagSheet } from "./bag-sheet";
 
@@ -88,7 +89,9 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   const [query, setQuery] = React.useState("");
   const [sort, setSort] = React.useState<Sort>("default");
   const [onlyAvailable, setOnlyAvailable] = React.useState(false);
-  const [category, setCategory] = React.useState<string | null>(null);
+  const [cats, setCats] = React.useState<string[]>([]);
+  const [minPrice, setMinPrice] = React.useState("");
+  const [maxPrice, setMaxPrice] = React.useState("");
   const [openId, setOpenId] = React.useState<string | null>(
     () => products.find((p) => p.slug === initialProductSlug)?.id ?? null
   );
@@ -117,13 +120,21 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .trim();
-  const visible = products.filter((p) => {
+  const minCents = minPrice ? Number(minPrice) * 100 : null;
+  const maxCents = maxPrice ? Number(maxPrice) * 100 : null;
+  const matches = (p: Product, skip?: "cats") => {
     if (onlyAvailable && p.availability === "soldout") return false;
-    if (category === "__none" ? p.categoryId : category && p.categoryId !== category) return false;
+    if (skip !== "cats" && cats.length && !cats.some((c) => (c === "__none" ? !p.categoryId : p.categoryId === c))) return false;
+    if (minCents !== null || maxCents !== null) {
+      if (typeof p.price !== "number") return false;
+      if (minCents !== null && p.price < minCents) return false;
+      if (maxCents !== null && p.price > maxCents) return false;
+    }
     if (!normalized) return true;
     const hay = `${p.name} ${p.description}`.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     return hay.includes(normalized);
-  });
+  };
+  const visible = products.filter((p) => matches(p));
   // Lo agotado va al final
   const priceOf = (p: Product, empty: number) => (typeof p.price === "number" ? p.price : empty);
   visible.sort((a, b) => {
@@ -133,14 +144,18 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
     if (sort === "desc") return priceOf(b, -Infinity) - priceOf(a, -Infinity);
     return 0;
   });
-  const countFor = (id: string | null) =>
-    products.filter((p) => (id === null ? true : id === "__none" ? !p.categoryId : p.categoryId === id) && !(onlyAvailable && p.availability === "soldout")).length;
+  const countFor = (id: string | null) => products.filter((p) => (id === null ? true : id === "__none" ? !p.categoryId : p.categoryId === id) && matches(p, "cats")).length;
+  const categoryOptions = [...usedCategories.map((c) => ({ id: c.id, label: c.name })), ...(hasUncategorized ? [{ id: "__none", label: "Otros" }] : [])].map((o) => ({ ...o, count: countFor(o.id) }));
+  const pricedCount = products.filter((p) => typeof p.price === "number").length;
   const hasSoldOut = products.some((p) => p.availability === "soldout");
-  const filtering = Boolean(normalized) || category !== null || onlyAvailable;
+  const showSidebar = categoryOptions.length > 0 || hasSoldOut || pricedCount > 1;
+  const filtering = Boolean(normalized) || cats.length > 0 || onlyAvailable || minPrice !== "" || maxPrice !== "";
   function clearFilters() {
     setQuery("");
-    setCategory(null);
+    setCats([]);
     setOnlyAvailable(false);
+    setMinPrice("");
+    setMaxPrice("");
   }
 
   const openProduct = products.find((p) => p.id === openId) ?? null;
@@ -305,22 +320,22 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
           </div>
 
           {(usedCategories.length > 0 || hasSoldOut) && (
-            <div className="no-scrollbar -mr-3 mt-2.5 flex gap-2 overflow-x-auto pr-3 sm:mr-0 sm:pr-0" role="tablist" aria-label="Filtros">
+            <div className="no-scrollbar -mr-3 mt-2.5 flex gap-2 overflow-x-auto pr-3 sm:mr-0 sm:pr-0 lg:hidden" role="tablist" aria-label="Filtros">
               {usedCategories.length > 0 &&
                 [{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
                   <button
                     key={c.id ?? "all"}
                     type="button"
                     role="tab"
-                    aria-selected={category === c.id}
-                    onClick={() => setCategory(c.id)}
+                    aria-selected={c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id}
+                    onClick={() => setCats(c.id === null ? [] : [c.id])}
                     className={cn(
                       "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                      category === c.id ? "bg-ink text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
+                      (c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id) ? "bg-ink text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
                     )}
                   >
                     {c.name}
-                    <span className={cn("ml-1.5 tabular-nums", category === c.id ? "text-white/70" : "text-slate")}>{countFor(c.id)}</span>
+                    <span className={cn("ml-1.5 tabular-nums", (c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id) ? "text-white/70" : "text-slate")}>{countFor(c.id)}</span>
                   </button>
                 ))}
               {hasSoldOut && (
@@ -343,58 +358,80 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
       </div>
 
       <main className={cn(WRAP, "pt-5")}>
-        <h2 className="sr-only">Productos</h2>
-        {products.length > 1 && (
-          <div className="mb-4 flex min-h-8 items-center justify-between gap-3 text-sm text-muted-foreground">
-            <p className="tabular-nums" aria-live="polite">
-              {filtering ? `${visible.length} de ${products.length} productos` : `${products.length} productos`}
-            </p>
-            {filtering && (
-              <button type="button" onClick={clearFilters} className="rounded-full px-3 py-1.5 font-medium text-ink underline underline-offset-4 hover:bg-cloud">
-                Limpiar
-              </button>
-            )}
-          </div>
-        )}
-        {visible.length === 0 ? (
-          <div className="mx-auto max-w-sm py-16 text-center">
-            <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-cloud text-slate">
-              <Search className="h-6 w-6" aria-hidden />
-            </span>
-            <p className="mt-4 font-display text-xl font-medium text-ink">
-              {products.length === 0 ? "Aún no hay productos" : query.trim() ? `Nada para “${query.trim()}”` : "Nada con esos filtros"}
-            </p>
-            {products.length === 0 ? (
-              <p className="mt-1 text-muted-foreground">Esta tienda todavía no sube productos. Vuelve pronto.</p>
-            ) : (
-              <>
-                <p className="mt-1 text-muted-foreground">Prueba con otra palabra o pregúntale directo a la tienda.</p>
-                <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-                  <button type="button" onClick={clearFilters} className="h-11 rounded-full bg-ink px-6 text-sm font-medium text-white hover:bg-ink/90">
-                    Ver todo el catálogo
+        <div className={cn(showSidebar && "lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-10")}>
+          {showSidebar && (
+            <FilterSidebar
+              categories={categoryOptions}
+              selected={cats}
+              onToggleCategory={(id) => setCats((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]))}
+              hasSoldOut={hasSoldOut}
+              onlyAvailable={onlyAvailable}
+              onToggleAvailable={() => setOnlyAvailable((v) => !v)}
+              availableCount={products.filter((p) => p.availability !== "soldout").length}
+              showPrice={pricedCount > 1}
+              min={minPrice}
+              max={maxPrice}
+              onMin={setMinPrice}
+              onMax={setMaxPrice}
+              filtering={filtering}
+              onClear={clearFilters}
+            />
+          )}
+          <div className="min-w-0">
+            <h2 className="sr-only">Productos</h2>
+            {products.length > 1 && (
+              <div className="mb-4 flex min-h-8 items-center justify-between gap-3 text-sm text-muted-foreground">
+                <p className="tabular-nums" aria-live="polite">
+                  {filtering ? `${visible.length} de ${products.length} productos` : `${products.length} productos`}
+                </p>
+                {filtering && (
+                  <button type="button" onClick={clearFilters} className={cn("rounded-full px-3 py-1.5 font-medium text-ink underline underline-offset-4 hover:bg-cloud", showSidebar && "lg:hidden")}>
+                    Limpiar
                   </button>
-                  {store.whatsapp && (
-                    <a
-                      href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, busco ${query.trim() || "un producto"} y no lo encontré en tu catálogo de Space®.`)}`}
-                      target="_blank"
-                      rel="noopener"
-                      className="inline-flex h-11 items-center justify-center gap-2 rounded-full px-6 text-sm font-medium text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
-                    >
-                      <MessageCircle className="h-4 w-4" aria-hidden />
-                      Preguntar por WhatsApp
-                    </a>
-                  )}
-                </div>
-              </>
+                )}
+              </div>
+            )}
+            {visible.length === 0 ? (
+              <div className="mx-auto max-w-sm py-16 text-center">
+                <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-cloud text-slate">
+                  <Search className="h-6 w-6" aria-hidden />
+                </span>
+                <p className="mt-4 font-display text-xl font-medium text-ink">
+                  {products.length === 0 ? "Aún no hay productos" : query.trim() ? `Nada para “${query.trim()}”` : "Nada con esos filtros"}
+                </p>
+                {products.length === 0 ? (
+                  <p className="mt-1 text-muted-foreground">Esta tienda todavía no sube productos. Vuelve pronto.</p>
+                ) : (
+                  <>
+                    <p className="mt-1 text-muted-foreground">Prueba con otra palabra o pregúntale directo a la tienda.</p>
+                    <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                      <button type="button" onClick={clearFilters} className="h-11 rounded-full bg-ink px-6 text-sm font-medium text-white hover:bg-ink/90">
+                        Ver todo el catálogo
+                      </button>
+                      {store.whatsapp && (
+                        <a
+                          href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, busco ${query.trim() || "un producto"} y no lo encontré en tu catálogo de Space®.`)}`}
+                          target="_blank"
+                          rel="noopener"
+                          className="inline-flex h-11 items-center justify-center gap-2 rounded-full px-6 text-sm font-medium text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
+                        >
+                          <MessageCircle className="h-4 w-4" aria-hidden />
+                          Preguntar por WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className={cn("grid grid-cols-2 gap-x-2.5 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10", showSidebar ? "lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6")}>
+                {visible.map((p, i) => (
+                  <ProductCard key={p.id} product={p} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
+                ))}
+              </div>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-x-2.5 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-            {visible.map((p, i) => (
-              <ProductCard key={p.id} product={p} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
-            ))}
-          </div>
-        )}
+        </div>
       </main>
 
       <footer className={cn(WRAP, "mt-16 text-center text-sm text-muted-foreground")}>
