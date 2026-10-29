@@ -8,6 +8,7 @@ import { todayKey } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Panel } from "@/components/app/shell";
 import { StoreStatus } from "@/components/app/store-status";
+import { TutorialButton } from "@/components/app/tutorial";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Inicio" };
@@ -67,12 +68,15 @@ export default async function HomePage() {
         title={firstName ? `Hola, ${firstName}` : "Tu tienda"}
         description={store.name}
         action={
-          <Button asChild size="lg" className="hidden lg:inline-flex">
-            <Link href="/app/productos/nuevo">
-              <Plus />
-              Agregar producto
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <TutorialButton />
+            <Button asChild size="lg" className="hidden lg:inline-flex">
+              <Link href="/app/productos/nuevo">
+                <Plus />
+                Agregar producto
+              </Link>
+            </Button>
+          </div>
         }
       />
       <div className="grid grid-cols-1 gap-4">

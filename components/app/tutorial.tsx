@@ -1,23 +1,27 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { CircleHelp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { markTutorialSeen } from "@/lib/actions/tutorial";
+import { markTutorialSeen, restartTutorial } from "@/lib/actions/tutorial";
 import type { TutorialId } from "@/lib/tutorial";
 
 interface Ctx {
   enabled: boolean;
   isPending: (id: TutorialId) => boolean;
   markSeen: (id: TutorialId) => void;
+  /** Borra lo visto y activa el tutorial, aunque la cuenta sea anterior a él. */
+  restart: () => void;
 }
 
-const TutorialContext = React.createContext<Ctx>({ enabled: false, isPending: () => false, markSeen: () => {} });
+const TutorialContext = React.createContext<Ctx>({ enabled: false, isPending: () => false, markSeen: () => {}, restart: () => {} });
 
 /** El estado viene de la cuenta (Firestore); aquí solo se refleja al instante lo que la persona va cerrando. */
 export function TutorialProvider({ enabled, seen, children }: { enabled: boolean; seen: TutorialId[]; children: React.ReactNode }) {
   const key = seen.join(",");
+  const router = useRouter();
+  const [forced, setForced] = React.useState(false);
   const [local, setLocal] = React.useState<TutorialId[]>(seen);
   React.useEffect(() => setLocal(key ? (key.split(",") as TutorialId[]) : []), [key, enabled]);
 
@@ -27,12 +31,42 @@ export function TutorialProvider({ enabled, seen, children }: { enabled: boolean
     void markTutorialSeen(id).catch(() => {});
   }, []);
 
-  const value = React.useMemo<Ctx>(() => ({ enabled, isPending: (id) => enabled && !local.includes(id), markSeen }), [enabled, local, markSeen]);
+  const restart = React.useCallback(() => {
+    setForced(true);
+    setLocal([]);
+    void restartTutorial().then(() => router.refresh(), () => {});
+  }, [router]);
+
+  const on = enabled || forced;
+  const value = React.useMemo<Ctx>(() => ({ enabled: on, isPending: (id) => on && !local.includes(id), markSeen, restart }), [on, local, markSeen, restart]);
   return <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>;
 }
 
 export function useTutorial() {
   return React.useContext(TutorialContext);
+}
+
+/** Botón de ícono con tooltip para volver a ver el recorrido. Vive en Inicio. */
+export function TutorialButton() {
+  const { restart } = useTutorial();
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        onClick={restart}
+        aria-label="Ver el tutorial"
+        className="grid h-11 w-11 place-items-center rounded-full bg-white text-blueInk ring-1 ring-ink/10 transition-colors hover:bg-spaceMist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <CircleHelp className="h-5 w-5" aria-hidden />
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        Ver el tutorial
+      </span>
+    </div>
+  );
 }
 
 /** Tarjeta de ayuda de una pantalla. Se cierra con la X y no vuelve a salir. */
@@ -105,6 +139,11 @@ export function WelcomeTour() {
       window.removeEventListener("scroll", measure, true);
     };
   }, [open, measure]);
+
+  // Cada vez que se abre, empieza desde el primer paso.
+  React.useEffect(() => {
+    if (open) setStep(0);
+  }, [open]);
 
   React.useEffect(() => {
     if (open) next.current?.focus();
