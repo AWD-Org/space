@@ -25,6 +25,8 @@ export interface Store {
   plan: "free";
   counts: { products: number; categories: number };
   slugChangedAt: number | null;
+  /** Tutorial del panel: qué pantallas ya vio la persona (se guarda en su cuenta, no en una cookie). */
+  tutorial?: { enabled?: boolean; seen?: Record<string, number> };
   createdAt: number;
   updatedAt: number;
 }

@@ -12,6 +12,7 @@ import { safe } from "@/lib/client/safe-action";
 import { authErrorMessage, changeDisplayName, changePassword, hasPasswordLogin, signOut } from "@/lib/firebase/client";
 import { deleteAccount, pauseStore, resumeStore } from "@/lib/actions/account";
 import { PAUSE_OPTIONS } from "@/lib/account-options";
+import { restartTutorial } from "@/lib/actions/tutorial";
 import { Panel } from "./shell";
 
 const dateFmt = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", year: "numeric" });
@@ -26,6 +27,18 @@ export function AccountPanel({ name, email, emailVerified, pausedUntil }: { name
   const [next, setNext] = React.useState("");
   const [savingPw, setSavingPw] = React.useState(false);
   const [sending, setSending] = React.useState(false);
+  const [restarting, setRestarting] = React.useState(false);
+
+  async function restart() {
+    setRestarting(true);
+    const res = await safe(() => restartTutorial());
+    if (!res.ok) {
+      setRestarting(false);
+      return toast.error(res.error);
+    }
+    router.push("/app");
+    router.refresh();
+  }
 
   async function saveName(e: React.FormEvent) {
     e.preventDefault();
@@ -133,6 +146,12 @@ export function AccountPanel({ name, email, emailVerified, pausedUntil }: { name
           </form>
         </Panel>
       )}
+
+      <Panel title="Tutorial" description="Un recorrido corto por las pantallas principales del panel.">
+        <Button variant="secondary" size="sm" loading={restarting} onClick={restart}>
+          Ver el tutorial otra vez
+        </Button>
+      </Panel>
 
       <Panel title="Sesión">
         <Button variant="secondary" size="sm" onClick={logout}>

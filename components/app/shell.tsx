@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/app", label: "Inicio", icon: Home },
-  { href: "/app/productos", label: "Productos", icon: Package },
-  { href: "/app/tienda", label: "Mi tienda", icon: StoreIcon },
-  { href: "/app/compartir", label: "Compartir", icon: QrCode },
+  { href: "/app/productos", label: "Productos", icon: Package, tour: "productos" },
+  { href: "/app/tienda", label: "Mi tienda", icon: StoreIcon, tour: "tienda" },
+  { href: "/app/compartir", label: "Compartir", icon: QrCode, tour: "compartir" },
   { href: "/app/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { href: "/app/cuenta", label: "Mi cuenta", icon: UserRound },
 ];
@@ -25,9 +25,9 @@ function isActive(pathname: string, href: string) {
   return href === "/app" ? pathname === "/app" : pathname.startsWith(href);
 }
 
-function NavLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>; active: boolean }) {
+function NavLink({ href, label, icon: Icon, active, tour }: { href: string; label: string; icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>; active: boolean; tour?: string }) {
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-0.5 py-1 text-[0.72rem] font-medium", active ? "text-blueInk" : "text-muted-foreground")}>
+    <Link href={href} data-tour={tour} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-0.5 py-1 text-[0.72rem] font-medium", active ? "text-blueInk" : "text-muted-foreground")}>
       <Icon className="h-[22px] w-[22px]" aria-hidden />
       {label}
     </Link>
@@ -53,10 +53,11 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
         </Link>
         <p className="mt-6 truncate px-2 text-sm font-medium text-muted-foreground">{storeName}</p>
         <nav className="mt-2 space-y-1" aria-label="Panel">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {NAV.map(({ href, label, icon: Icon, tour }) => (
             <Link
               key={href}
               href={href}
+              data-tour={tour}
               aria-current={isActive(pathname, href) ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium transition-colors",
@@ -69,7 +70,7 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
           ))}
         </nav>
         <div className="mt-auto space-y-1">
-          <a href={`/${slug}`} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
+          <a href={`/${slug}`} data-tour="catalogo" target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] font-medium text-ink hover:bg-cloud">
             <ExternalLink className="h-5 w-5" aria-hidden />
             Ver mi catálogo
           </a>
@@ -87,7 +88,7 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
             <SpaceLogo variant="mark" size={22} />
             <span className="truncate font-display font-semibold text-ink">{storeName}</span>
           </Link>
-          <a href={`/${slug}`} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-blueInk hover:bg-spaceMist">
+          <a href={`/${slug}`} data-tour="catalogo" target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-blueInk hover:bg-spaceMist">
             Ver catálogo
             <ExternalLink className="h-4 w-4" aria-hidden />
           </a>
