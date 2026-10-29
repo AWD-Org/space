@@ -28,17 +28,31 @@ export async function POST(req: NextRequest) {
   const kind = form?.get("kind") === "logo" ? "logo" : "product";
   if (!(file instanceof File)) return NextResponse.json({ ok: false, error: "No llegó ninguna foto." }, { status: 400 });
 
-  const ext = TYPES[file.type];
-  if (!ext) return NextResponse.json({ ok: false, error: "Usa una foto JPG, PNG o WebP." }, { status: 415 });
+  if (!TYPES[file.type]) return NextResponse.json({ ok: false, error: "Usa una foto JPG, PNG o WebP." }, { status: 415 });
 
   const limits = await getLimits();
   if (file.size > limits.maxStoredBytes) {
     return NextResponse.json({ ok: false, error: "La foto pesa demasiado. Intenta con otra." }, { status: 413 });
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
+  let bytes: Buffer = Buffer.from(await file.arrayBuffer());
   if (!matchesSignature(bytes, file.type)) {
     return NextResponse.json({ ok: false, error: "Ese archivo no es una foto válida. Usa una foto JPG, PNG o WebP." }, { status: 415 });
+  }
+
+  // Respaldo en el servidor: aunque el navegador ya comprimió, se normaliza siempre
+  // (orientación, sin metadatos, tamaño máximo y WebP) para no depender del cliente.
+  let contentType = file.type;
+  try {
+    const sharp = (await import("sharp")).default;
+    const side = kind === "logo" ? 512 : 1600;
+    bytes = await sharp(bytes).rotate().resize({ width: side, height: side, fit: "inside", withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+    contentType = "image/webp";
+  } catch {
+    return NextResponse.json({ ok: false, error: "No pudimos procesar esa foto. Prueba con otra." }, { status: 415 });
+  }
+  if (bytes.length > limits.maxStoredBytes) {
+    return NextResponse.json({ ok: false, error: "La foto pesa demasiado. Intenta con otra." }, { status: 413 });
   }
 
   const store = await getStore(user.uid);
@@ -53,8 +67,8 @@ export async function POST(req: NextRequest) {
   }
   await db.set(dayPath, { date: todayKey(), uploads: increment(1) }, { merge: true });
 
-  const name = `${Date.now().toString(36)}-${db.newId().slice(0, 8)}.${ext}`;
-  const image = await saveImage(`u/${user.uid}/${kind}/${name}`, bytes, file.type);
+  const name = `${Date.now().toString(36)}-${db.newId().slice(0, 8)}.webp`;
+  const image = await saveImage(`u/${user.uid}/${kind}/${name}`, bytes, contentType);
 
   if (kind === "logo") {
     const previous = store.logo?.path;

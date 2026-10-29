@@ -3,7 +3,7 @@
 import imageCompression from "browser-image-compression";
 import type { ImageRef } from "@/lib/types";
 
-export const MAX_ORIGINAL_MB = 8;
+export const MAX_ORIGINAL_MB = 30;
 
 /** Comprime en el navegador (WebP, 1600 px) y sube al servidor. */
 export async function uploadImage(file: File, kind: "product" | "logo" = "product"): Promise<ImageRef> {
@@ -20,7 +20,7 @@ export async function uploadImage(file: File, kind: "product" | "logo" = "produc
       useWebWorker: true,
     });
   } catch {
-    throw new Error("No pudimos procesar esa foto. Prueba con otra.");
+    throw new Error("No pudimos leer esa foto. Prueba con una JPG, PNG o WebP.");
   }
 
   const body = new FormData();
