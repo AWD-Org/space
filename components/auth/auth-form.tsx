@@ -12,7 +12,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { RouteLoader } from "@/components/ui/route-loader";
 import { authFormSchema, type AuthFormValues } from "@/lib/validators";
-import { authErrorMessage, completeGoogleRedirect, googleRedirectPending, isSilentAuthError, localModeAuth, resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase/client";
+import { authErrorMessage, clearGooglePending, completeGoogleRedirect, googleRedirectPending, isSilentAuthError, localModeAuth, resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/firebase/client";
 
 function GoogleGlyph() {
   return (
@@ -53,6 +53,7 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
 
   async function finish(fn: () => Promise<void | "away">, kind: "email" | "google") {
     setPending(kind);
+    if (kind === "email") clearGooglePending();
     try {
       const result = await fn();
       setRedirecting(true);
@@ -73,9 +74,24 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
           return;
         }
       }
-      if (!isSilentAuthError(err)) toast.error(authErrorMessage(err));
+      if (!isSilentAuthError(err)) {
+        const code = (err as { code?: string })?.code;
+        const wrongLogin = !signup && kind === "email" && (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found");
+        toast.error(wrongLogin ? "Correo o contraseña incorrectos. Si creaste tu cuenta con Google, entra con «Continuar con Google»." : authErrorMessage(err));
+      }
     }
   }
+
+  // Seguro: si la navegación no termina en 15 s, se quita la pantalla de carga para no dejar la app bloqueada.
+  React.useEffect(() => {
+    if (!redirecting && !returning) return;
+    const t = setTimeout(() => {
+      setRedirecting(false);
+      setReturning(false);
+      setPending(null);
+    }, 15_000);
+    return () => clearTimeout(t);
+  }, [redirecting, returning]);
 
   // Al volver de Google (acceso por redirección) se completa la sesión aquí.
   React.useEffect(() => {

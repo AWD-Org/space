@@ -97,7 +97,7 @@ export async function signUpWithEmail(name: string, email: string, password: str
 export async function signInWithGoogle(): Promise<"away" | void> {
   if (localModeAuth) return postSession({ local: { email: "google.local@space.test", name: "Cuenta de prueba" } });
   try {
-    sessionStorage.setItem(GOOGLE_PENDING, "1");
+    sessionStorage.setItem(GOOGLE_PENDING, String(Date.now()));
   } catch {
     /* sin almacenamiento */
   }
@@ -107,11 +107,21 @@ export async function signInWithGoogle(): Promise<"away" | void> {
 
 const GOOGLE_PENDING = "space-google-pending";
 
+/** El intento de Google caduca a los 2 minutos: una bandera vieja no debe tapar el formulario. */
 export function googleRedirectPending() {
   try {
-    return sessionStorage.getItem(GOOGLE_PENDING) === "1";
+    const at = Number(sessionStorage.getItem(GOOGLE_PENDING));
+    return at > 0 && Date.now() - at < 120_000;
   } catch {
     return false;
+  }
+}
+
+export function clearGooglePending() {
+  try {
+    sessionStorage.removeItem(GOOGLE_PENDING);
+  } catch {
+    /* sin almacenamiento */
   }
 }
 
@@ -119,7 +129,8 @@ export function googleRedirectPending() {
 export async function completeGoogleRedirect() {
   if (localModeAuth || !hasFirebaseClient) return false;
   try {
-    const result = await getRedirectResult(clientAuth());
+    // Si Firebase no responde en 10 s se suelta la pantalla de carga para que se pueda seguir usando el formulario.
+    const result = await Promise.race([getRedirectResult(clientAuth()), new Promise<null>((r) => setTimeout(() => r(null), 10_000))]);
     if (!result) return false;
     await startSession(result.user);
     return true;

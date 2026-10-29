@@ -82,6 +82,8 @@ export function Onboarding({
   const [publishing, setPublishing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [created, setCreated] = React.useState(Boolean(store));
+  const [products, setProducts] = React.useState(productCount);
+  const hasProducts = products > 0;
 
   const whatsappReady = /^\d{10}$/.test(whatsapp);
   const accentLabel = ACCENTS.find((a) => a.value.toLowerCase() === accent.toLowerCase())?.label ?? "Personalizado";
@@ -152,7 +154,7 @@ export function Onboarding({
   const summary = [
     { ok: Boolean(name.trim()), text: name.trim() || "Nombre de tu tienda" },
     { ok: whatsappReady, text: whatsappReady ? "Pedidos a tu WhatsApp" : "WhatsApp sin configurar" },
-    { ok: productCount > 0 || step === 3, text: productCount > 0 ? `${productCount} ${productCount === 1 ? "producto" : "productos"}` : "Sin productos todavía" },
+    { ok: hasProducts, text: hasProducts ? `${products} ${products === 1 ? "producto" : "productos"}` : "Sin productos todavía" },
   ];
 
   return (
@@ -319,9 +321,21 @@ export function Onboarding({
                     </motion.p>
                   </div>
                   <motion.div {...item(1)}>
-                    <ProductForm compact categories={categories} maxImages={maxImages} categoryLimit={categoryLimit} onSaved={() => setStep(3)} />
+                    <ProductForm compact categories={categories} maxImages={maxImages} categoryLimit={categoryLimit} onSaved={() => {
+                      setProducts((n) => n + 1);
+                      setStep(3);
+                    }}
+                    />
                   </motion.div>
-                  <button type="button" onClick={() => setStep(3)} className="w-full py-2 text-sm text-muted-foreground transition-colors hover:text-ink">
+                  {/* Sin productos no hay nada que publicar: se va directo al panel. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.push("/app");
+                      router.refresh();
+                    }}
+                    className="w-full py-2 text-sm text-muted-foreground transition-colors hover:text-ink"
+                  >
                     Lo hago después
                   </button>
                 </div>
@@ -331,10 +345,12 @@ export function Onboarding({
                 <div className="space-y-7">
                   <div>
                     <h1 className="text-balance font-display text-[2rem] font-semibold leading-[1.08] text-ink sm:text-4xl">
-                      <WordsReveal text="Tu catálogo está listo para salir" />
+                      <WordsReveal text={hasProducts ? "Tu catálogo está listo para salir" : "Tu tienda ya está creada"} />
                     </h1>
                     <motion.p {...item(0)} className="mt-3 text-lg leading-relaxed text-muted-foreground">
-                      Al publicarlo, cualquiera con tu link puede verlo y mandarte pedidos. Lo puedes ocultar cuando quieras.
+                      {hasProducts
+                        ? "Al publicarlo, cualquiera con tu link puede verlo y mandarte pedidos. Lo puedes ocultar cuando quieras."
+                        : "Agrega tu primer producto desde el panel y ahí mismo publicas tu catálogo."}
                     </motion.p>
                   </div>
 
@@ -359,13 +375,24 @@ export function Onboarding({
                   </motion.div>
 
                   <motion.div {...item(2)} className="space-y-2">
-                    <Button size="lg" className="group h-14 w-full text-base" onClick={publish} loading={busy} loadingText="Publicando…">
-                      Publicar mi catálogo
-                      <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
-                    </Button>
-                    <Link href="/app" className="block w-full py-2 text-center text-sm text-muted-foreground transition-colors hover:text-ink">
-                      Prefiero revisarlo primero en el panel
-                    </Link>
+                    {hasProducts ? (
+                      <>
+                        <Button size="lg" className="group h-14 w-full text-base" onClick={publish} loading={busy} loadingText="Publicando…">
+                          Publicar mi catálogo
+                          <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
+                        </Button>
+                        <Link href="/app" className="block w-full py-2 text-center text-sm text-muted-foreground transition-colors hover:text-ink">
+                          Prefiero revisarlo primero en el panel
+                        </Link>
+                      </>
+                    ) : (
+                      <Button asChild size="lg" className="group h-14 w-full text-base">
+                        <Link href="/app">
+                          Ir a mi catálogo
+                          <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
+                        </Link>
+                      </Button>
+                    )}
                   </motion.div>
                 </div>
               )}
