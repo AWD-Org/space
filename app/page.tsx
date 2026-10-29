@@ -74,7 +74,7 @@ export default function LandingPage() {
         <section aria-labelledby="para-title" className="section-y">
           <div className="container">
             <SectionTitle id="para-title" title="Se adapta a lo que vendes">
-              Postres, accesorios, arte. Cada producto lleva hasta 4 fotos, precio, descripción y su estado: disponible, se acabó o sobre pedido.
+              Postres, accesorios, arte. Cada producto lleva hasta 10 fotos, precio, descripción y su estado: disponible, se acabó o sobre pedido.
             </SectionTitle>
             <div className="mt-10">
               <Showcase />

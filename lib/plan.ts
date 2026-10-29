@@ -14,7 +14,7 @@ export interface PlanLimits {
 /** Plan gratis de Space. Se puede sobreescribir en Firestore: config/plan_free. */
 export const FREE_PLAN: PlanLimits = {
   products: 40,
-  imagesPerProduct: 4,
+  imagesPerProduct: 10,
   categories: 6,
   maxOriginalMB: 8,
   maxStoredBytes: 900_000,
