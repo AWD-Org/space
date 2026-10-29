@@ -38,9 +38,19 @@ function clientAuth() {
 }
 
 async function postSession(body: unknown) {
-  const res = await fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-  if (!res.ok || !json.ok) throw new Error(json.error || "No pudimos iniciar tu sesión.");
+  // Con tope de tiempo: si el servidor no contesta, se avisa en lugar de quedarse en «Entrando…» para siempre.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20_000);
+  try {
+    const res = await fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+    if (!res.ok || !json.ok) throw new Error(json.error || "No pudimos iniciar tu sesión.");
+  } catch (e) {
+    if ((e as Error)?.name === "AbortError") throw new Error("Tardó demasiado en responder. Revisa tu internet e intenta de nuevo.");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function startSession(user: User) {

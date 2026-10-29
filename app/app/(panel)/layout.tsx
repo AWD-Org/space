@@ -14,12 +14,12 @@ export const dynamic = "force-dynamic";
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   if (!backendReady()) return <NotConfigured />;
   const user = await requireUser();
-  const store = await getStore(user.uid);
+  const [store, limits] = await Promise.all([getStore(user.uid), getLimits()]);
   if (!store) redirect("/app/empezar");
   const tutorial = tutorialState(store);
   return (
     <TutorialProvider enabled={tutorial.enabled} seen={tutorial.seen}>
-    <AppShell storeName={store.name} slug={store.slug} email={user.email} atLimit={store.counts.products >= (await getLimits()).products} emailVerified={user.emailVerified !== false}>
+    <AppShell storeName={store.name} slug={store.slug} email={user.email} atLimit={store.counts.products >= limits.products} emailVerified={user.emailVerified !== false}>
       {children}
     </AppShell>
     <WelcomeTour />

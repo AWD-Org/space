@@ -12,20 +12,28 @@ const CORE = [44, 66, 188]; // #2C42BC
 const FACE = [122, 144, 255]; // #7A90FF
 
 /** Pantalla de carga completa: la estrella de Space en 3D girando sobre su propio eje. */
-export function RouteLoader({ label = "Cargando tu espacio", className }: { label?: string; className?: string }) {
+export function RouteLoader({ label = "Cargando tu espacio", className, delay = 0 }: { label?: string; className?: string; delay?: number }) {
   const [gl, setGl] = React.useState(false);
   const ready = React.useCallback(() => setGl(true), []);
+  // Con retraso, la estrella (y su carga en 3D) solo se monta si la espera de verdad se alarga.
+  const [armed, setArmed] = React.useState(delay <= 0);
+  React.useEffect(() => {
+    if (armed) return;
+    const t = setTimeout(() => setArmed(true), delay * 1000);
+    return () => clearTimeout(t);
+  }, [armed, delay]);
   return (
     <div
       className={cn("loader-anim fixed inset-0 z-[100] grid place-items-center bg-white", className)}
-      style={{ animation: "loader-in 0.4s ease-out both" }}
+      // Con `delay`, si la pantalla carga rápido el loader nunca llega a verse (evita el parpadeo).
+      style={{ animation: `loader-in 0.4s ease-out ${delay}s both` }}
       role="status"
       aria-live="polite"
     >
       <div className="flex flex-col items-center gap-12">
         <div className="relative h-28 w-28" style={{ perspective: 700 }} aria-hidden>
-          <Star3D onReady={ready} />
-          <div className="loader-anim relative h-full w-full" hidden={gl} style={{ transformStyle: "preserve-3d", animation: "star-turn 6s linear infinite" }}>
+          {armed && <Star3D onReady={ready} />}
+          <div className="loader-anim relative h-full w-full" hidden={gl || !armed} style={{ transformStyle: "preserve-3d", animation: "star-turn 6s linear infinite" }}>
             {Array.from({ length: LAYERS }, (_, i) => {
               const t = (i / (LAYERS - 1)) * 2 - 1; // -1 … 1
               const a = Math.abs(t);

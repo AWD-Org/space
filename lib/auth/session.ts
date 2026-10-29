@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { isLocalMode } from "@/lib/env";
 import { hasFirebaseAdmin } from "@/lib/firebase/config";
 import type { SessionUser } from "@/lib/types";
+import { verifySession } from "./verify";
 
 export const SESSION_COOKIE = "__session";
 export const SESSION_DAYS = 14;
@@ -40,12 +41,9 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (!hasFirebaseAdmin) return null;
   try {
     const { adminAuth } = await import("@/lib/firebase/admin");
-    const decoded = await adminAuth().verifySessionCookie(value, true);
-    let emailVerified = decoded.email_verified === true;
-    // La cookie guarda el estado del momento en que entró; si ya confirmó su correo, se lee al día.
-    if (!emailVerified) emailVerified = (await adminAuth().getUser(decoded.uid)).emailVerified;
-    return { uid: decoded.uid, email: decoded.email ?? null, name: (decoded.name as string | undefined) ?? null, emailVerified };
-  } catch {
+    return await verifySession(adminAuth(), value);
+  } catch (e) {
+    console.error("[session] no se pudo validar la sesión:", e);
     return null;
   }
 });
