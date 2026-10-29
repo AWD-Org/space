@@ -58,7 +58,7 @@ export function ImageUploader({
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {value.map((img, i) => (
           <div key={img.path} className="group relative aspect-square overflow-hidden rounded-xl skeleton-img">
             <Image src={img.url} alt={`Foto ${i + 1}`} fill sizes="160px" className="object-cover" />
