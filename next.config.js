@@ -12,6 +12,8 @@ const securityHeaders = [
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
+  // Metadatos (title, description, OG) siempre dentro de <head>, no en streaming dentro de <body>: mejor SEO y previews.
+  htmlLimitedBots: /.*/,
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

@@ -38,7 +38,6 @@ export function ProductCard({
         type="button"
         onClick={onOpen}
         className={cn("relative block aspect-[4/5] w-full overflow-hidden rounded-[1.375rem] text-left", image ? "skeleton-img" : "bg-spaceMist")}
-        aria-label={`Ver ${product.name}`}
       >
         {image ? (
           <Image

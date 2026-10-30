@@ -1,40 +1,31 @@
 "use client";
 
-import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
-import {
-  createUserWithEmailAndPassword,
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  updatePassword,
-  getAuth,
-  GoogleAuthProvider,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  connectAuthEmulator,
-  getRedirectResult,
-  signInWithRedirect,
-  signOut as fbSignOut,
-  updateProfile,
-  type User,
-} from "firebase/auth";
+import type { FirebaseApp } from "firebase/app";
+import type { Auth, User } from "firebase/auth";
 import { firebaseClientConfig, hasFirebaseClient, isLocalMode } from "@/lib/env";
 
 let app: FirebaseApp | undefined;
 let emulatorConnected = false;
-function clientAuth() {
+/** El SDK de Firebase pesa bastante: se descarga solo cuando de verdad se necesita (al enviar el formulario, no al abrir la página). */
+async function loadFirebase() {
+  const [appMod, authMod] = await Promise.all([import("firebase/app"), import("firebase/auth")]);
+  return { appMod, authMod };
+}
+async function clientAuth() {
   if (!hasFirebaseClient) throw new Error("Space todavía no está conectado a su sistema de cuentas.");
+  const { appMod, authMod } = await loadFirebase();
   // El acceso con Google redirige y vuelve a este mismo dominio (el handler de Firebase se
   // sirve por /__/auth gracias al rewrite de next.config.js), así no depende de popups ni de cookies de terceros.
-  app = app ?? getApps()[0] ?? initializeApp({ ...firebaseClientConfig, authDomain: typeof window !== "undefined" ? window.location.host : firebaseClientConfig.authDomain });
-  const auth = getAuth(app);
+  app = app ?? appMod.getApps()[0] ?? appMod.initializeApp({ ...firebaseClientConfig, authDomain: typeof window !== "undefined" ? window.location.host : firebaseClientConfig.authDomain });
+  const auth: Auth = authMod.getAuth(app);
   auth.languageCode = "es";
   // Solo para pruebas: apunta al emulador de Firebase Auth (nunca se define en producción).
   const emu = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_URL;
   if (emu && !emulatorConnected) {
-    connectAuthEmulator(auth, emu, { disableWarnings: true });
+    authMod.connectAuthEmulator(auth, emu, { disableWarnings: true });
     emulatorConnected = true;
   }
-  return auth;
+  return { auth, A: authMod };
 }
 
 async function postSession(body: unknown) {
@@ -91,14 +82,16 @@ export const localModeAuth = isLocalMode && !hasFirebaseClient;
 
 export async function signInWithEmail(email: string, password: string) {
   if (localModeAuth) return postSession({ local: { email } });
-  const cred = await signInWithEmailAndPassword(clientAuth(), email, password);
+  const { auth, A } = await clientAuth();
+  const cred = await A.signInWithEmailAndPassword(auth, email, password);
   await startSession(cred.user);
 }
 
 export async function signUpWithEmail(name: string, email: string, password: string) {
   if (localModeAuth) return postSession({ local: { email, name } });
-  const cred = await createUserWithEmailAndPassword(clientAuth(), email, password);
-  if (name) await updateProfile(cred.user, { displayName: name });
+  const { auth, A } = await clientAuth();
+  const cred = await A.createUserWithEmailAndPassword(auth, email, password);
+  if (name) await A.updateProfile(cred.user, { displayName: name });
   await startSession(cred.user);
   // Confirmación de correo (solo registro con contraseña; Google ya viene verificado). Sin bloquear el registro.
   void fetch("/api/verify-email", { method: "POST" }).catch(() => {});
@@ -111,7 +104,8 @@ export async function signInWithGoogle(): Promise<"away" | void> {
   } catch {
     /* sin almacenamiento */
   }
-  await signInWithRedirect(clientAuth(), new GoogleAuthProvider());
+  const { auth, A } = await clientAuth();
+  await A.signInWithRedirect(auth, new A.GoogleAuthProvider());
   return "away";
 }
 
@@ -140,7 +134,7 @@ export async function completeGoogleRedirect() {
   if (localModeAuth || !hasFirebaseClient) return false;
   try {
     // Si Firebase no responde en 10 s se suelta la pantalla de carga para que se pueda seguir usando el formulario.
-    const result = await Promise.race([getRedirectResult(clientAuth()), new Promise<null>((r) => setTimeout(() => r(null), 10_000))]);
+    const result = await Promise.race([clientAuth().then(({ auth, A }) => A.getRedirectResult(auth)), new Promise<null>((r) => setTimeout(() => r(null), 10_000))]);
     if (!result) return false;
     await startSession(result.user);
     return true;
@@ -155,32 +149,42 @@ export async function completeGoogleRedirect() {
 
 export async function resetPassword(email: string) {
   if (localModeAuth) return;
-  await sendPasswordResetEmail(clientAuth(), email);
+  const { auth, A } = await clientAuth();
+  await A.sendPasswordResetEmail(auth, email);
 }
 
 export async function signOut() {
   await fetch("/api/session", { method: "DELETE" });
-  if (hasFirebaseClient) await fbSignOut(clientAuth()).catch(() => {});
+  if (hasFirebaseClient) {
+    const { auth, A } = await clientAuth().catch(() => ({ auth: null, A: null }));
+    if (auth && A) await A.signOut(auth).catch(() => {});
+  }
 }
 
 /** ¿La cuenta entra con contraseña? (las de Google no tienen una que cambiar). */
-export function hasPasswordLogin() {
+export async function hasPasswordLogin() {
   if (localModeAuth || !hasFirebaseClient) return false;
-  return Boolean(clientAuth().currentUser?.providerData.some((p) => p.providerId === "password"));
+  const { auth } = await clientAuth();
+  await auth.authStateReady();
+  return Boolean(auth.currentUser?.providerData.some((p) => p.providerId === "password"));
 }
 
 export async function changeDisplayName(name: string) {
   if (localModeAuth) return;
-  const user = clientAuth().currentUser;
+  const { auth, A } = await clientAuth();
+  await auth.authStateReady();
+  const user = auth.currentUser;
   if (!user) throw Object.assign(new Error("Vuelve a entrar para cambiar tu nombre."), { code: "space/no-user" });
-  await updateProfile(user, { displayName: name });
+  await A.updateProfile(user, { displayName: name });
 }
 
 export async function changePassword(current: string, next: string) {
-  const user = clientAuth().currentUser;
+  const { auth, A } = await clientAuth();
+  await auth.authStateReady();
+  const user = auth.currentUser;
   if (!user?.email) throw Object.assign(new Error("Vuelve a entrar para cambiar tu contraseña."), { code: "space/no-user" });
   await user.reload();
   if (!user.emailVerified) throw Object.assign(new Error("Confirma tu correo antes de cambiar tu contraseña."), { code: "space/email-not-verified" });
-  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, current));
-  await updatePassword(user, next);
+  await A.reauthenticateWithCredential(user, A.EmailAuthProvider.credential(user.email, current));
+  await A.updatePassword(user, next);
 }

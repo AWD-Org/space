@@ -8,6 +8,14 @@ export const runtime = "nodejs";
 
 const ID = /^[A-Za-z0-9_-]{6,64}$/;
 
+// Existencia de la tienda recordada unos minutos por instancia: evita una lectura por cada evento.
+const KNOWN_TTL_MS = 10 * 60_000;
+const known = new Map<string, number>();
+function remember(id: string) {
+  if (known.size > 2000) known.clear();
+  known.set(id, Date.now());
+}
+
 /** Contadores diarios: visitas, vistas de producto y pedidos enviados. */
 export async function POST(req: NextRequest) {
   if (!backendReady()) return new NextResponse(null, { status: 204 });
@@ -29,7 +37,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const db = await getDb();
-    if (!(await db.get(`stores/${body.storeId}`))) return new NextResponse(null, { status: 204 });
+    const seen = known.get(body.storeId);
+    if (!seen || Date.now() - seen > KNOWN_TTL_MS) {
+      if (!(await db.get(`stores/${body.storeId}`))) return new NextResponse(null, { status: 204 });
+      remember(body.storeId);
+    }
     await db.set(`${statsPath(body.storeId)}/${date}`, data, { merge: true });
   } catch (err) {
     console.error("[track]", err);

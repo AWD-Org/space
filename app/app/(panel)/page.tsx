@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, Circle, Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
-import { getLimits, getStats, getStore, listProducts } from "@/lib/data/queries";
+import { getLimits, getStats, getStoreForView, hasVisibleProduct, topViewedProducts } from "@/lib/data/queries";
 import { SITE_URL } from "@/lib/env";
 import { todayKey } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -32,8 +32,9 @@ function Meter({ label, used, max }: { label: string; used: number; max: number 
 
 export default async function HomePage() {
   const user = await requireUser();
-  const [store, products, limits, stats] = await Promise.all([getStore(user.uid), listProducts(user.uid), getLimits(), getStats(user.uid, 14)]);
+  const [store, limits, stats, canPublish] = await Promise.all([getStoreForView(user.uid), getLimits(), getStats(user.uid, 14), hasVisibleProduct(user.uid)]);
   if (!store) return null;
+  const productCount = store.counts?.products ?? 0;
 
   const url = `${SITE_URL}/${store.slug}`;
   const days = Array.from({ length: 14 }, (_, i) => todayKey(new Date(Date.now() - (13 - i) * 86_400_000)));
@@ -46,17 +47,13 @@ export default async function HomePage() {
 
   const productViews = new Map<string, number>();
   for (const s of stats) for (const [id, n] of Object.entries(s.productViews ?? {})) productViews.set(id, (productViews.get(id) ?? 0) + n);
-  const top = [...productViews.entries()]
-    .map(([id, n]) => ({ product: products.find((p) => p.id === id), n }))
-    .filter((x) => x.product)
-    .sort((a, b) => b.n - a.n)
-    .slice(0, 5);
+  const top = await topViewedProducts(user.uid, productViews, 5);
 
   const checklist = [
-    { done: products.length > 0, label: "Sube tu primer producto", href: "/app/productos/nuevo" },
+    { done: productCount > 0, label: "Sube tu primer producto", href: "/app/productos/nuevo" },
     { done: Boolean(store.logo), label: "Pon tu logo o una foto tuya", href: "/app/tienda" },
     { done: Boolean(store.deliveryNote), label: "Di dónde y cuándo entregas", href: "/app/tienda" },
-    { done: products.length >= 5, label: "Llega a 5 productos", href: "/app/productos/nuevo" },
+    { done: productCount >= 5, label: "Llega a 5 productos", href: "/app/productos/nuevo" },
     { done: store.status === "published", label: "Publica tu catálogo", href: "/app" },
   ];
   const pending = checklist.filter((c) => !c.done);
@@ -80,7 +77,7 @@ export default async function HomePage() {
         }
       />
       <div className="grid grid-cols-1 gap-4">
-        <StoreStatus url={url} displayUrl={url.replace(/^https?:\/\//, "")} published={store.status === "published"} isOpen={store.isOpen} canPublish={products.some((p) => p.visible)} />
+        <StoreStatus url={url} displayUrl={url.replace(/^https?:\/\//, "")} published={store.status === "published"} isOpen={store.isOpen} canPublish={canPublish} />
 
         {pending.length > 0 && (
           <Panel title="Termina de armar tu catálogo" description={`${checklist.length - pending.length} de ${checklist.length} listos`}>
@@ -144,7 +141,7 @@ export default async function HomePage() {
 
         <Panel title="Tu plan gratis">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Meter label="Productos" used={products.length} max={limits.products} />
+            <Meter label="Productos" used={productCount} max={limits.products} />
             <Meter label="Categorías" used={store.counts?.categories ?? 0} max={limits.categories} />
           </div>
           <p className="mt-4 text-sm text-muted-foreground">Hasta {limits.imagesPerProduct} fotos por producto. Space no cobra comisión por tus ventas.</p>

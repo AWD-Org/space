@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db";
 import { isLocalMode } from "@/lib/env";
 import { requireUserForAction } from "@/lib/auth/session";
 import { categoriesPath, getStore, listProducts, productsPath, slugPath, statsPath, storePath } from "@/lib/data/queries";
-import { removeImages } from "@/lib/storage/server";
+import { removeAllUserImages, removeImages } from "@/lib/storage/server";
 import type { ActionResult } from "@/lib/types";
 import { DELETE_PHRASE, PAUSE_OPTIONS } from "@/lib/account-options";
 import { refreshStore, run, UserError } from "./helpers";
@@ -48,6 +48,7 @@ export async function deleteAccount(phrase: string): Promise<ActionResult> {
       const products = await listProducts(user.uid);
       const paths = [...products.flatMap((p) => p.images.map((i) => i.path)), ...(store.logo ? [store.logo.path] : [])];
       await removeImages(paths);
+      await removeAllUserImages(user.uid);
       const [cats, stats] = await Promise.all([db.list<{ id: string }>(categoriesPath(user.uid)), db.list<{ id: string }>(statsPath(user.uid))]);
       await Promise.all([
         ...products.map((p) => db.delete(`${productsPath(user.uid)}/${p.id}`)),

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
-import { getStats, getStore, listProducts } from "@/lib/data/queries";
+import { getStats, getStoreForView, topViewedProducts } from "@/lib/data/queries";
 import { todayKey } from "@/lib/format";
 import { PageHeader, Panel } from "@/components/app/shell";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
   const user = await requireUser();
   const { dias } = await searchParams;
   const range = (RANGES as readonly number[]).includes(Number(dias)) ? Number(dias) : 30;
-  const [store, products, stats] = await Promise.all([getStore(user.uid), listProducts(user.uid), getStats(user.uid, range)]);
+  const [store, stats] = await Promise.all([getStoreForView(user.uid), getStats(user.uid, range)]);
   if (!store) return null;
 
   const days = Array.from({ length: range }, (_, i) => todayKey(new Date(Date.now() - (range - 1 - i) * 86_400_000)));
@@ -28,11 +28,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
   const pv = new Map<string, number>();
   for (const s of stats) for (const [id, n] of Object.entries(s.productViews ?? {})) pv.set(id, (pv.get(id) ?? 0) + n);
-  const top = [...pv.entries()]
-    .map(([id, n]) => ({ product: products.find((p) => p.id === id), n }))
-    .filter((x) => x.product)
-    .sort((a, b) => b.n - a.n)
-    .slice(0, 10);
+  const top = await topViewedProducts(user.uid, pv, 10);
 
   return (
     <>

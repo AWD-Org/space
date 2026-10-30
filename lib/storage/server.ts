@@ -50,6 +50,28 @@ export async function removeImages(paths: string[]) {
   );
 }
 
+/** Borra TODAS las fotos de una persona (incluye las subidas que nunca se guardaron en un producto). */
+export async function removeAllUserImages(uid: string) {
+  if (!/^[A-Za-z0-9_-]+$/.test(uid)) return;
+  try {
+    if (isLocalMode) {
+      const files = await fs.readdir(LOCAL_DIR).catch(() => [] as string[]);
+      await Promise.all(files.filter((f) => f.startsWith(`${uid}.`)).map((f) => fs.unlink(path.join(LOCAL_DIR, f)).catch(() => {})));
+      return;
+    }
+    const db = (await import("@/lib/firebase/admin")).adminDb();
+    for (;;) {
+      const snap = await db.collection(COLLECTION).where("ownerId", "==", uid).select().limit(200).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  } catch (err) {
+    console.error("[removeAllUserImages]", err);
+  }
+}
+
 const EXT_TYPES: Record<string, string> = { webp: "image/webp", jpg: "image/jpeg", png: "image/png" };
 
 export async function readImage(id: string): Promise<{ data: Buffer; contentType: string } | null> {

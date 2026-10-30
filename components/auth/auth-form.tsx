@@ -183,14 +183,14 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
       )}
 
       {!signup && (
-        <button type="button" onClick={forgot} className="mt-4 text-sm text-blueInk underline-offset-4 hover:underline">
+        <button type="button" onClick={forgot} className="mt-2 inline-flex min-h-11 items-center rounded-md text-sm text-blueInk underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
           Olvidé mi contraseña
         </button>
       )}
 
       <p className="mt-8 text-sm text-muted-foreground">
         {signup ? "¿Ya tienes cuenta? " : "¿Todavía no tienes catálogo? "}
-        <Link href={signup ? "/entrar" : "/registro"} className="font-medium text-blueInk underline-offset-4 hover:underline">
+        <Link href={signup ? "/entrar" : "/registro"} className="rounded-sm font-medium text-blueInk underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
           {signup ? "Entra aquí" : "Créalo gratis"}
         </Link>
       </p>

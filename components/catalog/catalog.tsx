@@ -12,8 +12,11 @@ import { cn } from "@/lib/utils";
 import { BagProvider, useBag } from "./bag";
 import { ProductCard } from "./product-card";
 import { FilterSidebar } from "./filter-sidebar";
-import { ProductSheet } from "./product-sheet";
-import { BagSheet } from "./bag-sheet";
+import dynamic from "next/dynamic";
+
+// Las hojas (con formulario y validación) se descargan solo cuando alguien las abre.
+const ProductSheet = dynamic(() => import("./product-sheet").then((m) => m.ProductSheet), { ssr: false });
+const BagSheet = dynamic(() => import("./bag-sheet").then((m) => m.BagSheet), { ssr: false });
 
 export type CatalogStore = Pick<
   Store,
@@ -96,6 +99,10 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
     () => products.find((p) => p.slug === initialProductSlug)?.id ?? null
   );
   const [bagOpen, setBagOpen] = React.useState(false);
+  const [bagLoaded, setBagLoaded] = React.useState(false);
+  const [productLoaded, setProductLoaded] = React.useState(Boolean(openId));
+  React.useEffect(() => { if (bagOpen) setBagLoaded(true); }, [bagOpen]);
+  React.useEffect(() => { if (openId) setProductLoaded(true); }, [openId]);
 
   const canOrder = store.isOpen && Boolean(store.whatsapp);
   const closedReason = store.isOpen ? "Esta tienda aún no tiene WhatsApp para pedidos." : `${store.name} no está tomando pedidos hoy. Vuelve pronto.`;
@@ -478,15 +485,15 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         )}
       </AnimatePresence>
 
-      <ProductSheet product={openProduct} open={Boolean(openProduct)} onOpenChange={close} canOrder={canOrder} closedReason={closedReason} accent={store.accent} />
-      <BagSheet
+      {productLoaded && <ProductSheet product={openProduct} open={Boolean(openProduct)} onOpenChange={close} canOrder={canOrder} closedReason={closedReason} accent={store.accent} />}
+      {bagLoaded && <BagSheet
         open={bagOpen}
         onOpenChange={setBagOpen}
         storeName={store.name}
         whatsapp={store.whatsapp}
         deliveryNote={store.deliveryNote}
         onSend={() => shouldTrack && track(store.id, "order")}
-      />
+      />}
     </div>
   );
 }

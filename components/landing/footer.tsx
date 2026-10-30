@@ -28,20 +28,20 @@ export function LandingFooter() {
           <span className="font-display font-semibold text-ink">Space</span>
           <span className="text-sm text-muted-foreground">© {new Date().getFullYear()}</span>
         </div>
-        <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Pie de página">
-          <Link href="/registro" className="text-ink/80 hover:text-ink">
+        <nav className="flex flex-wrap gap-x-6 text-sm" aria-label="Pie de página">
+          <Link href="/registro" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Crear catálogo
           </Link>
-          <Link href="/entrar" className="text-ink/80 hover:text-ink">
+          <Link href="/entrar" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Entrar
           </Link>
-          <a href="#preguntas" className="text-ink/80 hover:text-ink">
+          <a href="#preguntas" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Preguntas
           </a>
-          <Link href="/privacidad" className="text-ink/80 hover:text-ink">
+          <Link href="/privacidad" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Aviso de privacidad
           </Link>
-          <Link href="/terminos" className="text-ink/80 hover:text-ink">
+          <Link href="/terminos" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Términos
           </Link>
         </nav>

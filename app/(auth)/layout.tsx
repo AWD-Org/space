@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1fr_1.05fr]">
       <div className="flex flex-col bg-white px-5 py-6 sm:px-10">
-        <Link href="/" className="inline-flex w-fit items-center gap-2" aria-label="Space, volver al inicio">
+        <Link href="/" className="inline-flex min-h-11 w-fit items-center gap-2" aria-label="Space, volver al inicio">
           <SpaceLogo variant="mark" size={28} />
           <span className="font-display text-lg font-semibold text-ink">Space</span>
         </Link>

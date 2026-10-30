@@ -21,7 +21,13 @@ export function AccountPanel({ name, email, emailVerified, pausedUntil }: { name
   const [nameVal, setNameVal] = React.useState(name ?? "");
   const [savingName, setSavingName] = React.useState(false);
   const [canPassword, setCanPassword] = React.useState(false);
-  React.useEffect(() => setCanPassword(hasPasswordLogin()), []);
+  React.useEffect(() => {
+    let on = true;
+    void hasPasswordLogin().then((v) => on && setCanPassword(v)).catch(() => {});
+    return () => {
+      on = false;
+    };
+  }, []);
   const [cur, setCur] = React.useState("");
   const [next, setNext] = React.useState("");
   const [savingPw, setSavingPw] = React.useState(false);

@@ -1,6 +1,5 @@
 "use client";
 
-import imageCompression from "browser-image-compression";
 import type { ImageRef } from "@/lib/types";
 
 export const MAX_ORIGINAL_MB = 30;
@@ -12,6 +11,7 @@ export async function uploadImage(file: File, kind: "product" | "logo" = "produc
 
   let compressed: Blob = file;
   try {
+    const imageCompression = (await import("browser-image-compression")).default;
     compressed = await imageCompression(file, {
       maxWidthOrHeight: kind === "logo" ? 512 : 1600,
       maxSizeMB: kind === "logo" ? 0.15 : 0.35,

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/lib/db";
 import { FREE_PLAN, type PlanLimits } from "@/lib/plan";
@@ -16,6 +17,28 @@ export const catalogTag = (slug: string) => `catalog-${slug}`;
 export async function getStore(uid: string) {
   const db = await getDb();
   return db.get<Store>(storePath(uid));
+}
+
+/** Para renderizar páginas del panel: layout y página comparten una sola lectura por petición. No usar en acciones que escriben. */
+export const getStoreForView = cache((uid: string) => getStore(uid));
+
+/** Productos por id (sin leer todo el catálogo). Devuelve solo los que existen. */
+export async function getProductsByIds(uid: string, ids: string[]) {
+  const db = await getDb();
+  const rows = await Promise.all(ids.map((id) => db.get<Product>(`${productsPath(uid)}/${id}`)));
+  return rows.filter((p): p is NonNullable<typeof p> => Boolean(p));
+}
+
+/** Los más vistos que todavía existen, leyendo solo los ids necesarios. */
+export async function topViewedProducts(uid: string, views: Map<string, number>, n: number) {
+  const ranked = [...views.entries()].sort((a, b) => b[1] - a[1]).slice(0, n * 2);
+  const found = new Map((await getProductsByIds(uid, ranked.map(([id]) => id))).map((p) => [p.id, p]));
+  return ranked.filter(([id]) => found.has(id)).slice(0, n).map(([id, count]) => ({ product: found.get(id)!, n: count }));
+}
+
+export async function hasVisibleProduct(uid: string) {
+  const db = await getDb();
+  return (await db.list<Product>(productsPath(uid), { where: [["visible", "==", true]], limit: 1 })).length > 0;
 }
 
 export async function listProducts(uid: string) {
