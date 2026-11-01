@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Copy, Eye, EyeOff, FileSpreadsheet, GripVertical, PackageCheck, PackageX, Plus, Tags, Trash2, X } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, FileSpreadsheet, GripVertical, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
 import { safe } from "@/lib/client/safe-action";
@@ -27,7 +28,9 @@ function Row({
   selected,
   onToggle,
   onAvailability,
+  onVisible,
   onDuplicate,
+  onDelete,
   duplicating,
 }: {
   product: Product;
@@ -36,9 +39,12 @@ function Row({
   selected: boolean;
   onToggle: () => void;
   onAvailability: (a: Availability) => void;
+  onVisible: (v: boolean) => void;
   onDuplicate: () => void;
+  onDelete: () => void;
   duplicating: boolean;
 }) {
+  const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id, disabled: selecting });
   const soldOut = product.availability === "soldout";
   const body = (
@@ -48,9 +54,10 @@ function Row({
       </div>
       <div className="min-w-0">
         <p className="line-clamp-2 font-medium leading-snug text-ink">{product.name}</p>
-        <p className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
           <span className="tabular-nums">{formatPrice(product.price, product.priceFrom)}</span>
           {category && <span>· {category}</span>}
+          {soldOut && <span className="font-medium text-[#9A3412]">· Agotado</span>}
           {!product.visible && (
             <span className="inline-flex items-center gap-1">
               · <EyeOff className="h-3.5 w-3.5" aria-hidden /> Oculto
@@ -64,17 +71,10 @@ function Row({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-center gap-2 bg-white py-3 pr-2 sm:gap-3", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]")}
+      className={cn("flex items-center gap-2 bg-white py-3 pr-1 sm:gap-3 sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]")}
     >
       {selecting ? (
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={selected}
-          aria-label={`Elegir ${product.name}`}
-          onClick={onToggle}
-          className="grid h-11 w-11 shrink-0 place-items-center"
-        >
+        <button type="button" role="checkbox" aria-checked={selected} aria-label={`Elegir ${product.name}`} onClick={onToggle} className="grid h-11 w-11 shrink-0 place-items-center">
           <span className={cn("grid h-6 w-6 place-items-center rounded-md ring-1 ring-inset transition-colors", selected ? "bg-primary text-white ring-primary" : "bg-white ring-border")}>
             {selected && <Check className="h-4 w-4" aria-hidden />}
           </span>
@@ -84,41 +84,44 @@ function Row({
           <GripVertical className="h-5 w-5" />
         </button>
       )}
-      <div className="min-w-0 flex-1">
-        {selecting ? (
-          <button type="button" onClick={onToggle} className="flex w-full min-w-0 items-center gap-3 text-left">
-            {body}
-          </button>
-        ) : (
-          <Link href={`/app/productos/${product.id}`} className="flex min-w-0 items-center gap-3">
-            {body}
-          </Link>
-        )}
-        {!selecting && (
-          <button
-            type="button"
-            onClick={() => onAvailability(soldOut ? "available" : "soldout")}
-            className={cn(
-              "mt-2 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[0.8rem] font-medium ring-1 ring-inset transition-colors",
-              soldOut ? "bg-[#FDECDD] text-[#9A3412] ring-[#F3C9A6] hover:bg-[#FBE0C8]" : "bg-white text-ink ring-border hover:bg-cloud"
-            )}
-          >
-            {soldOut ? <PackageCheck className="h-4 w-4" aria-hidden /> : <PackageX className="h-4 w-4" aria-hidden />}
-            {soldOut ? "Agotado · volver a disponible" : "Marcar como agotado"}
-          </button>
-        )}
-      </div>
-      {!selecting && (
-        <button
-          type="button"
-          onClick={onDuplicate}
-          disabled={duplicating}
-          aria-label={`Duplicar ${product.name}`}
-          title="Duplicar"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate transition-colors hover:bg-cloud hover:text-ink disabled:opacity-50"
-        >
-          <Copy className="h-5 w-5" aria-hidden />
+      {selecting ? (
+        <button type="button" onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          {body}
         </button>
+      ) : (
+        <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+          {body}
+        </Link>
+      )}
+      {!selecting && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`Acciones de ${product.name}`}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-cloud hover:text-ink focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:bg-cloud"
+          >
+            <MoreVertical className="h-5 w-5" aria-hidden />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => router.push(`/app/productos/${product.id}`)}>
+              <Pencil /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onAvailability(soldOut ? "available" : "soldout")}>
+              {soldOut ? <PackageCheck /> : <PackageX />}
+              {soldOut ? "Volver a disponible" : "Marcar como agotado"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onVisible(!product.visible)}>
+              {product.visible ? <EyeOff /> : <Eye />}
+              {product.visible ? "Ocultar del catálogo" : "Mostrar en el catálogo"}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={duplicating} onSelect={onDuplicate}>
+              <Copy /> Duplicar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem danger onSelect={onDelete}>
+              <Trash2 /> Eliminar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </li>
   );
@@ -133,6 +136,7 @@ export function ProductsManager({ products: initial, categories, limit, category
   const [picked, setPicked] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [toDelete, setToDelete] = React.useState<Product | null>(null);
   const [dupBusy, setDupBusy] = React.useState<string | null>(null);
   React.useEffect(() => setProducts(initial), [initial]);
 
@@ -159,6 +163,30 @@ export function ProductsManager({ products: initial, categories, limit, category
       toast.error(res.error);
       router.refresh();
     }
+  }
+
+  async function changeVisible(id: string, visible: boolean) {
+    setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, visible } : p)));
+    const res = await safe(() => bulkProducts([id], { type: "visible", value: visible }));
+    if (!res.ok) {
+      toast.error(res.error);
+      router.refresh();
+      return;
+    }
+    toast.success(visible ? "Ya se ve en tu catálogo." : "Quedó oculto de tu catálogo.");
+  }
+
+  async function removeOne() {
+    if (!toDelete) return;
+    const id = toDelete.id;
+    const res = await safe(() => bulkProducts([id], { type: "delete" }));
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    setProducts((ps) => ps.filter((p) => p.id !== id));
+    toast.success("Producto eliminado.");
+    router.refresh();
   }
 
   async function duplicate(id: string) {
@@ -290,7 +318,9 @@ export function ProductsManager({ products: initial, categories, limit, category
                     selected={picked.has(p.id)}
                     onToggle={() => toggle(p.id)}
                     onAvailability={(a) => changeAvailability(p.id, a)}
+                    onVisible={(v) => changeVisible(p.id, v)}
                     onDuplicate={() => duplicate(p.id)}
+                    onDelete={() => setToDelete(p)}
                     duplicating={dupBusy === p.id}
                   />
                 ))}
@@ -353,6 +383,14 @@ export function ProductsManager({ products: initial, categories, limit, category
         onConfirm={async () => { await bulk({ type: "delete" }, "{n} eliminados."); }}
       />
 
+      <ConfirmDialog
+        open={toDelete !== null}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        title={toDelete ? `¿Eliminar “${toDelete.name}”?` : ""}
+        description="Se borra con sus fotos y no se puede recuperar."
+        confirmLabel="Eliminar"
+        onConfirm={removeOne}
+      />
       <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />
       <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />
     </>

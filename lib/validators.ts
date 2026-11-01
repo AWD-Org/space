@@ -138,8 +138,6 @@ export type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 export interface OrderFormOptions {
   /** Hay formas de entrega para elegir. */
   delivery: boolean;
-  /** Tienda anterior sin formas de entrega: se pide dónde y cuándo en texto libre. */
-  legacyDelivery: boolean;
   payment: boolean;
 }
 
@@ -154,9 +152,6 @@ export function makeOrderSchema(opts: OrderFormOptions) {
       note: z.string().trim().max(300, "Máximo 300 caracteres."),
     })
     .superRefine((v, ctx) => {
-      if (opts.legacyDelivery && v.detail.length < 3) {
-        ctx.addIssue({ code: "custom", path: ["detail"], message: "Dinos dónde y cuándo lo recoges." });
-      }
       if (opts.delivery) {
         const method = v.delivery as keyof typeof DELIVERY_INFO;
         if (!DELIVERY_INFO[method]) {

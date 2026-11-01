@@ -167,11 +167,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
                   );
                 })}
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {store.deliveryMethods === undefined
-                  ? "Todavía no eliges: tus clientes ven un campo libre para escribir dónde recogen. Guarda para que puedan elegir entre estas opciones."
-                  : "Tus clientes eligen una de estas al hacer el pedido. Si quitas todas, no se les pregunta."}
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">Tus clientes eligen una de estas al hacer el pedido. Si quitas todas, no se les pregunta.</p>
             </div>
             <Field label="Dónde y cuándo entregas" htmlFor="s-del" counter={`${deliveryNote.length}/160`} error={errors.deliveryNote?.message} hint="Se muestra en tu catálogo. Ej. punto de encuentro y horarios.">
               <Input id="s-del" {...register("deliveryNote")} aria-invalid={!!errors.deliveryNote} maxLength={160} autoCapitalize="sentences" enterKeyHint="next" placeholder="Ej. Entrego en el centro, de 12 a 3" />

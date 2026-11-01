@@ -17,7 +17,7 @@ export interface Store {
   whatsapp: string; // solo dígitos con lada de país, ej. 525512345678
   deliveryNote: string;
   paymentMethods: PaymentMethod[];
-  /** Formas de entrega que el cliente puede elegir al pedir. Si falta (tiendas anteriores), el pedido pide dónde y cuándo en texto libre. */
+  /** Formas de entrega que el cliente puede elegir al pedir. Si falta (tiendas anteriores), se usan las de DEFAULT_DELIVERY. */
   deliveryMethods?: DeliveryMethod[];
   accent: string; // color de acento del catálogo
   logo: ImageRef | null;

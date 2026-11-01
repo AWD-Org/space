@@ -11,7 +11,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { formatPrice } from "@/lib/format";
 import { makeOrderSchema, type OrderFormValues } from "@/lib/validators";
-import { DELIVERY_INFO } from "@/lib/delivery";
+import { DEFAULT_DELIVERY, DELIVERY_INFO } from "@/lib/delivery";
 import { PAYMENT_LABEL } from "@/lib/format";
 import { Select } from "@/components/ui/select";
 import type { DeliveryMethod, PaymentMethod } from "@/lib/types";
@@ -33,7 +33,7 @@ export function BagSheet({
   storeName,
   whatsapp,
   deliveryNote,
-  deliveryMethods,
+  deliveryMethods = DEFAULT_DELIVERY,
   paymentMethods = [],
   onSend,
   demo,
@@ -50,10 +50,9 @@ export function BagSheet({
 }) {
   const { items, setQty, clear, lines } = useBag();
   const { total, partial } = bagTotal(lines);
-  const legacyDelivery = deliveryMethods === undefined;
-  const hasDelivery = !legacyDelivery && deliveryMethods.length > 0;
+  const hasDelivery = deliveryMethods.length > 0;
   const hasPayment = paymentMethods.length > 0;
-  const schema = React.useMemo(() => makeOrderSchema({ delivery: hasDelivery, legacyDelivery, payment: hasPayment }), [hasDelivery, legacyDelivery, hasPayment]);
+  const schema = React.useMemo(() => makeOrderSchema({ delivery: hasDelivery, payment: hasPayment }), [hasDelivery, hasPayment]);
   const {
     register,
     handleSubmit,
@@ -65,7 +64,7 @@ export function BagSheet({
     // Con una sola opción ya viene elegida: un toque menos para quien compra.
     defaultValues: {
       name: "",
-      delivery: hasDelivery && deliveryMethods!.length === 1 ? deliveryMethods![0] : "",
+      delivery: hasDelivery && deliveryMethods.length === 1 ? deliveryMethods[0] : "",
       detail: "",
       payment: hasPayment && paymentMethods.length === 1 ? paymentMethods[0] : "",
       note: "",
@@ -80,7 +79,7 @@ export function BagSheet({
         storeName,
         lines,
         customerName: v.name,
-        delivery: info ? info.label : legacyDelivery ? v.detail : undefined,
+        delivery: info ? info.label : undefined,
         deliveryDetail: info?.detail ? v.detail : undefined,
         deliveryDetailLabel: info?.detail === "address" ? "Dirección" : "Punto y hora",
         payment: hasPayment ? PAYMENT_LABEL[v.payment as PaymentMethod] : undefined,
@@ -124,24 +123,11 @@ export function BagSheet({
                 <Field label="Tu nombre" htmlFor="bag-name" error={errors.name?.message}>
                   <Input id="bag-name" {...register("name")} aria-invalid={!!errors.name} placeholder="Para que sepa de quién es" autoComplete="given-name" autoCapitalize="words" enterKeyHint="next" maxLength={40} />
                 </Field>
-                {legacyDelivery && (
-                  <Field label="¿Dónde y cuándo lo recoges?" htmlFor="bag-detail" error={errors.detail?.message}>
-                    <Input
-                      id="bag-detail"
-                      {...register("detail")}
-                      aria-invalid={!!errors.detail}
-                      maxLength={160}
-                      autoCapitalize="sentences"
-                      enterKeyHint="next"
-                      placeholder={deliveryNote ? `Entrega: ${deliveryNote}` : "Ej. salida del edificio B a las 2"}
-                    />
-                  </Field>
-                )}
                 {hasDelivery && (
                   <Field label="Cómo lo quieres recibir" htmlFor="bag-delivery" error={errors.delivery?.message} hint={info?.hint}>
                     <Select id="bag-delivery" {...register("delivery")} aria-invalid={!!errors.delivery}>
                       <option value="">Elige una opción</option>
-                      {deliveryMethods!.map((m) => (
+                      {deliveryMethods.map((m) => (
                         <option key={m} value={m}>
                           {DELIVERY_INFO[m].label}
                         </option>
