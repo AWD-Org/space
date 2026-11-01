@@ -32,7 +32,7 @@ export function centsToInput(cents: number | null | undefined) {
 
 export const AVAILABILITY_LABEL: Record<Availability, string> = {
   available: "Disponible",
-  soldout: "Se acabó",
+  soldout: "Agotado",
   onrequest: "Sobre pedido",
 };
 

@@ -3,10 +3,10 @@
 import { getDb, increment } from "@/lib/db";
 import { requireUserForAction } from "@/lib/auth/session";
 import { categoriesPath, getLimits, getStore, productsPath, storePath } from "@/lib/data/queries";
-import { removeImages, ownsPath } from "@/lib/storage/server";
+import { copyImage, removeImages, ownsPath } from "@/lib/storage/server";
 import { slugify } from "@/lib/slug";
 import { firstError, productSchema, type ProductInput } from "@/lib/validators";
-import type { ActionResult, Availability, Product, Store } from "@/lib/types";
+import type { ActionResult, Availability, ImageRef, Product, Store } from "@/lib/types";
 import { refreshStore, run, UserError } from "./helpers";
 
 async function uniqueProductSlug(uid: string, name: string, exceptId?: string) {
@@ -124,5 +124,110 @@ export async function reorderProducts(ids: string[]): Promise<ActionResult> {
     const store = await getStore(user.uid);
     refreshStore(store?.slug);
     return undefined;
+  });
+}
+
+/** Crea una copia oculta de un producto (con sus fotos) al final de la lista. */
+export async function duplicateProduct(id: string): Promise<ActionResult<{ id: string }>> {
+  return run(async () => {
+    const user = await requireUserForAction();
+    const db = await getDb();
+    const source = await db.get<Product>(`${productsPath(user.uid)}/${id}`);
+    if (!source) throw new UserError("Ese producto ya no existe.");
+    const limits = await getLimits();
+    const store = await getStore(user.uid);
+    if (!store) throw new UserError("Primero crea tu tienda.");
+    if ((store.counts?.products ?? 0) >= limits.products) {
+      throw new UserError(`Llegaste a ${limits.products} productos, el máximo del plan gratis. Borra uno para duplicar.`);
+    }
+    const newId = db.newId();
+    const stamp = Date.now().toString(36);
+    const copies: ImageRef[] = [];
+    for (const [i, img] of source.images.entries()) {
+      const copy = await copyImage(user.uid, img, `${stamp}-${newId.slice(0, 6)}${i}.webp`);
+      if (copy) copies.push(copy);
+    }
+    const suffix = " (copia)";
+    const name = `${source.name.slice(0, 60 - suffix.length)}${suffix}`;
+    const slug = await uniqueProductSlug(user.uid, name);
+    const now = Date.now();
+    try {
+      await db.tx(async (tx) => {
+        const s = await tx.get<Store>(storePath(user.uid));
+        if (!s) throw new UserError("Primero crea tu tienda.");
+        if ((s.counts?.products ?? 0) >= limits.products) throw new UserError(`Llegaste a ${limits.products} productos, el máximo del plan gratis.`);
+        tx.set(`${productsPath(user.uid)}/${newId}`, {
+          name,
+          slug,
+          description: source.description,
+          price: source.price,
+          priceFrom: source.priceFrom,
+          availability: source.availability,
+          visible: false,
+          categoryId: source.categoryId,
+          images: copies,
+          order: now,
+          createdAt: now,
+          updatedAt: now,
+        });
+        tx.update(storePath(user.uid), { "counts.products": increment(1), updatedAt: now });
+      });
+    } catch (err) {
+      await removeImages(copies.map((c) => c.path));
+      throw err;
+    }
+    refreshStore(store.slug);
+    return { id: newId };
+  });
+}
+
+export type BulkOp =
+  | { type: "availability"; value: Availability }
+  | { type: "visible"; value: boolean }
+  | { type: "category"; categoryId: string | null }
+  | { type: "delete" };
+
+const BULK_MAX = 100;
+
+/** Una misma acción sobre varios productos a la vez. */
+export async function bulkProducts(ids: string[], op: BulkOp): Promise<ActionResult<{ count: number }>> {
+  return run(async () => {
+    const user = await requireUserForAction();
+    const unique = [...new Set(ids)].slice(0, BULK_MAX);
+    if (unique.length === 0) throw new UserError("Elige al menos un producto.");
+    const db = await getDb();
+    const store = await getStore(user.uid);
+    if (!store) throw new UserError("Primero crea tu tienda.");
+    const existing = new Map((await db.list<Product>(productsPath(user.uid))).map((p) => [p.id, p]));
+    const targets = unique.filter((id) => existing.has(id));
+    if (targets.length === 0) throw new UserError("Esos productos ya no existen.");
+    const now = Date.now();
+
+    if (op.type === "delete") {
+      const images = targets.flatMap((id) => existing.get(id)!.images.map((i) => i.path));
+      await db.tx(async (tx) => {
+        const s = await tx.get<Store>(storePath(user.uid));
+        if (!s) return;
+        for (const id of targets) tx.delete(`${productsPath(user.uid)}/${id}`);
+        tx.update(storePath(user.uid), { "counts.products": increment(-targets.length), updatedAt: now });
+      });
+      await removeImages(images);
+    } else {
+      let data: Record<string, unknown>;
+      if (op.type === "availability") {
+        if (!["available", "soldout", "onrequest"].includes(op.value)) throw new UserError("Opción no válida.");
+        data = { availability: op.value };
+      } else if (op.type === "visible") {
+        data = { visible: Boolean(op.value) };
+      } else if (op.type === "category") {
+        if (op.categoryId && !(await db.get(`${categoriesPath(user.uid)}/${op.categoryId}`))) throw new UserError("Esa categoría ya no existe.");
+        data = { categoryId: op.categoryId ?? null };
+      } else {
+        throw new UserError("Acción no válida.");
+      }
+      await db.batchUpdate(targets.map((id) => ({ path: `${productsPath(user.uid)}/${id}`, data: { ...data, updatedAt: now } })));
+    }
+    refreshStore(store.slug);
+    return { count: targets.length };
   });
 }

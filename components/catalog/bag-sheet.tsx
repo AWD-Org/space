@@ -10,7 +10,11 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Input, Textarea } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { formatPrice } from "@/lib/format";
-import { orderFormSchema, type OrderFormValues } from "@/lib/validators";
+import { makeOrderSchema, type OrderFormValues } from "@/lib/validators";
+import { DELIVERY_INFO } from "@/lib/delivery";
+import { PAYMENT_LABEL } from "@/lib/format";
+import { Select } from "@/components/ui/select";
+import type { DeliveryMethod, PaymentMethod } from "@/lib/types";
 import { bagTotal, buildOrderMessage, whatsappLink } from "@/lib/whatsapp";
 import { useBag } from "./bag";
 import { QtyStepper } from "./product-sheet";
@@ -29,6 +33,8 @@ export function BagSheet({
   storeName,
   whatsapp,
   deliveryNote,
+  deliveryMethods,
+  paymentMethods = [],
   onSend,
   demo,
 }: {
@@ -37,24 +43,53 @@ export function BagSheet({
   storeName: string;
   whatsapp: string;
   deliveryNote: string;
+  deliveryMethods?: DeliveryMethod[];
+  paymentMethods?: PaymentMethod[];
   onSend?: (message: string) => void;
   demo?: boolean;
 }) {
   const { items, setQty, clear, lines } = useBag();
   const { total, partial } = bagTotal(lines);
+  const legacyDelivery = deliveryMethods === undefined;
+  const hasDelivery = !legacyDelivery && deliveryMethods.length > 0;
+  const hasPayment = paymentMethods.length > 0;
+  const schema = React.useMemo(() => makeOrderSchema({ delivery: hasDelivery, legacyDelivery, payment: hasPayment }), [hasDelivery, legacyDelivery, hasPayment]);
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
-  } = useForm<OrderFormValues>({ resolver: zodResolver(orderFormSchema), mode: "onTouched", defaultValues: { name: "", delivery: "", note: "" } });
+  } = useForm<OrderFormValues>({
+    resolver: zodResolver(schema),
+    mode: "onTouched",
+    // Con una sola opción ya viene elegida: un toque menos para quien compra.
+    defaultValues: {
+      name: "",
+      delivery: hasDelivery && deliveryMethods!.length === 1 ? deliveryMethods![0] : "",
+      detail: "",
+      payment: hasPayment && paymentMethods.length === 1 ? paymentMethods[0] : "",
+      note: "",
+    },
+  });
+  const chosen = watch("delivery") as DeliveryMethod;
+  const info = hasDelivery && DELIVERY_INFO[chosen] ? DELIVERY_INFO[chosen] : null;
 
   const send = handleSubmit(
     (v) => {
-      const message = buildOrderMessage({ storeName, lines, customerName: v.name, delivery: v.delivery, note: v.note });
+      const message = buildOrderMessage({
+        storeName,
+        lines,
+        customerName: v.name,
+        delivery: info ? info.label : legacyDelivery ? v.detail : undefined,
+        deliveryDetail: info?.detail ? v.detail : undefined,
+        deliveryDetailLabel: info?.detail === "address" ? "Dirección" : "Punto y hora",
+        payment: hasPayment ? PAYMENT_LABEL[v.payment as PaymentMethod] : undefined,
+        note: v.note,
+      });
       onSend?.(message);
       if (!demo) window.open(whatsappLink(whatsapp, message), "_blank", "noopener");
     },
-    () => toast.warning("Falta tu nombre y dónde lo recoges.")
+    () => toast.warning("Revisa los datos marcados en rojo.")
   );
 
   return (
@@ -89,17 +124,48 @@ export function BagSheet({
                 <Field label="Tu nombre" htmlFor="bag-name" error={errors.name?.message}>
                   <Input id="bag-name" {...register("name")} aria-invalid={!!errors.name} placeholder="Para que sepa de quién es" autoComplete="given-name" autoCapitalize="words" enterKeyHint="next" maxLength={40} />
                 </Field>
-                <Field label="¿Dónde y cuándo lo recoges?" htmlFor="bag-delivery" error={errors.delivery?.message}>
-                  <Input
-                    id="bag-delivery"
-                    {...register("delivery")}
-                    aria-invalid={!!errors.delivery}
-                    maxLength={160}
-                    autoCapitalize="sentences"
-                    enterKeyHint="next"
-                    placeholder={deliveryNote ? `Entrega: ${deliveryNote}` : "Ej. salida del edificio B a las 2"}
-                  />
-                </Field>
+                {legacyDelivery && (
+                  <Field label="¿Dónde y cuándo lo recoges?" htmlFor="bag-detail" error={errors.detail?.message}>
+                    <Input
+                      id="bag-detail"
+                      {...register("detail")}
+                      aria-invalid={!!errors.detail}
+                      maxLength={160}
+                      autoCapitalize="sentences"
+                      enterKeyHint="next"
+                      placeholder={deliveryNote ? `Entrega: ${deliveryNote}` : "Ej. salida del edificio B a las 2"}
+                    />
+                  </Field>
+                )}
+                {hasDelivery && (
+                  <Field label="Cómo lo quieres recibir" htmlFor="bag-delivery" error={errors.delivery?.message} hint={info?.hint}>
+                    <Select id="bag-delivery" {...register("delivery")} aria-invalid={!!errors.delivery}>
+                      <option value="">Elige una opción</option>
+                      {deliveryMethods!.map((m) => (
+                        <option key={m} value={m}>
+                          {DELIVERY_INFO[m].label}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
+                {info?.detail && (
+                  <Field label={info.detailLabel} htmlFor="bag-detail" error={errors.detail?.message} hint={chosen === "punto" && deliveryNote ? `El vendedor entrega: ${deliveryNote}` : undefined}>
+                    <Input id="bag-detail" {...register("detail")} aria-invalid={!!errors.detail} maxLength={160} autoCapitalize="sentences" enterKeyHint="next" placeholder={info.placeholder} />
+                  </Field>
+                )}
+                {hasPayment && (
+                  <Field label="Forma de pago" htmlFor="bag-payment" error={errors.payment?.message}>
+                    <Select id="bag-payment" {...register("payment")} aria-invalid={!!errors.payment}>
+                      <option value="">Elige una opción</option>
+                      {paymentMethods.map((m) => (
+                        <option key={m} value={m}>
+                          {PAYMENT_LABEL[m]}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
                 <Field label="Nota (opcional)" htmlFor="bag-note" error={errors.note?.message}>
                   <Textarea id="bag-note" {...register("note")} maxLength={300} placeholder="Sabor, talla o lo que haga falta" className="min-h-[72px]" />
                 </Field>

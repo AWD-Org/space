@@ -200,7 +200,7 @@ export function ProductForm({
                   options={[
                     { value: "available", label: "Disponible" },
                     { value: "onrequest", label: "Sobre pedido" },
-                    { value: "soldout", label: "Se acabó" },
+                    { value: "soldout", label: "Agotado" },
                   ]}
                 />
               )}

@@ -20,7 +20,7 @@ const BagSheet = dynamic(() => import("./bag-sheet").then((m) => m.BagSheet), { 
 
 export type CatalogStore = Pick<
   Store,
-  "id" | "name" | "slug" | "tagline" | "whatsapp" | "deliveryNote" | "paymentMethods" | "accent" | "logo" | "isOpen"
+  "id" | "name" | "slug" | "tagline" | "whatsapp" | "deliveryNote" | "paymentMethods" | "deliveryMethods" | "accent" | "logo" | "isOpen"
 >;
 
 interface CatalogProps {
@@ -492,6 +492,8 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         storeName={store.name}
         whatsapp={store.whatsapp}
         deliveryNote={store.deliveryNote}
+        deliveryMethods={store.deliveryMethods}
+        paymentMethods={store.paymentMethods}
         onSend={() => shouldTrack && track(store.id, "order")}
       />}
     </div>

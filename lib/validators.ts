@@ -2,6 +2,7 @@ import { z } from "zod";
 import { normalizeWhatsapp, parsePriceInput } from "./format";
 import { ensureReadable, normalizeHex } from "./color";
 import { slugProblem } from "./slug";
+import { DELIVERY_INFO } from "./delivery";
 
 export const ACCENTS = [
   { value: "#3B55E6", label: "Azul Space" },
@@ -38,6 +39,7 @@ export const updateStoreSchema = z
     whatsapp: whatsappSchema,
     deliveryNote: z.string().trim().max(160, "Máximo 160 caracteres."),
     paymentMethods: z.array(z.enum(["efectivo", "transferencia", "tarjeta"])).max(3),
+    deliveryMethods: z.array(z.enum(["punto", "domicilio", "tienda", "paqueteria"])).max(4),
     accent: accentSchema,
     isOpen: z.boolean(),
   })
@@ -113,6 +115,7 @@ export const settingsFormSchema = z.object({
   whatsapp: phoneFieldSchema,
   deliveryNote: z.string().trim().max(160, "Máximo 160 caracteres."),
   paymentMethods: z.array(z.enum(["efectivo", "transferencia", "tarjeta"])),
+  deliveryMethods: z.array(z.enum(["punto", "domicilio", "tienda", "paqueteria"])),
   accent: z.string().refine((v) => normalizeHex(v) !== null, "Ese color no es válido."),
 });
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
@@ -132,9 +135,41 @@ export type ProductFormValues = z.infer<typeof productFormSchema>;
 export const categoryFormSchema = z.object({ name: z.string().trim().min(1, "Escribe el nombre.").pipe(categoryNameSchema) });
 export type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 
-export const orderFormSchema = z.object({
-  name: z.string().trim().min(2, "Escribe tu nombre para que sepan de quién es.").max(40, "Máximo 40 caracteres."),
-  delivery: z.string().trim().min(3, "Dinos dónde y cuándo lo recoges.").max(160, "Máximo 160 caracteres."),
-  note: z.string().trim().max(300, "Máximo 300 caracteres."),
-});
-export type OrderFormValues = z.infer<typeof orderFormSchema>;
+export interface OrderFormOptions {
+  /** Hay formas de entrega para elegir. */
+  delivery: boolean;
+  /** Tienda anterior sin formas de entrega: se pide dónde y cuándo en texto libre. */
+  legacyDelivery: boolean;
+  payment: boolean;
+}
+
+/** Los datos del pedido que llena la persona que compra. Qué se pide depende de cómo configuró su tienda el dueño. */
+export function makeOrderSchema(opts: OrderFormOptions) {
+  return z
+    .object({
+      name: z.string().trim().min(2, "Escribe tu nombre para que sepan de quién es.").max(40, "Máximo 40 caracteres."),
+      delivery: z.string(),
+      detail: z.string().trim().max(160, "Máximo 160 caracteres."),
+      payment: z.string(),
+      note: z.string().trim().max(300, "Máximo 300 caracteres."),
+    })
+    .superRefine((v, ctx) => {
+      if (opts.legacyDelivery && v.detail.length < 3) {
+        ctx.addIssue({ code: "custom", path: ["detail"], message: "Dinos dónde y cuándo lo recoges." });
+      }
+      if (opts.delivery) {
+        const method = v.delivery as keyof typeof DELIVERY_INFO;
+        if (!DELIVERY_INFO[method]) {
+          ctx.addIssue({ code: "custom", path: ["delivery"], message: "Elige cómo quieres recibirlo." });
+        } else if (DELIVERY_INFO[method].detail && v.detail.length < 3) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["detail"],
+            message: DELIVERY_INFO[method].detail === "address" ? "Escribe la dirección completa." : "Dinos dónde y a qué hora.",
+          });
+        }
+      }
+      if (opts.payment && !v.payment) ctx.addIssue({ code: "custom", path: ["payment"], message: "Elige cómo vas a pagar." });
+    });
+}
+export type OrderFormValues = z.infer<ReturnType<typeof makeOrderSchema>>;

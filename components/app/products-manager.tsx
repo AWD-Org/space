@@ -7,59 +7,119 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { EyeOff, GripVertical, Plus, Tags } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, FileSpreadsheet, GripVertical, PackageCheck, PackageX, Plus, Tags, Trash2, X } from "lucide-react";
 import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
 import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
-import { reorderProducts, setAvailability } from "@/lib/actions/product";
-import { AVAILABILITY_LABEL, formatPrice } from "@/lib/format";
+import { bulkProducts, duplicateProduct, reorderProducts, setAvailability, type BulkOp } from "@/lib/actions/product";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { formatPrice } from "@/lib/format";
 import type { Availability, Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CategoriesSheet } from "./categories-sheet";
+import { ImportSheet } from "./import-sheet";
 
-function Row({ product, category, onAvailability }: { product: Product; category?: string; onAvailability: (a: Availability) => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id });
+function Row({
+  product,
+  category,
+  selecting,
+  selected,
+  onToggle,
+  onAvailability,
+  onDuplicate,
+  duplicating,
+}: {
+  product: Product;
+  category?: string;
+  selecting: boolean;
+  selected: boolean;
+  onToggle: () => void;
+  onAvailability: (a: Availability) => void;
+  onDuplicate: () => void;
+  duplicating: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id, disabled: selecting });
+  const soldOut = product.availability === "soldout";
+  const body = (
+    <>
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
+        {product.images[0] && <Image src={product.images[0].url} alt="" fill sizes="56px" className={cn("object-cover", soldOut && "opacity-60")} />}
+      </div>
+      <div className="min-w-0">
+        <p className="line-clamp-2 font-medium leading-snug text-ink">{product.name}</p>
+        <p className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+          <span className="tabular-nums">{formatPrice(product.price, product.priceFrom)}</span>
+          {category && <span>· {category}</span>}
+          {!product.visible && (
+            <span className="inline-flex items-center gap-1">
+              · <EyeOff className="h-3.5 w-3.5" aria-hidden /> Oculto
+            </span>
+          )}
+        </p>
+      </div>
+    </>
+  );
   return (
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-center gap-3 bg-white py-3 pr-3", isDragging && "relative z-10 rounded-xl shadow-lg")}
+      className={cn("flex items-center gap-2 bg-white py-3 pr-2 sm:gap-3", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]")}
     >
-      <button type="button" className="touch-none cursor-grab px-1 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
-        <GripVertical className="h-5 w-5" />
-      </button>
-      <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
-          {product.images[0] && <Image src={product.images[0].url} alt="" fill sizes="56px" className="object-cover" />}
-        </div>
-        <div className="min-w-0">
-          <p className="line-clamp-2 font-medium leading-snug text-ink">{product.name}</p>
-          <p className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-            <span className="tabular-nums">{formatPrice(product.price, product.priceFrom)}</span>
-            {category && <span>· {category}</span>}
-            {!product.visible && (
-              <span className="inline-flex items-center gap-1">
-                · <EyeOff className="h-3.5 w-3.5" aria-hidden /> Oculto
-              </span>
+      {selecting ? (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={selected}
+          aria-label={`Elegir ${product.name}`}
+          onClick={onToggle}
+          className="grid h-11 w-11 shrink-0 place-items-center"
+        >
+          <span className={cn("grid h-6 w-6 place-items-center rounded-md ring-1 ring-inset transition-colors", selected ? "bg-primary text-white ring-primary" : "bg-white ring-border")}>
+            {selected && <Check className="h-4 w-4" aria-hidden />}
+          </span>
+        </button>
+      ) : (
+        <button type="button" className="touch-none cursor-grab px-1 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
+          <GripVertical className="h-5 w-5" />
+        </button>
+      )}
+      <div className="min-w-0 flex-1">
+        {selecting ? (
+          <button type="button" onClick={onToggle} className="flex w-full min-w-0 items-center gap-3 text-left">
+            {body}
+          </button>
+        ) : (
+          <Link href={`/app/productos/${product.id}`} className="flex min-w-0 items-center gap-3">
+            {body}
+          </Link>
+        )}
+        {!selecting && (
+          <button
+            type="button"
+            onClick={() => onAvailability(soldOut ? "available" : "soldout")}
+            className={cn(
+              "mt-2 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[0.8rem] font-medium ring-1 ring-inset transition-colors",
+              soldOut ? "bg-[#FDECDD] text-[#9A3412] ring-[#F3C9A6] hover:bg-[#FBE0C8]" : "bg-white text-ink ring-border hover:bg-cloud"
             )}
-          </p>
-        </div>
-      </Link>
-      <Select
-        variant="pill"
-        wrapperClassName="shrink-0"
-        value={product.availability}
-        onChange={(e) => onAvailability(e.target.value as Availability)}
-        aria-label={`Disponibilidad de ${product.name}`}
-        className={cn("w-[7.4rem] pl-3 pr-8 text-[0.8rem] sm:w-auto sm:pl-4 sm:pr-10 sm:text-sm", product.availability === "soldout" && "text-[#9A3412]")}
-      >
-        {(Object.keys(AVAILABILITY_LABEL) as Availability[]).map((a) => (
-          <option key={a} value={a}>
-            {AVAILABILITY_LABEL[a]}
-          </option>
-        ))}
-      </Select>
+          >
+            {soldOut ? <PackageCheck className="h-4 w-4" aria-hidden /> : <PackageX className="h-4 w-4" aria-hidden />}
+            {soldOut ? "Agotado · volver a disponible" : "Marcar como agotado"}
+          </button>
+        )}
+      </div>
+      {!selecting && (
+        <button
+          type="button"
+          onClick={onDuplicate}
+          disabled={duplicating}
+          aria-label={`Duplicar ${product.name}`}
+          title="Duplicar"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate transition-colors hover:bg-cloud hover:text-ink disabled:opacity-50"
+        >
+          <Copy className="h-5 w-5" aria-hidden />
+        </button>
+      )}
     </li>
   );
 }
@@ -68,6 +128,12 @@ export function ProductsManager({ products: initial, categories, limit, category
   const router = useRouter();
   const [products, setProducts] = React.useState(initial);
   const [catsOpen, setCatsOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
+  const [selecting, setSelecting] = React.useState(false);
+  const [picked, setPicked] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [dupBusy, setDupBusy] = React.useState<string | null>(null);
   React.useEffect(() => setProducts(initial), [initial]);
 
   const sensors = useSensors(
@@ -95,6 +161,41 @@ export function ProductsManager({ products: initial, categories, limit, category
     }
   }
 
+  async function duplicate(id: string) {
+    setDupBusy(id);
+    const res = await safe(() => duplicateProduct(id));
+    setDupBusy(null);
+    if (!res.ok) return toast.error(res.error);
+    toast.success("Listo: creamos una copia oculta. Edítala y muéstrala cuando esté lista.");
+    router.push(`/app/productos/${res.data!.id}`);
+  }
+
+  function toggle(id: string) {
+    setPicked((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function stopSelecting() {
+    setSelecting(false);
+    setPicked(new Set());
+  }
+
+  async function bulk(op: BulkOp, done: string) {
+    if (picked.size === 0) return;
+    setBulkBusy(true);
+    const ids = [...picked];
+    const res = await safe(() => bulkProducts(ids, op));
+    setBulkBusy(false);
+    if (!res.ok) return toast.error(res.error);
+    toast.success(done.replace("{n}", String(res.data!.count)));
+    if (op.type === "delete") setProducts((ps) => ps.filter((p) => !picked.has(p.id)));
+    stopSelecting();
+    router.refresh();
+  }
+
   const atLimit = products.length >= limit;
   const catName = new Map(categories.map((c) => [c.id, c.name]));
 
@@ -107,7 +208,17 @@ export function ProductsManager({ products: initial, categories, limit, category
             {products.length} de {limit} en tu plan gratis
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {products.length > 1 && (
+            <Button variant="secondary" onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
+              {selecting ? <X /> : <Check />}
+              {selecting ? "Cancelar" : "Seleccionar"}
+            </Button>
+          )}
+          <Button variant="secondary" onClick={() => setImportOpen(true)}>
+            <FileSpreadsheet />
+            Importar
+          </Button>
           <Button variant="secondary" onClick={() => setCatsOpen(true)}>
             <Tags />
             Categorías
@@ -133,11 +244,25 @@ export function ProductsManager({ products: initial, categories, limit, category
         </p>
       )}
 
-      {products.length > 1 && (
+      {products.length > 1 && !selecting && (
         <p className="mb-3 flex items-center gap-1.5 text-[0.8rem] text-muted-foreground">
           <GripVertical className="h-3.5 w-3.5" aria-hidden />
           Arrastra los productos para cambiar el orden en que se ven en tu catálogo.
         </p>
+      )}
+      {selecting && (
+        <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+          <p className="tabular-nums text-muted-foreground" aria-live="polite">
+            {picked.size === 0 ? "Toca los productos que quieras cambiar." : `${picked.size} ${picked.size === 1 ? "elegido" : "elegidos"}`}
+          </p>
+          <button
+            type="button"
+            className="font-medium text-primary hover:underline"
+            onClick={() => setPicked(picked.size === products.length ? new Set() : new Set(products.map((p) => p.id)))}
+          >
+            {picked.size === products.length ? "Quitar todos" : "Elegir todos"}
+          </button>
+        </div>
       )}
 
       {products.length === 0 ? (
@@ -157,7 +282,17 @@ export function ProductsManager({ products: initial, categories, limit, category
             <SortableContext items={products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
               <ul className="divide-y divide-ink/5">
                 {products.map((p) => (
-                  <Row key={p.id} product={p} category={p.categoryId ? catName.get(p.categoryId) : undefined} onAvailability={(a) => changeAvailability(p.id, a)} />
+                  <Row
+                    key={p.id}
+                    product={p}
+                    category={p.categoryId ? catName.get(p.categoryId) : undefined}
+                    selecting={selecting}
+                    selected={picked.has(p.id)}
+                    onToggle={() => toggle(p.id)}
+                    onAvailability={(a) => changeAvailability(p.id, a)}
+                    onDuplicate={() => duplicate(p.id)}
+                    duplicating={dupBusy === p.id}
+                  />
                 ))}
               </ul>
             </SortableContext>
@@ -166,7 +301,76 @@ export function ProductsManager({ products: initial, categories, limit, category
       )}
 
 
+      {selecting && picked.size > 0 && (
+        <div className="fixed inset-x-0 bottom-[6rem] z-40 px-3 lg:bottom-5 lg:left-auto lg:right-6 lg:px-0" role="toolbar" aria-label="Acciones para los productos elegidos">
+          <div className="mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-2xl bg-ink p-2.5 text-white shadow-xl lg:max-w-2xl">
+            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "availability", value: "soldout" }, "{n} marcados como agotados.")}>
+              <PackageX className="h-4 w-4" aria-hidden /> Agotado
+            </BarButton>
+            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "availability", value: "available" }, "{n} disponibles otra vez.")}>
+              <PackageCheck className="h-4 w-4" aria-hidden /> Disponible
+            </BarButton>
+            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "visible", value: false }, "{n} ocultos.")}>
+              <EyeOff className="h-4 w-4" aria-hidden /> Ocultar
+            </BarButton>
+            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "visible", value: true }, "{n} visibles.")}>
+              <Eye className="h-4 w-4" aria-hidden /> Mostrar
+            </BarButton>
+            {categories.length > 0 && (
+              <Select
+                variant="pill"
+                wrapperClassName="shrink-0"
+                aria-label="Cambiar categoría"
+                value=""
+                disabled={bulkBusy}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v) void bulk({ type: "category", categoryId: v === "__none" ? null : v }, "Categoría cambiada en {n}.");
+                }}
+                className="h-9 bg-white/10 text-white ring-white/20"
+              >
+                <option value="">Mover a categoría…</option>
+                <option value="__none">Sin categoría</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id} className="text-ink">
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+            <BarButton disabled={bulkBusy} onClick={() => setConfirmDelete(true)} danger>
+              <Trash2 className="h-4 w-4" aria-hidden /> Eliminar
+            </BarButton>
+          </div>
+        </div>
+      )}
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`¿Eliminar ${picked.size} ${picked.size === 1 ? "producto" : "productos"}?`}
+        description="Se borran con sus fotos y no se pueden recuperar."
+        confirmLabel="Eliminar"
+        onConfirm={async () => { await bulk({ type: "delete" }, "{n} eliminados."); }}
+      />
+
+      <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />
       <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />
     </>
+  );
+}
+
+function BarButton({ children, onClick, disabled, danger }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors disabled:opacity-50",
+        danger ? "bg-[#B42318] text-white hover:bg-[#9A1D14]" : "bg-white/10 text-white hover:bg-white/20"
+      )}
+    >
+      {children}
+    </button>
   );
 }

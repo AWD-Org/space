@@ -1,0 +1,279 @@
+import { centsToInput } from "./format";
+import type { Availability } from "./types";
+
+/** Importar y exportar el catálogo en CSV o Excel. Todo aquí es puro (sin base de datos) para poder probarlo solo. */
+
+export const IMPORT_HEADERS = ["Nombre", "Descripción", "Precio", "Categoría", "Disponibilidad"] as const;
+export const MAX_IMPORT_ROWS = 500;
+export const MAX_IMPORT_BYTES = 1_000_000;
+
+export interface ParsedRow {
+  /** Número de fila en el archivo (la 1 es el encabezado). */
+  row: number;
+  name: string;
+  description: string;
+  /** Centavos, o null si no trae precio. */
+  price: number | null;
+  category: string;
+  availability: Availability;
+}
+
+export interface RowIssue {
+  row: number;
+  message: string;
+}
+
+export const normKey = (v: string) =>
+  v
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ");
+
+// ── Lectura ──────────────────────────────────────────────────────────────
+
+/** UTF-8 si es válido; si no, Windows-1252 (como guarda el CSV de Excel en México). */
+export function decodeText(buf: Uint8Array): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buf).replace(/^﻿/, "");
+  } catch {
+    return new TextDecoder("windows-1252").decode(buf);
+  }
+}
+
+function detectDelimiter(firstLine: string) {
+  const count = (ch: string) => firstLine.split(ch).length - 1;
+  const options: [string, number][] = [
+    [",", count(",")],
+    [";", count(";")],
+    ["\t", count("\t")],
+  ];
+  options.sort((a, b) => b[1] - a[1]);
+  return options[0]![1] > 0 ? options[0]![0] : ",";
+}
+
+/** CSV con comillas ("a, b", "dijo ""hola"""), saltos de línea dentro de comillas, separador , ; o tab. */
+export function parseCsv(text: string): string[][] {
+  const clean = text.replace(/^﻿/, "");
+  const firstLine = clean.split(/\r?\n/, 1)[0] ?? "";
+  const delimiter = detectDelimiter(firstLine);
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean[i]!;
+    if (quoted) {
+      if (ch === '"') {
+        if (clean[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else quoted = false;
+      } else cell += ch;
+    } else if (ch === '"' && cell === "") {
+      quoted = true;
+    } else if (ch === delimiter) {
+      row.push(cell);
+      cell = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && clean[i + 1] === "\n") i++;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else cell += ch;
+  }
+  if (cell !== "" || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows;
+}
+
+/** "45", "$1,250.50", "1.250,50", "45 MXN" → centavos. null si no es un precio. */
+export function parseImportPrice(raw: unknown): number | null | "invalid" {
+  if (raw == null || raw === "") return null;
+  if (typeof raw === "number") return Number.isFinite(raw) && raw >= 0 ? Math.round(raw * 100) : "invalid";
+  let s = String(raw).trim().replace(/mxn|pesos?|\$|\s/gi, "");
+  if (!s) return null;
+  if (!/^[\d.,]+$/.test(s)) return "invalid";
+  const lastDot = s.lastIndexOf(".");
+  const lastComma = s.lastIndexOf(",");
+  if (lastDot >= 0 && lastComma >= 0) {
+    // El último separador es el decimal; el otro, de miles.
+    const dec = Math.max(lastDot, lastComma);
+    s = s.slice(0, dec).replace(/[.,]/g, "") + "." + s.slice(dec + 1);
+  } else if (lastComma >= 0) {
+    const parts = s.split(",");
+    s = parts.length === 2 && parts[1]!.length <= 2 ? `${parts[0]}.${parts[1]}` : parts.join("");
+  } else if (s.split(".").length > 2 || /^\d{1,3}\.\d{3}$/.test(s)) {
+    // "1.200" o "1.250.000": un precio no tiene 3 decimales, así que el punto es de miles.
+    s = s.replace(/\./g, "");
+  }
+  const n = Number(s);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : "invalid";
+}
+
+function parseAvailability(raw: string): Availability | null {
+  const k = normKey(raw);
+  if (!k || ["disponible", "si", "sí", "en existencia", "hay"].includes(k)) return "available";
+  if (["agotado", "se acabo", "sin existencia", "no disponible", "no hay"].includes(k)) return "soldout";
+  if (["sobre pedido", "bajo pedido", "por encargo", "encargo", "pedido"].includes(k)) return "onrequest";
+  return null;
+}
+
+const HEADER_ALIASES: Record<(typeof IMPORT_HEADERS)[number], string[]> = {
+  Nombre: ["nombre", "producto", "servicio", "nombre del producto", "titulo", "name"],
+  Descripción: ["descripcion", "detalle", "description"],
+  Precio: ["precio", "costo", "price", "precio mxn"],
+  Categoría: ["categoria", "categorias", "category", "tipo"],
+  Disponibilidad: ["disponibilidad", "estado", "existencia", "availability"],
+};
+
+export interface TableResult {
+  rows: ParsedRow[];
+  issues: RowIssue[];
+  /** Error que impide leer el archivo completo. */
+  fatal?: string;
+}
+
+const cellText = (v: unknown) => (v == null ? "" : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).trim());
+// Quita el apóstrofo que ponemos al exportar para que Excel no ejecute "=..." como fórmula.
+const unescapeFormula = (v: string) => (/^'[=+\-@]/.test(v) ? v.slice(1) : v);
+
+/** Convierte las filas crudas de un CSV o Excel en productos validados fila por fila. */
+export function parseTable(table: unknown[][]): TableResult {
+  const filled = table.map((r, i) => ({ r, i })).filter(({ r }) => r.some((c) => cellText(c) !== ""));
+  if (filled.length === 0) return { rows: [], issues: [], fatal: "El archivo está vacío. Descarga la plantilla y llénala." };
+  const head = filled[0]!;
+  const col: Partial<Record<(typeof IMPORT_HEADERS)[number], number>> = {};
+  head.r.forEach((c, idx) => {
+    const k = normKey(cellText(c));
+    for (const h of IMPORT_HEADERS) if (col[h] === undefined && HEADER_ALIASES[h].includes(k)) col[h] = idx;
+  });
+  if (col.Nombre === undefined) {
+    return { rows: [], issues: [], fatal: "No encontramos la columna “Nombre” en la primera fila. Descarga la plantilla para ver cómo va." };
+  }
+  const data = filled.slice(1);
+  if (data.length > MAX_IMPORT_ROWS) {
+    return { rows: [], issues: [], fatal: `El archivo trae más de ${MAX_IMPORT_ROWS} filas. Divídelo en partes más pequeñas.` };
+  }
+  const rows: ParsedRow[] = [];
+  const issues: RowIssue[] = [];
+  for (const { r, i } of data) {
+    const row = i + 1;
+    const get = (h: (typeof IMPORT_HEADERS)[number]) => (col[h] === undefined ? "" : unescapeFormula(cellText(r[col[h]!])));
+    const name = get("Nombre");
+    const description = get("Descripción");
+    const category = get("Categoría");
+    const priceRaw = col.Precio === undefined ? null : r[col.Precio];
+    const problems: string[] = [];
+    if (name.length < 2) problems.push("el nombre necesita al menos 2 letras");
+    if (name.length > 60) problems.push("el nombre pasa de 60 caracteres");
+    if (description.length > 400) problems.push("la descripción pasa de 400 caracteres");
+    if (category && category.length < 2) problems.push("la categoría necesita al menos 2 letras");
+    if (category.length > 30) problems.push("la categoría pasa de 30 caracteres");
+    const price = parseImportPrice(priceRaw);
+    if (price === "invalid") problems.push("el precio no es válido (usa solo números, por ejemplo 45 o 1,250.50)");
+    else if (price != null && price > 10_000_000 * 100) problems.push("revisa el precio");
+    const availability = parseAvailability(get("Disponibilidad"));
+    if (!availability) problems.push("la disponibilidad debe ser Disponible, Agotado o Sobre pedido");
+    if (problems.length) {
+      issues.push({ row, message: `Fila ${row}: ${problems.join("; ")}.` });
+      continue;
+    }
+    rows.push({ row, name, description, price: price as number | null, category, availability: availability! });
+  }
+  return { rows, issues };
+}
+
+// ── Plan de importación ──────────────────────────────────────────────────
+
+export interface ImportContext {
+  existingNames: string[];
+  existingCategories: string[];
+  productSlots: number;
+  categorySlots: number;
+}
+
+export interface ImportPlan {
+  accepted: (ParsedRow & { categoryKey: string | null })[];
+  /** Categorías nuevas que se crearán, en orden de aparición. */
+  newCategories: string[];
+  alreadyExist: { row: number; name: string }[];
+  repeatedInFile: { row: number; name: string }[];
+  overLimit: number;
+  withoutCategoryByLimit: number;
+}
+
+/** Decide qué entra y qué no, con las reglas del plan. Es la misma lógica para la vista previa y para guardar. */
+export function planImport(rows: ParsedRow[], ctx: ImportContext): ImportPlan {
+  const seen = new Set(ctx.existingNames.map(normKey));
+  const alreadyExist: ImportPlan["alreadyExist"] = [];
+  const repeatedInFile: ImportPlan["repeatedInFile"] = [];
+  const fresh: ParsedRow[] = [];
+  const inFile = new Set<string>();
+  for (const r of rows) {
+    const k = normKey(r.name);
+    if (seen.has(k)) alreadyExist.push({ row: r.row, name: r.name });
+    else if (inFile.has(k)) repeatedInFile.push({ row: r.row, name: r.name });
+    else {
+      inFile.add(k);
+      fresh.push(r);
+    }
+  }
+  const slots = Math.max(0, ctx.productSlots);
+  const taken = fresh.slice(0, slots);
+  const overLimit = fresh.length - taken.length;
+
+  const known = new Map(ctx.existingCategories.map((c) => [normKey(c), c]));
+  const created = new Map<string, string>();
+  let withoutCategoryByLimit = 0;
+  const accepted = taken.map((r) => {
+    if (!r.category) return { ...r, categoryKey: null };
+    const k = normKey(r.category);
+    if (known.has(k) || created.has(k)) return { ...r, categoryKey: k };
+    if (created.size < Math.max(0, ctx.categorySlots)) {
+      created.set(k, r.category.replace(/\s+/g, " "));
+      return { ...r, categoryKey: k };
+    }
+    withoutCategoryByLimit++;
+    return { ...r, categoryKey: null };
+  });
+  return { accepted, newCategories: [...created.values()], alreadyExist, repeatedInFile, overLimit, withoutCategoryByLimit };
+}
+
+// ── Exportar ─────────────────────────────────────────────────────────────
+
+const AVAILABILITY_TEXT: Record<Availability, string> = { available: "Disponible", soldout: "Agotado", onrequest: "Sobre pedido" };
+
+export interface ExportItem {
+  name: string;
+  description: string;
+  price: number | null;
+  category: string;
+  availability: Availability;
+}
+
+/** Evita que Excel ejecute como fórmula un texto que empieza con = + - @. */
+const guard = (v: string) => (/^[=+\-@]/.test(v) ? `'${v}` : v);
+
+export function exportRows(items: ExportItem[]): string[][] {
+  return [
+    [...IMPORT_HEADERS],
+    ...items.map((i) => [guard(i.name), guard(i.description), centsToInput(i.price), guard(i.category), AVAILABILITY_TEXT[i.availability]]),
+  ];
+}
+
+export function toCsv(rows: string[][]): string {
+  const esc = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  // BOM para que Excel abra los acentos bien.
+  return "﻿" + rows.map((r) => r.map(esc).join(",")).join("\r\n") + "\r\n";
+}
+
+export const TEMPLATE_EXAMPLES: ExportItem[] = [
+  { name: "Pastel de chocolate", description: "Para 10 personas, con ganache.", price: 450_00, category: "Pasteles", availability: "available" },
+  { name: "Caja de galletas", description: "12 piezas surtidas.", price: 180_00, category: "Galletas", availability: "available" },
+  { name: "Mesa de postres para eventos", description: "Cotizamos según número de invitados.", price: null, category: "Eventos", availability: "onrequest" },
+];

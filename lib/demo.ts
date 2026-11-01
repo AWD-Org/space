@@ -36,6 +36,7 @@ export const demoStore: CatalogStore = {
   whatsapp: "520000000000",
   deliveryNote: "Centro, de 12 a 3",
   paymentMethods: ["efectivo", "transferencia"],
+  deliveryMethods: ["punto", "tienda"],
   accent: "#B4235A",
   logo: null,
   isOpen: true,

@@ -16,10 +16,11 @@ import { Field } from "@/components/ui/field";
 import { changeSlug, setPublished, updateStore } from "@/lib/actions/store";
 import { uploadImage } from "@/lib/client/upload";
 import { PAYMENT_LABEL, prettyWhatsapp } from "@/lib/format";
+import { DEFAULT_DELIVERY, DELIVERY_INFO, DELIVERY_ORDER } from "@/lib/delivery";
 import { settingsFormSchema, type SettingsFormValues } from "@/lib/validators";
 import { slugify, slugifyInput } from "@/lib/slug";
 import { ColorPicker } from "./color-picker";
-import type { PaymentMethod, Store } from "@/lib/types";
+import type { DeliveryMethod, PaymentMethod, Store } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Panel } from "./shell";
 
@@ -35,6 +36,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
       whatsapp: prettyWhatsapp(store.whatsapp),
       deliveryNote: store.deliveryNote,
       paymentMethods: [...store.paymentMethods],
+      deliveryMethods: [...(store.deliveryMethods ?? DEFAULT_DELIVERY)],
       accent: store.accent,
     }),
     [store]
@@ -52,11 +54,12 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
   const tagline = watch("tagline");
   const deliveryNote = watch("deliveryNote");
   const payments = watch("paymentMethods");
+  const deliveries = watch("deliveryMethods");
   const accent = watch("accent");
 
   const save = handleSubmit(
     async (v) => {
-      const res = await safe(() => updateStore({ ...v, paymentMethods: v.paymentMethods }));
+      const res = await safe(() => updateStore({ ...v }));
       if (!res.ok) return toast.error(res.error);
       reset(v);
       toast.success("Tu tienda quedó actualizada.");
@@ -146,7 +149,31 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
             <Field label="WhatsApp para pedidos" htmlFor="s-wa" error={errors.whatsapp?.message} hint="10 dígitos, sin espacios. Ahí te llegan los pedidos.">
               <Controller control={control} name="whatsapp" render={({ field }) => <PhoneInput id="s-wa" ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={!!errors.whatsapp} />} />
             </Field>
-            <Field label="Dónde y cuándo entregas" htmlFor="s-del" counter={`${deliveryNote.length}/160`} error={errors.deliveryNote?.message}>
+            <div>
+              <p className="mb-2 text-sm font-medium text-ink">Cómo entregas</p>
+              <div className="flex flex-wrap gap-2">
+                {DELIVERY_ORDER.map((m: DeliveryMethod) => {
+                  const on = deliveries.includes(m);
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setValue("deliveryMethods", on ? deliveries.filter((x) => x !== m) : DELIVERY_ORDER.filter((x) => x === m || deliveries.includes(x)), { shouldDirty: true })}
+                      className={cn("rounded-full px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors", on ? "bg-ink text-white ring-ink" : "bg-white text-ink ring-border hover:bg-cloud")}
+                    >
+                      {DELIVERY_INFO[m].label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {store.deliveryMethods === undefined
+                  ? "Todavía no eliges: tus clientes ven un campo libre para escribir dónde recogen. Guarda para que puedan elegir entre estas opciones."
+                  : "Tus clientes eligen una de estas al hacer el pedido. Si quitas todas, no se les pregunta."}
+              </p>
+            </div>
+            <Field label="Dónde y cuándo entregas" htmlFor="s-del" counter={`${deliveryNote.length}/160`} error={errors.deliveryNote?.message} hint="Se muestra en tu catálogo. Ej. punto de encuentro y horarios.">
               <Input id="s-del" {...register("deliveryNote")} aria-invalid={!!errors.deliveryNote} maxLength={160} autoCapitalize="sentences" enterKeyHint="next" placeholder="Ej. Entrego en el centro, de 12 a 3" />
             </Field>
             <div>
@@ -167,7 +194,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
                   );
                 })}
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">Solo es informativo. El cobro lo acuerdas tú por WhatsApp.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Tus clientes eligen una al hacer el pedido. El cobro lo acuerdas tú por WhatsApp.</p>
             </div>
           </div>
         </Panel>
