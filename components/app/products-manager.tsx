@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Copy, Eye, EyeOff, FileSpreadsheet, GripVertical, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2, X } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Minus, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { toast } from "sonner";
 import { safe } from "@/lib/client/safe-action";
@@ -24,7 +24,6 @@ import { ImportSheet } from "./import-sheet";
 function Row({
   product,
   category,
-  selecting,
   selected,
   onToggle,
   onAvailability,
@@ -35,7 +34,6 @@ function Row({
 }: {
   product: Product;
   category?: string;
-  selecting: boolean;
   selected: boolean;
   onToggle: () => void;
   onAvailability: (a: Availability) => void;
@@ -45,7 +43,7 @@ function Row({
   duplicating: boolean;
 }) {
   const router = useRouter();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id, disabled: selecting });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id });
   const soldOut = product.availability === "soldout";
   const body = (
     <>
@@ -71,29 +69,16 @@ function Row({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-center gap-2 bg-white py-3 pr-1 sm:gap-3 sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]")}
+      className={cn("flex items-center gap-1 bg-white py-3 pr-1 transition-colors sm:gap-2 sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]")}
     >
-      {selecting ? (
-        <button type="button" role="checkbox" aria-checked={selected} aria-label={`Elegir ${product.name}`} onClick={onToggle} className="grid h-11 w-11 shrink-0 place-items-center">
-          <span className={cn("grid h-6 w-6 place-items-center rounded-md ring-1 ring-inset transition-colors", selected ? "bg-primary text-white ring-primary" : "bg-white ring-border")}>
-            {selected && <Check className="h-4 w-4" aria-hidden />}
-          </span>
-        </button>
-      ) : (
-        <button type="button" className="touch-none cursor-grab px-1 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
-          <GripVertical className="h-5 w-5" />
-        </button>
-      )}
-      {selecting ? (
-        <button type="button" onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-          {body}
-        </button>
-      ) : (
-        <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-          {body}
-        </Link>
-      )}
-      {!selecting && (
+      <CheckBox checked={selected} onChange={onToggle} label={`Elegir ${product.name}`} />
+      <button type="button" className="touch-none cursor-grab px-0.5 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
+        <GripVertical className="h-5 w-5" />
+      </button>
+      <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+        {body}
+      </Link>
+      {(
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`Acciones de ${product.name}`}
@@ -132,7 +117,6 @@ export function ProductsManager({ products: initial, categories, limit, category
   const [products, setProducts] = React.useState(initial);
   const [catsOpen, setCatsOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
-  const [selecting, setSelecting] = React.useState(false);
   const [picked, setPicked] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
@@ -206,8 +190,7 @@ export function ProductsManager({ products: initial, categories, limit, category
       return next;
     });
   }
-  function stopSelecting() {
-    setSelecting(false);
+  function clearPicked() {
     setPicked(new Set());
   }
 
@@ -220,7 +203,7 @@ export function ProductsManager({ products: initial, categories, limit, category
     if (!res.ok) return toast.error(res.error);
     toast.success(done.replace("{n}", String(res.data!.count)));
     if (op.type === "delete") setProducts((ps) => ps.filter((p) => !picked.has(p.id)));
-    stopSelecting();
+    clearPicked();
     router.refresh();
   }
 
@@ -237,12 +220,6 @@ export function ProductsManager({ products: initial, categories, limit, category
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {products.length > 0 && (
-            <Button variant="secondary" onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
-              {selecting ? <X /> : <Check />}
-              {selecting ? "Cancelar" : "Seleccionar"}
-            </Button>
-          )}
           <Button variant="secondary" onClick={() => setImportOpen(true)}>
             <FileSpreadsheet />
             Importar
@@ -272,25 +249,11 @@ export function ProductsManager({ products: initial, categories, limit, category
         </p>
       )}
 
-      {products.length > 1 && !selecting && (
+      {products.length > 1 && (
         <p className="mb-3 flex items-center gap-1.5 text-[0.8rem] text-muted-foreground">
           <GripVertical className="h-3.5 w-3.5" aria-hidden />
           Arrastra los productos para cambiar el orden en que se ven en tu catálogo.
         </p>
-      )}
-      {selecting && (
-        <div className="mb-3 flex items-center justify-between gap-3 text-sm">
-          <p className="tabular-nums text-muted-foreground" aria-live="polite">
-            {picked.size === 0 ? "Toca los productos que quieras cambiar." : `${picked.size} ${picked.size === 1 ? "elegido" : "elegidos"}`}
-          </p>
-          <button
-            type="button"
-            className="font-medium text-primary hover:underline"
-            onClick={() => setPicked(picked.size === products.length ? new Set() : new Set(products.map((p) => p.id)))}
-          >
-            {picked.size === products.length ? "Quitar todos" : "Elegir todos"}
-          </button>
-        </div>
       )}
 
       {products.length === 0 ? (
@@ -306,6 +269,59 @@ export function ProductsManager({ products: initial, categories, limit, category
         </div>
       ) : (
         <div className="rounded-2xl bg-white px-2 ring-1 ring-ink/5 sm:px-3">
+          <div className="flex h-14 items-center gap-2 border-b border-ink/5 pr-1 sm:gap-3 sm:pr-2">
+            <CheckBox
+              checked={picked.size === products.length ? true : picked.size > 0 ? "mixed" : false}
+              onChange={() => setPicked(picked.size === products.length ? new Set() : new Set(products.map((p) => p.id)))}
+              label="Seleccionar todos los productos"
+            />
+            <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground" aria-live="polite">
+              {picked.size === 0 ? "Seleccionar todo" : <span className="font-medium text-ink">{picked.size} {picked.size === 1 ? "seleccionado" : "seleccionados"}</span>}
+            </p>
+            {picked.size > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="sm" disabled={bulkBusy} className="motion-rise">
+                    Acciones
+                    <ChevronDown />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "soldout" }, "{n} marcados como agotados.")}>
+                    <PackageX /> Marcar como agotado
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "available" }, "{n} disponibles otra vez.")}>
+                    <PackageCheck /> Volver a disponible
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: false }, "{n} ocultos.")}>
+                    <EyeOff /> Ocultar del catálogo
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: true }, "{n} visibles.")}>
+                    <Eye /> Mostrar en el catálogo
+                  </DropdownMenuItem>
+                  {categories.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <FolderInput /> Mover a categoría
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onSelect={() => bulk({ type: "category", categoryId: null }, "Categoría cambiada en {n}.")}>Sin categoría</DropdownMenuItem>
+                        {categories.map((c) => (
+                          <DropdownMenuItem key={c.id} onSelect={() => bulk({ type: "category", categoryId: c.id }, "Categoría cambiada en {n}.")}>
+                            {c.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem danger onSelect={() => setConfirmDelete(true)}>
+                    <Trash2 /> Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
               <ul className="divide-y divide-ink/5">
@@ -314,7 +330,6 @@ export function ProductsManager({ products: initial, categories, limit, category
                     key={p.id}
                     product={p}
                     category={p.categoryId ? catName.get(p.categoryId) : undefined}
-                    selecting={selecting}
                     selected={picked.has(p.id)}
                     onToggle={() => toggle(p.id)}
                     onAvailability={(a) => changeAvailability(p.id, a)}
@@ -331,49 +346,6 @@ export function ProductsManager({ products: initial, categories, limit, category
       )}
 
 
-      {selecting && picked.size > 0 && (
-        <div className="fixed inset-x-0 bottom-[6rem] z-40 px-3 lg:bottom-5 lg:left-auto lg:right-6 lg:px-0" role="toolbar" aria-label="Acciones para los productos elegidos">
-          <div className="mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-2xl bg-ink p-2.5 text-white shadow-xl lg:max-w-2xl">
-            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "availability", value: "soldout" }, "{n} marcados como agotados.")}>
-              <PackageX className="h-4 w-4" aria-hidden /> Agotado
-            </BarButton>
-            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "availability", value: "available" }, "{n} disponibles otra vez.")}>
-              <PackageCheck className="h-4 w-4" aria-hidden /> Disponible
-            </BarButton>
-            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "visible", value: false }, "{n} ocultos.")}>
-              <EyeOff className="h-4 w-4" aria-hidden /> Ocultar
-            </BarButton>
-            <BarButton disabled={bulkBusy} onClick={() => bulk({ type: "visible", value: true }, "{n} visibles.")}>
-              <Eye className="h-4 w-4" aria-hidden /> Mostrar
-            </BarButton>
-            {categories.length > 0 && (
-              <Select
-                variant="pill"
-                wrapperClassName="shrink-0"
-                aria-label="Cambiar categoría"
-                value=""
-                disabled={bulkBusy}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v) void bulk({ type: "category", categoryId: v === "__none" ? null : v }, "Categoría cambiada en {n}.");
-                }}
-                className="h-9 bg-white/10 text-white ring-white/20"
-              >
-                <option value="">Mover a categoría…</option>
-                <option value="__none">Sin categoría</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id} className="text-ink">
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-            <BarButton disabled={bulkBusy} onClick={() => setConfirmDelete(true)} danger>
-              <Trash2 className="h-4 w-4" aria-hidden /> Eliminar
-            </BarButton>
-          </div>
-        </div>
-      )}
       <ConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
@@ -397,18 +369,18 @@ export function ProductsManager({ products: initial, categories, limit, category
   );
 }
 
-function BarButton({ children, onClick, disabled, danger }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean }) {
+function CheckBox({ checked, onChange, label }: { checked: boolean | "mixed"; onChange: () => void; label: string }) {
+  const on = checked === true || checked === "mixed";
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors disabled:opacity-50",
-        danger ? "bg-[#B42318] text-white hover:bg-[#9A1D14]" : "bg-white/10 text-white hover:bg-white/20"
-      )}
-    >
-      {children}
+    <button type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onChange} className="group grid h-11 w-10 shrink-0 place-items-center rounded-full outline-none sm:w-11">
+      <span
+        className={cn(
+          "grid h-[1.4rem] w-[1.4rem] place-items-center rounded-md ring-1 ring-inset transition-[background-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-active:scale-90 group-focus-visible:ring-2 group-focus-visible:ring-primary",
+          on ? "bg-primary text-white ring-primary" : "bg-white ring-border group-hover:ring-slate"
+        )}
+      >
+        {checked === "mixed" ? <Minus className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : checked ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : null}
+      </span>
     </button>
   );
 }
