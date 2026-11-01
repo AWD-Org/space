@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
 import { getLimits, getStore, listCategories, listProducts } from "@/lib/data/queries";
 import { rateLimited } from "@/lib/rate-limit";
-import { decodeText, MAX_IMPORT_BYTES, parseCsv, parseTable, planImport } from "@/lib/catalog-io";
+import { decodeText, MAX_IMPORT_BYTES, MAX_XLSX_UNZIPPED_BYTES, parseCsv, parseTable, planImport, zipUncompressedSize } from "@/lib/catalog-io";
 
 export const runtime = "nodejs";
 
@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
     if (ext === "xlsx") {
       // Los .xlsx son un zip que empieza con "PK". Si no, no es un Excel de verdad.
       if (bytes.length < 4 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new Error("not-xlsx");
+      const unzipped = zipUncompressedSize(bytes);
+      if (unzipped === null || unzipped > MAX_XLSX_UNZIPPED_BYTES) throw new Error("zip-size");
       const { readSheet } = await import("read-excel-file/node");
       table = (await readSheet(bytes)) as unknown[][];
     } else if (ext === "csv" || ext === "txt") {

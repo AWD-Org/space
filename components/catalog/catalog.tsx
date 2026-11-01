@@ -8,6 +8,7 @@ import { ArrowUpDown, Check, MapPin, MessageCircle, Search, Share2, ShoppingBag,
 import { formatPrice, PAYMENT_LABEL, storeInitials } from "@/lib/format";
 import { bagTotal } from "@/lib/whatsapp";
 import type { Category, Product, Store } from "@/lib/types";
+import { validDelivery } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { BagProvider, useBag } from "./bag";
 import { ProductCard } from "./product-card";
@@ -492,7 +493,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         storeName={store.name}
         whatsapp={store.whatsapp}
         deliveryNote={store.deliveryNote}
-        deliveryMethods={store.deliveryMethods}
+        deliveryMethods={validDelivery(store.deliveryMethods)}
         paymentMethods={store.paymentMethods}
         onSend={() => shouldTrack && track(store.id, "order")}
       />}

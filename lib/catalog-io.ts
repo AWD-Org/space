@@ -6,6 +6,30 @@ import type { Availability } from "./types";
 export const IMPORT_HEADERS = ["Nombre", "Descripción", "Precio", "Categoría", "Disponibilidad"] as const;
 export const MAX_IMPORT_ROWS = 500;
 export const MAX_IMPORT_BYTES = 1_000_000;
+/** Un .xlsx es un zip: se revisa cuánto pesaría descomprimido antes de abrirlo, para que un archivo pequeño no llene la memoria. */
+export const MAX_XLSX_UNZIPPED_BYTES = 20_000_000;
+
+/** Suma el tamaño descomprimido declarado en el directorio central del zip. null si no parece un zip válido. */
+export function zipUncompressedSize(buf: Uint8Array): number | null {
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 65_535); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) return null;
+  const entries = view.getUint16(eocd + 10, true);
+  let offset = view.getUint32(eocd + 16, true);
+  let total = 0;
+  for (let n = 0; n < entries; n++) {
+    if (offset + 46 > buf.length || view.getUint32(offset, true) !== 0x02014b50) return null;
+    total += view.getUint32(offset + 24, true);
+    offset += 46 + view.getUint16(offset + 28, true) + view.getUint16(offset + 30, true) + view.getUint16(offset + 32, true);
+  }
+  return total;
+}
 
 export interface ParsedRow {
   /** Número de fila en el archivo (la 1 es el encabezado). */

@@ -1,6 +1,6 @@
 export type Availability = "available" | "soldout" | "onrequest";
 export type PaymentMethod = "efectivo" | "transferencia" | "tarjeta";
-export type DeliveryMethod = "punto" | "domicilio" | "tienda" | "paqueteria";
+export type DeliveryMethod = "punto" | "domicilio" | "tienda";
 
 export interface ImageRef {
   path: string;

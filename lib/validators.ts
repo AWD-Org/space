@@ -39,7 +39,10 @@ export const updateStoreSchema = z
     whatsapp: whatsappSchema,
     deliveryNote: z.string().trim().max(160, "Máximo 160 caracteres."),
     paymentMethods: z.array(z.enum(["efectivo", "transferencia", "tarjeta"])).max(3),
-    deliveryMethods: z.array(z.enum(["punto", "domicilio", "tienda", "paqueteria"])).max(4),
+    deliveryMethods: z
+      .array(z.enum(["punto", "domicilio", "tienda"]))
+      .max(3)
+      .transform((a) => [...new Set(a)]),
     accent: accentSchema,
     isOpen: z.boolean(),
   })
@@ -115,7 +118,7 @@ export const settingsFormSchema = z.object({
   whatsapp: phoneFieldSchema,
   deliveryNote: z.string().trim().max(160, "Máximo 160 caracteres."),
   paymentMethods: z.array(z.enum(["efectivo", "transferencia", "tarjeta"])),
-  deliveryMethods: z.array(z.enum(["punto", "domicilio", "tienda", "paqueteria"])),
+  deliveryMethods: z.array(z.enum(["punto", "domicilio", "tienda"])),
   accent: z.string().refine((v) => normalizeHex(v) !== null, "Ese color no es válido."),
 });
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;

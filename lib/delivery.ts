@@ -31,16 +31,14 @@ export const DELIVERY_INFO: Record<DeliveryMethod, DeliveryInfo> = {
     placeholder: "",
     hint: "La persona pasa por el pedido a tu local.",
   },
-  paqueteria: {
-    label: "Envío por paquetería",
-    detail: "address",
-    detailLabel: "Dirección de envío",
-    placeholder: "Calle, número, colonia, ciudad y código postal",
-    hint: "Lo mandas con una paquetería a otra ciudad.",
-  },
 };
 
-export const DELIVERY_ORDER: DeliveryMethod[] = ["punto", "domicilio", "tienda", "paqueteria"];
+export const DELIVERY_ORDER: DeliveryMethod[] = ["punto", "domicilio", "tienda"];
 
-/** Con lo que nace una tienda nueva. La paquetería se activa a propósito. */
+/** Con lo que nace una tienda nueva. */
 export const DEFAULT_DELIVERY: DeliveryMethod[] = ["punto", "domicilio", "tienda"];
+
+/** Deja solo formas de entrega que existen (por si quedó guardada una que ya no está). */
+export function validDelivery(list: string[] | undefined): DeliveryMethod[] | undefined {
+  return list?.filter((m): m is DeliveryMethod => m in DELIVERY_INFO);
+}

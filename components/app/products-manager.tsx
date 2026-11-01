@@ -233,7 +233,7 @@ export function ProductsManager({ products: initial, categories, limit, category
         <div>
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight text-ink sm:text-3xl">Productos</h1>
           <p className="mt-1 tabular-nums text-muted-foreground">
-            {products.length} de {limit} en tu plan gratis
+            {products.length} de {limit} en tu plan
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

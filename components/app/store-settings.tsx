@@ -16,7 +16,7 @@ import { Field } from "@/components/ui/field";
 import { changeSlug, setPublished, updateStore } from "@/lib/actions/store";
 import { uploadImage } from "@/lib/client/upload";
 import { PAYMENT_LABEL, prettyWhatsapp } from "@/lib/format";
-import { DEFAULT_DELIVERY, DELIVERY_INFO, DELIVERY_ORDER } from "@/lib/delivery";
+import { DEFAULT_DELIVERY, DELIVERY_INFO, DELIVERY_ORDER, validDelivery } from "@/lib/delivery";
 import { settingsFormSchema, type SettingsFormValues } from "@/lib/validators";
 import { slugify, slugifyInput } from "@/lib/slug";
 import { ColorPicker } from "./color-picker";
@@ -36,7 +36,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
       whatsapp: prettyWhatsapp(store.whatsapp),
       deliveryNote: store.deliveryNote,
       paymentMethods: [...store.paymentMethods],
-      deliveryMethods: [...(store.deliveryMethods ?? DEFAULT_DELIVERY)],
+      deliveryMethods: [...(validDelivery(store.deliveryMethods) ?? DEFAULT_DELIVERY)],
       accent: store.accent,
     }),
     [store]
