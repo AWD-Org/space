@@ -237,7 +237,7 @@ export function ProductsManager({ products: initial, categories, limit, category
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {products.length > 1 && (
+          {products.length > 0 && (
             <Button variant="secondary" onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
               {selecting ? <X /> : <Check />}
               {selecting ? "Cancelar" : "Seleccionar"}
