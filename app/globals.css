@@ -167,3 +167,22 @@ html.lenis body {
 [data-sileo-title] {
   text-transform: none !important;
 }
+
+/* Avisos con los colores del sistema de diseño de Space (html:root gana a la hoja de Sileo, que carga después). */
+html:root {
+  --sileo-state-success: #146c3b;
+  --sileo-state-error: #b42318;
+  --sileo-state-warning: #b45309;
+  --sileo-state-info: #3b55e6;
+  --sileo-state-loading: #1e1f24;
+  --sileo-state-action: #3b55e6;
+}
+[data-sileo-viewport] {
+  font-family: inherit;
+}
+[data-sileo-toast] {
+  filter: drop-shadow(0 10px 22px rgba(30, 31, 36, 0.16)) drop-shadow(0 0 0.5px rgba(30, 31, 36, 0.35));
+}
+[data-sileo-title] {
+  font-size: 0.9rem;
+}
