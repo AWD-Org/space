@@ -162,3 +162,8 @@ html.lenis body {
 
 .motion-rise { animation: motion-rise 460ms var(--ease-sheet) backwards; }
 .motion-page-in { animation: motion-page-in 420ms var(--ease-out) backwards; }
+
+/* Avisos: respetar mayúsculas y minúsculas de nuestros textos (Sileo capitaliza cada palabra por defecto). */
+[data-sileo-title] {
+  text-transform: none !important;
+}

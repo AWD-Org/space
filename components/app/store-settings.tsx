@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, Check, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -36,14 +36,12 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
       name: store.name,
       tagline: store.tagline,
       whatsapp: prettyWhatsapp(store.whatsapp),
-      deliveryNote: store.deliveryNote,
       paymentMethods: [...store.paymentMethods],
       deliveryMethods: [...(validDelivery(store.deliveryMethods) ?? DEFAULT_DELIVERY)],
       instagram: displaySocial("instagram", store.socials?.instagram),
       facebook: displaySocial("facebook", store.socials?.facebook),
       tiktok: displaySocial("tiktok", store.socials?.tiktok),
       youtube: displaySocial("youtube", store.socials?.youtube),
-      web: displaySocial("web", store.socials?.web),
       accent: store.accent,
     }),
     [store]
@@ -59,18 +57,16 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
   } = useForm<SettingsFormValues>({ resolver: zodResolver(settingsFormSchema), mode: "onTouched", defaultValues: initial });
   const name = watch("name");
   const tagline = watch("tagline");
-  const deliveryNote = watch("deliveryNote");
   const payments = watch("paymentMethods");
   const deliveries = watch("deliveryMethods");
   const accent = watch("accent");
 
   const save = handleSubmit(
     async (v) => {
-      const { instagram, facebook, tiktok, youtube, web, ...rest } = v;
-      const res = await safe(() => updateStore({ ...rest, socials: { instagram, facebook, tiktok, youtube, web } }));
-      if (!res.ok) return toast.error(res.error);
+      const { instagram, facebook, tiktok, youtube, ...rest } = v;
+      const res = await toast.task(() => safe(() => updateStore({ ...rest, socials: { instagram, facebook, tiktok, youtube } })), { loading: "Guardando cambios…", success: "Tu tienda quedó actualizada." });
+      if (!res.ok) return;
       reset(v);
-      toast.success("Tu tienda quedó actualizada.");
       router.refresh();
     },
     () => toast.warning("Revisa los campos marcados en rojo.")
@@ -81,34 +77,39 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
 
   async function saveSlug() {
     setSlugBusy(true);
-    const res = await safe(() => changeSlug(slug));
+    const res = await toast.task(() => safe(() => changeSlug(slug)), { loading: "Cambiando tu link…", success: "Tu link cambió. Comparte el nuevo." });
     setSlugBusy(false);
-    if (!res.ok) return toast.error(res.error);
+    if (!res.ok) return;
     setSlug(res.data!.slug);
-    toast.success("Tu link cambió. Comparte el nuevo.");
     router.refresh();
   }
 
   async function onLogo(file?: File) {
     if (!file) return;
     setLogoBusy(true);
-    try {
-      await uploadImage(file, "logo");
-      toast.success("Logo actualizado.");
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo subir el logo.");
-    } finally {
-      setLogoBusy(false);
-    }
+    const res = await toast.task(
+      async () => {
+        try {
+          await uploadImage(file, "logo");
+          return { ok: true as const };
+        } catch (err) {
+          return { ok: false as const, error: err instanceof Error ? err.message : "No se pudo subir el logo." };
+        }
+      },
+      { loading: "Subiendo logo…", success: "Logo actualizado." }
+    );
+    setLogoBusy(false);
+    if (res.ok) router.refresh();
   }
 
   async function togglePublished() {
     setPubBusy(true);
-    const res = await safe(() => setPublished(store.status !== "published"));
+    const res = await toast.task(() => safe(() => setPublished(store.status !== "published")), {
+      loading: store.status === "published" ? "Ocultando tu catálogo…" : "Publicando tu catálogo…",
+      success: store.status === "published" ? "Tu catálogo quedó oculto." : "Tu catálogo ya está en línea.",
+    });
     setPubBusy(false);
-    if (!res.ok) return toast.error(res.error);
-    toast.success(store.status === "published" ? "Tu catálogo quedó oculto." : "Tu catálogo ya está en línea.");
+    if (!res.ok) return;
     router.refresh();
   }
 
@@ -177,9 +178,6 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
               </div>
               <p className="mt-2 text-sm text-muted-foreground">Tus clientes eligen una de estas al hacer el pedido. Si quitas todas, no se les pregunta.</p>
             </div>
-            <Field label="Dónde y cuándo entregas" htmlFor="s-del" counter={`${deliveryNote.length}/160`} error={errors.deliveryNote?.message} hint="Se muestra en tu catálogo. Ej. punto de encuentro y horarios.">
-              <Input id="s-del" {...register("deliveryNote")} aria-invalid={!!errors.deliveryNote} maxLength={160} autoCapitalize="sentences" enterKeyHint="next" placeholder="Ej. Entrego en el centro, de 12 a 3" />
-            </Field>
             <div>
               <p className="mb-2 text-sm font-medium text-ink">Cómo te pagan</p>
               <div className="flex flex-wrap gap-2">

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Input, Textarea } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -32,7 +32,6 @@ export function BagSheet({
   onOpenChange,
   storeName,
   whatsapp,
-  deliveryNote,
   deliveryMethods = DEFAULT_DELIVERY,
   paymentMethods = [],
   onSend,
@@ -42,7 +41,6 @@ export function BagSheet({
   onOpenChange: (o: boolean) => void;
   storeName: string;
   whatsapp: string;
-  deliveryNote: string;
   deliveryMethods?: DeliveryMethod[];
   paymentMethods?: PaymentMethod[];
   onSend?: (message: string) => void;
@@ -136,7 +134,7 @@ export function BagSheet({
                   </Field>
                 )}
                 {info?.detail && (
-                  <Field label={info.detailLabel} htmlFor="bag-detail" error={errors.detail?.message} hint={chosen === "punto" && deliveryNote ? `El vendedor entrega: ${deliveryNote}` : undefined}>
+                  <Field label={info.detailLabel} htmlFor="bag-detail" error={errors.detail?.message}>
                     <Input id="bag-detail" {...register("detail")} aria-invalid={!!errors.detail} maxLength={160} autoCapitalize="sentences" enterKeyHint="next" placeholder={info.placeholder} />
                   </Field>
                 )}

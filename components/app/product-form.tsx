@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
@@ -83,7 +83,7 @@ export function ProductForm({
     setError(null);
     if (uploading) return toast.info("Espera a que terminen de subir las fotos.");
     setSaving(another ? "another" : "save");
-    const res = await safe(() => saveProduct({
+    const res = await toast.task(() => safe(() => saveProduct({
       id: product?.id,
       name: v.name,
       description: v.description,
@@ -93,10 +93,9 @@ export function ProductForm({
       visible: v.visible,
       categoryId: v.categoryId,
       images,
-    }));
+    })), { loading: "Guardando producto…", showError: false, success: product ? "Cambios guardados." : "Producto agregado a tu catálogo." });
     setSaving(null);
     if (!res.ok) return setError(res.error);
-    toast.success(product ? "Cambios guardados." : "Producto agregado a tu catálogo.");
     if (onSaved) return onSaved(res.data!.id);
     if (another) {
       router.replace("/app/productos/nuevo?otro=" + Date.now());
@@ -116,9 +115,8 @@ export function ProductForm({
 
   async function remove() {
     if (!product) return;
-    const res = await safe(() => deleteProduct(product.id));
-    if (!res.ok) return toast.error(res.error);
-    toast.success("Producto borrado.");
+    const res = await toast.task(() => safe(() => deleteProduct(product.id)), { loading: "Borrando producto…", success: "Producto borrado." });
+    if (!res.ok) return;
     router.push("/app/productos");
     router.refresh();
   }

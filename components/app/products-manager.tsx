@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Minus, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { bulkProducts, duplicateProduct, reorderProducts, setAvailability, type BulkOp } from "@/lib/actions/product";
@@ -69,7 +69,7 @@ function Row({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-center gap-1 bg-white py-3 pr-1 transition-colors sm:gap-2 sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]")}
+      className={cn("flex items-center gap-1 bg-white py-3 pr-1 transition-colors sm:gap-2 sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]", duplicating && "pointer-events-none opacity-60")}
     >
       <CheckBox checked={selected} onChange={onToggle} label={`Elegir ${product.name}`} />
       <button type="button" className="touch-none cursor-grab px-0.5 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
@@ -84,7 +84,7 @@ function Row({
             aria-label={`Acciones de ${product.name}`}
             className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-cloud hover:text-ink focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:bg-cloud"
           >
-            <MoreVertical className="h-5 w-5" aria-hidden />
+            {duplicating ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MoreVertical className="h-5 w-5" aria-hidden />}
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onSelect={() => router.push(`/app/productos/${product.id}`)}>
@@ -163,22 +163,20 @@ export function ProductsManager({ products: initial, categories, limit, category
   async function removeOne() {
     if (!toDelete) return;
     const id = toDelete.id;
-    const res = await safe(() => bulkProducts([id], { type: "delete" }));
-    if (!res.ok) {
-      toast.error(res.error);
-      return;
-    }
+    const res = await toast.task(() => safe(() => bulkProducts([id], { type: "delete" })), { loading: "Eliminando producto…", success: "Producto eliminado." });
+    if (!res.ok) return;
     setProducts((ps) => ps.filter((p) => p.id !== id));
-    toast.success("Producto eliminado.");
     router.refresh();
   }
 
   async function duplicate(id: string) {
     setDupBusy(id);
-    const res = await safe(() => duplicateProduct(id));
+    const res = await toast.task(() => safe(() => duplicateProduct(id)), {
+      loading: "Duplicando producto…",
+      success: "Copia creada. Quedó oculta hasta que la muestres.",
+    });
     setDupBusy(null);
-    if (!res.ok) return toast.error(res.error);
-    toast.success("Listo: creamos una copia oculta. Edítala y muéstrala cuando esté lista.");
+    if (!res.ok) return;
     router.push(`/app/productos/${res.data!.id}`);
   }
 
@@ -198,10 +196,12 @@ export function ProductsManager({ products: initial, categories, limit, category
     if (picked.size === 0) return;
     setBulkBusy(true);
     const ids = [...picked];
-    const res = await safe(() => bulkProducts(ids, op));
+    const res = await toast.task(() => safe(() => bulkProducts(ids, op)), {
+      loading: op.type === "delete" ? "Eliminando productos…" : "Aplicando cambios…",
+      success: (r) => done.replace("{n}", String(r.ok ? r.data!.count : 0)),
+    });
     setBulkBusy(false);
-    if (!res.ok) return toast.error(res.error);
-    toast.success(done.replace("{n}", String(res.data!.count)));
+    if (!res.ok) return;
     if (op.type === "delete") setProducts((ps) => ps.filter((p) => !picked.has(p.id)));
     clearPicked();
     router.refresh();

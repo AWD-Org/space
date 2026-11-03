@@ -20,7 +20,7 @@ export interface Store {
   /** Formas de entrega que el cliente puede elegir al pedir. Si falta (tiendas anteriores), se usan las de DEFAULT_DELIVERY. */
   deliveryMethods?: DeliveryMethod[];
   /** Redes sociales visibles en el catálogo (links https ya normalizados). */
-  socials?: Partial<Record<"instagram" | "facebook" | "tiktok" | "youtube" | "web", string>>;
+  socials?: Partial<Record<"instagram" | "facebook" | "tiktok" | "youtube", string>>;
   accent: string; // color de acento del catálogo
   logo: ImageRef | null;
   isOpen: boolean;

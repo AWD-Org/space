@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CheckCheck, MapPin, ShoppingBag } from "lucide-react";
+import { CheckCheck, ShoppingBag } from "lucide-react";
 import { BagProvider, useBag, type BagItem } from "@/components/catalog/bag";
 import { ProductCard } from "@/components/catalog/product-card";
 import { demoProducts, demoStore } from "@/lib/demo";
@@ -33,10 +33,6 @@ function MiniCatalog() {
           <span className="inline-flex items-center gap-1 rounded-full bg-[#E7F6EE] px-2 py-1 font-medium text-[#146C3B]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#1A8D4A]" aria-hidden />
             Tomando pedidos
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-cloud px-2 py-1 text-ink">
-            <MapPin className="h-3 w-3 text-slate" aria-hidden />
-            {demoStore.deliveryNote}
           </span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-x-2.5 gap-y-4">

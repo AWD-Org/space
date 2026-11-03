@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Copy, Eye, MessageCircle, QrCode } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -40,19 +40,18 @@ export function StoreStatus({ url, displayUrl, published, isOpen, canPublish }: 
 
   async function toggleOpen(v: boolean) {
     setOpen(v);
-    const res = await safe(() => updateStore({ isOpen: v }));
-    if (!res.ok) {
-      setOpen(!v);
-      toast.error(res.error);
-    } else toast.success(v ? "Tu catálogo vuelve a recibir pedidos." : "Pausaste los pedidos. El catálogo sigue visible.");
+    const res = await toast.task(() => safe(() => updateStore({ isOpen: v })), {
+      loading: v ? "Reanudando pedidos…" : "Pausando pedidos…",
+      success: v ? "Tu catálogo vuelve a recibir pedidos." : "Pausaste los pedidos. El catálogo sigue visible.",
+    });
+    if (!res.ok) setOpen(!v);
   }
 
   async function publish() {
     setBusy(true);
-    const res = await safe(() => setPublished(true));
+    const res = await toast.task(() => safe(() => setPublished(true)), { loading: "Publicando tu catálogo…", success: "Tu catálogo ya está en línea." });
     setBusy(false);
-    if (!res.ok) return toast.error(res.error);
-    toast.success("Tu catálogo ya está en línea.");
+    if (!res.ok) return;
     router.refresh();
   }
 

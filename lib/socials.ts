@@ -1,8 +1,8 @@
 /** Redes sociales que una tienda puede mostrar en su catálogo. */
-export type SocialKey = "instagram" | "facebook" | "tiktok" | "youtube" | "web";
+export type SocialKey = "instagram" | "facebook" | "tiktok" | "youtube";
 export type Socials = Partial<Record<SocialKey, string>>;
 
-export const SOCIAL_ORDER: SocialKey[] = ["instagram", "facebook", "tiktok", "youtube", "web"];
+export const SOCIAL_ORDER: SocialKey[] = ["instagram", "facebook", "tiktok", "youtube"];
 
 interface SocialInfo {
   label: string;
@@ -19,7 +19,6 @@ export const SOCIAL_INFO: Record<SocialKey, SocialInfo> = {
   facebook: { label: "Facebook", placeholder: "tupagina o link de tu página", hosts: ["facebook.com", "fb.com", "fb.me"], fromHandle: (h) => `https://www.facebook.com/${h}`, handlePattern: /^[A-Za-z0-9.]{3,50}$/ },
   tiktok: { label: "TikTok", placeholder: "@tuusuario", hosts: ["tiktok.com"], fromHandle: (h) => `https://www.tiktok.com/@${h}`, handlePattern: /^[A-Za-z0-9._]{2,24}$/ },
   youtube: { label: "YouTube", placeholder: "@tucanal o link de tu canal", hosts: ["youtube.com", "youtu.be"], fromHandle: (h) => `https://www.youtube.com/@${h}`, handlePattern: /^[A-Za-z0-9._-]{3,30}$/ },
-  web: { label: "Sitio web", placeholder: "www.tusitio.com", hosts: [], fromHandle: null, handlePattern: /^$/ },
 };
 
 function hostMatches(host: string, allowed: string[]) {
@@ -63,7 +62,7 @@ export function normalizeSocial(key: SocialKey, raw: string): string | "" | null
 export function displaySocial(key: SocialKey, url: string | undefined) {
   if (!url) return "";
   const m = url.match(/^https:\/\/(?:www\.)?(?:instagram\.com\/([A-Za-z0-9._]+)\/?|tiktok\.com\/@([A-Za-z0-9._]+)\/?|youtube\.com\/@([A-Za-z0-9._-]+)\/?)$/);
-  if (m && key !== "facebook" && key !== "web") return "@" + (m[1] ?? m[2] ?? m[3]);
+  if (m && key !== "facebook") return "@" + (m[1] ?? m[2] ?? m[3]);
   return url.replace(/^https:\/\/(www\.)?/, "").replace(/\/$/, "");
 }
 

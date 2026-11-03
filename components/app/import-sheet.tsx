@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Download, FileSpreadsheet, Loader2, Upload } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { safe } from "@/lib/client/safe-action";
@@ -72,13 +72,16 @@ export function ImportSheet({ open, onOpenChange, hasProducts }: { open: boolean
   async function confirm() {
     if (!preview) return;
     setBusy("save");
-    const res = await safe(() => importProducts(preview.rows));
+    const res = await toast.task(() => safe(() => importProducts(preview.rows)), {
+      loading: "Importando tu catálogo…",
+      showError: false,
+      success: (r) => {
+        const { created, categoriesCreated } = r.ok ? r.data! : { created: 0, categoriesCreated: 0 };
+        return `Importamos ${plural(created, "producto", "productos")}${categoriesCreated ? ` y creamos ${plural(categoriesCreated, "categoría", "categorías")}` : ""}.`;
+      },
+    });
     setBusy(null);
     if (!res.ok) return setError(res.error);
-    const { created, categoriesCreated } = res.data!;
-    toast.success(
-      `Importamos ${plural(created, "producto", "productos")}${categoriesCreated ? ` y creamos ${plural(categoriesCreated, "categoría", "categorías")}` : ""}.`
-    );
     onOpenChange(false);
     router.refresh();
   }

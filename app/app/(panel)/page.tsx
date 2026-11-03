@@ -52,7 +52,6 @@ export default async function HomePage() {
   const checklist = [
     { done: productCount > 0, label: "Sube tu primer producto", href: "/app/productos/nuevo" },
     { done: Boolean(store.logo), label: "Pon tu logo o una foto tuya", href: "/app/tienda" },
-    { done: Boolean(store.deliveryNote), label: "Di dónde y cuándo entregas", href: "/app/tienda" },
     { done: productCount >= 5, label: "Llega a 5 productos", href: "/app/productos/nuevo" },
     { done: store.status === "published", label: "Publica tu catálogo", href: "/app" },
   ];

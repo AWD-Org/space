@@ -3,7 +3,7 @@
 import * as React from "react";
 import QRCode from "qrcode";
 import { Download, Printer } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { WhatsAppGlyph } from "@/components/catalog/bag-sheet";
 import { CopyLink } from "./store-status";

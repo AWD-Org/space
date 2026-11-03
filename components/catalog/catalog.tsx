@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowUpDown, Check, MapPin, MessageCircle, Search, Share2, ShoppingBag, Wallet, X } from "lucide-react";
+import { ArrowUpDown, Check, MessageCircle, Search, Share2, ShoppingBag, Wallet, X } from "lucide-react";
 import { formatPrice, isNewProduct, PAYMENT_LABEL, storeInitials } from "@/lib/format";
 import { bagTotal } from "@/lib/whatsapp";
 import type { Category, Product, Store } from "@/lib/types";
@@ -23,7 +23,7 @@ const BagSheet = dynamic(() => import("./bag-sheet").then((m) => m.BagSheet), { 
 
 export type CatalogStore = Pick<
   Store,
-  "id" | "name" | "slug" | "tagline" | "whatsapp" | "deliveryNote" | "paymentMethods" | "deliveryMethods" | "accent" | "logo" | "isOpen" | "socials"
+  "id" | "name" | "slug" | "tagline" | "whatsapp" | "paymentMethods" | "deliveryMethods" | "accent" | "logo" | "isOpen" | "socials"
 >;
 
 interface CatalogProps {
@@ -150,6 +150,9 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
     const hay = `${p.name} ${p.description}`.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     return hay.includes(normalized);
   };
+  // "Novedades" solo tiene sentido si hay algo nuevo y no es todo el catálogo (p. ej. una tienda recién importada).
+  const newCount = products.filter((p) => isNewProduct(p.createdAt, now)).length;
+  const hasNew = newCount > 0 && newCount < products.length;
   const visible = products.filter((p) => matches(p));
   // Lo agotado va al final
   const priceOf = (p: Product, empty: number) => (typeof p.price === "number" ? p.price : empty);
@@ -158,15 +161,19 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
     if (sold) return sold;
     if (sort === "asc") return priceOf(a, Infinity) - priceOf(b, Infinity);
     if (sort === "desc") return priceOf(b, -Infinity) - priceOf(a, -Infinity);
+    // Orden por defecto: lo nuevo primero (lo más reciente arriba); el resto conserva el orden del dueño.
+    if (hasNew) {
+      const na = isNewProduct(a.createdAt, now);
+      const nb = isNewProduct(b.createdAt, now);
+      if (na !== nb) return na ? -1 : 1;
+      if (na && nb) return b.createdAt - a.createdAt;
+    }
     return 0;
   });
   const countFor = (id: string | null) => products.filter((p) => (id === null ? true : id === "__none" ? !p.categoryId : p.categoryId === id) && matches(p, "cats")).length;
   const categoryOptions = [...usedCategories.map((c) => ({ id: c.id, label: c.name })), ...(hasUncategorized ? [{ id: "__none", label: "Otros" }] : [])].map((o) => ({ ...o, count: countFor(o.id) }));
   const pricedCount = products.filter((p) => typeof p.price === "number").length;
   const hasSoldOut = products.some((p) => p.availability === "soldout");
-  // "Novedades" solo tiene sentido si hay algo nuevo y no es todo el catálogo (p. ej. una tienda recién importada).
-  const newCount = products.filter((p) => isNewProduct(p.createdAt, now)).length;
-  const hasNew = newCount > 0 && newCount < products.length;
   const showSidebar = categoryOptions.length > 0 || hasSoldOut || hasNew || pricedCount > 1;
   const filtering = Boolean(normalized) || cats.length > 0 || onlyAvailable || onlyNew || minPrice !== "" || maxPrice !== "";
   function clearFilters() {
@@ -251,12 +258,6 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
               <span className={cn("h-2 w-2 rounded-full", store.isOpen ? "bg-[#1A8D4A]" : "bg-slate")} aria-hidden />
               {store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}
             </span>
-            {store.deliveryNote && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-cloud px-3 py-1.5 text-ink">
-                <MapPin className="h-4 w-4 text-slate" aria-hidden />
-                {store.deliveryNote}
-              </span>
-            )}
             {store.paymentMethods.length > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-cloud px-3 py-1.5 text-ink">
                 <Wallet className="h-4 w-4 text-slate" aria-hidden />
@@ -293,17 +294,6 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                 <p className="font-medium text-ink">{store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}</p>
               </div>
             </li>
-            {store.deliveryNote && (
-              <li className="flex flex-1 items-center gap-3 px-4 py-3.5">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cloud">
-                  <MapPin className="h-4 w-4 text-ink" aria-hidden />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">Entrega</p>
-                  <p className="font-medium leading-snug text-ink">{store.deliveryNote}</p>
-                </div>
-              </li>
-            )}
             {store.paymentMethods.length > 0 && (
               <li className="flex flex-1 items-center gap-3 px-4 py-3.5">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cloud">
@@ -541,7 +531,6 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         onOpenChange={setBagOpen}
         storeName={store.name}
         whatsapp={store.whatsapp}
-        deliveryNote={store.deliveryNote}
         deliveryMethods={validDelivery(store.deliveryMethods)}
         paymentMethods={store.paymentMethods}
         onSend={() => shouldTrack && track(store.id, "order")}

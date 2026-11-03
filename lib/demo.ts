@@ -34,7 +34,6 @@ export const demoStore: CatalogStore = {
   slug: "antojos-de-vale",
   tagline: "Postres hechos en casa",
   whatsapp: "520000000000",
-  deliveryNote: "Centro, de 12 a 3",
   paymentMethods: ["efectivo", "transferencia"],
   deliveryMethods: ["punto", "tienda"],
   accent: "#B4235A",
