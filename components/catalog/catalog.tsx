@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUpDown, Check, MapPin, MessageCircle, Search, Share2, ShoppingBag, Wallet, X } from "lucide-react";
-import { formatPrice, PAYMENT_LABEL, storeInitials } from "@/lib/format";
+import { formatPrice, isNewProduct, PAYMENT_LABEL, storeInitials } from "@/lib/format";
 import { bagTotal } from "@/lib/whatsapp";
 import type { Category, Product, Store } from "@/lib/types";
 import { validDelivery } from "@/lib/delivery";
@@ -93,6 +93,9 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   const [query, setQuery] = React.useState("");
   const [sort, setSort] = React.useState<Sort>("default");
   const [onlyAvailable, setOnlyAvailable] = React.useState(false);
+  const [onlyNew, setOnlyNew] = React.useState(false);
+  const [now, setNow] = React.useState<number | null>(null);
+  React.useEffect(() => setNow(Date.now()), []);
   const [cats, setCats] = React.useState<string[]>([]);
   const [minPrice, setMinPrice] = React.useState("");
   const [maxPrice, setMaxPrice] = React.useState("");
@@ -132,6 +135,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   const maxCents = maxPrice ? Number(maxPrice) * 100 : null;
   const matches = (p: Product, skip?: "cats") => {
     if (onlyAvailable && p.availability === "soldout") return false;
+    if (onlyNew && !isNewProduct(p.createdAt, now)) return false;
     if (skip !== "cats" && cats.length && !cats.some((c) => (c === "__none" ? !p.categoryId : p.categoryId === c))) return false;
     if (minCents !== null || maxCents !== null) {
       if (typeof p.price !== "number") return false;
@@ -156,12 +160,16 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   const categoryOptions = [...usedCategories.map((c) => ({ id: c.id, label: c.name })), ...(hasUncategorized ? [{ id: "__none", label: "Otros" }] : [])].map((o) => ({ ...o, count: countFor(o.id) }));
   const pricedCount = products.filter((p) => typeof p.price === "number").length;
   const hasSoldOut = products.some((p) => p.availability === "soldout");
-  const showSidebar = categoryOptions.length > 0 || hasSoldOut || pricedCount > 1;
-  const filtering = Boolean(normalized) || cats.length > 0 || onlyAvailable || minPrice !== "" || maxPrice !== "";
+  // "Novedades" solo tiene sentido si hay algo nuevo y no es todo el catálogo (p. ej. una tienda recién importada).
+  const newCount = products.filter((p) => isNewProduct(p.createdAt, now)).length;
+  const hasNew = newCount > 0 && newCount < products.length;
+  const showSidebar = categoryOptions.length > 0 || hasSoldOut || hasNew || pricedCount > 1;
+  const filtering = Boolean(normalized) || cats.length > 0 || onlyAvailable || onlyNew || minPrice !== "" || maxPrice !== "";
   function clearFilters() {
     setQuery("");
     setCats([]);
     setOnlyAvailable(false);
+    setOnlyNew(false);
     setMinPrice("");
     setMaxPrice("");
   }
@@ -327,7 +335,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             )}
           </div>
 
-          {(usedCategories.length > 0 || hasSoldOut) && (
+          {(usedCategories.length > 0 || hasSoldOut || hasNew) && (
             <div className="no-scrollbar -mr-3 mt-2.5 flex gap-2 overflow-x-auto pr-3 sm:mr-0 sm:pr-0 lg:hidden" role="group" aria-label="Filtros">
               {usedCategories.length > 0 &&
                 [{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
@@ -345,6 +353,21 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                     <span className={cn("ml-1.5 tabular-nums", (c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id) ? "text-white/70" : "text-slate")}>{countFor(c.id)}</span>
                   </button>
                 ))}
+              {hasNew && (
+                <button
+                  type="button"
+                  aria-pressed={onlyNew}
+                  onClick={() => setOnlyNew((v) => !v)}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    onlyNew ? "bg-[var(--accent)] text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
+                  )}
+                >
+                  {onlyNew && <Check className="h-4 w-4" aria-hidden />}
+                  Novedades
+                  <span className={cn("tabular-nums", onlyNew ? "text-white/70" : "text-slate")}>{newCount}</span>
+                </button>
+              )}
               {hasSoldOut && (
                 <button
                   type="button"
@@ -375,6 +398,10 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
               onlyAvailable={onlyAvailable}
               onToggleAvailable={() => setOnlyAvailable((v) => !v)}
               availableCount={products.filter((p) => p.availability !== "soldout").length}
+              hasNew={hasNew}
+              onlyNew={onlyNew}
+              onToggleNew={() => setOnlyNew((v) => !v)}
+              newCount={newCount}
               showPrice={pricedCount > 1}
               min={minPrice}
               max={maxPrice}
@@ -433,7 +460,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             ) : (
               <div className={cn("grid grid-cols-2 gap-x-2.5 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10", showSidebar ? "lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6")}>
                 {visible.map((p, i) => (
-                  <ProductCard key={p.id} product={p} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
+                  <ProductCard key={p.id} product={p} isNew={hasNew && isNewProduct(p.createdAt, now)} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
                 ))}
               </div>
             )}
