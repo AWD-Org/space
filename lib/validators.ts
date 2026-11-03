@@ -3,6 +3,7 @@ import { normalizeWhatsapp, parsePriceInput } from "./format";
 import { ensureReadable, normalizeHex } from "./color";
 import { slugProblem } from "./slug";
 import { DELIVERY_INFO } from "./delivery";
+import { normalizeSocial, SOCIAL_INFO, SOCIAL_ORDER, cleanSocials } from "./socials";
 
 export const ACCENTS = [
   { value: "#3B55E6", label: "Azul Space" },
@@ -43,6 +44,14 @@ export const updateStoreSchema = z
       .array(z.enum(["punto", "domicilio", "tienda"]))
       .max(3)
       .transform((a) => [...new Set(a)]),
+    socials: z
+      .record(z.string(), z.string().max(200))
+      .superRefine((o, ctx) => {
+        for (const k of SOCIAL_ORDER) {
+          if (o[k] !== undefined && normalizeSocial(k, o[k]) === null) ctx.addIssue({ code: "custom", message: `Revisa tu ${SOCIAL_INFO[k].label}.` });
+        }
+      })
+      .transform((o) => cleanSocials(o)),
     accent: accentSchema,
     isOpen: z.boolean(),
   })
@@ -119,6 +128,11 @@ export const settingsFormSchema = z.object({
   deliveryNote: z.string().trim().max(160, "Máximo 160 caracteres."),
   paymentMethods: z.array(z.enum(["efectivo", "transferencia", "tarjeta"])),
   deliveryMethods: z.array(z.enum(["punto", "domicilio", "tienda"])),
+  instagram: z.string().trim().refine((v) => normalizeSocial("instagram", v) !== null, "Revisa tu Instagram."),
+  facebook: z.string().trim().refine((v) => normalizeSocial("facebook", v) !== null, "Revisa tu Facebook."),
+  tiktok: z.string().trim().refine((v) => normalizeSocial("tiktok", v) !== null, "Revisa tu TikTok."),
+  youtube: z.string().trim().refine((v) => normalizeSocial("youtube", v) !== null, "Revisa tu YouTube."),
+  web: z.string().trim().refine((v) => normalizeSocial("web", v) !== null, "Revisa tu sitio web."),
   accent: z.string().refine((v) => normalizeHex(v) !== null, "Ese color no es válido."),
 });
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;

@@ -12,6 +12,8 @@ import { validDelivery } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { BagProvider, useBag } from "./bag";
 import { ProductCard } from "./product-card";
+import { SocialIcon } from "./social-icon";
+import { cleanSocials, SOCIAL_INFO, SOCIAL_ORDER } from "@/lib/socials";
 import { FilterSidebar } from "./filter-sidebar";
 import dynamic from "next/dynamic";
 
@@ -21,7 +23,7 @@ const BagSheet = dynamic(() => import("./bag-sheet").then((m) => m.BagSheet), { 
 
 export type CatalogStore = Pick<
   Store,
-  "id" | "name" | "slug" | "tagline" | "whatsapp" | "deliveryNote" | "paymentMethods" | "deliveryMethods" | "accent" | "logo" | "isOpen"
+  "id" | "name" | "slug" | "tagline" | "whatsapp" | "deliveryNote" | "paymentMethods" | "deliveryMethods" | "accent" | "logo" | "isOpen" | "socials"
 >;
 
 interface CatalogProps {
@@ -108,6 +110,8 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   React.useEffect(() => { if (bagOpen) setBagLoaded(true); }, [bagOpen]);
   React.useEffect(() => { if (openId) setProductLoaded(true); }, [openId]);
 
+  const socials = cleanSocials(store.socials);
+  const socialLinks = SOCIAL_ORDER.filter((k) => socials[k]).map((k) => [k, socials[k]!] as const);
   const canOrder = store.isOpen && Boolean(store.whatsapp);
   const closedReason = store.isOpen ? "Esta tienda aún no tiene WhatsApp para pedidos." : `${store.name} no está tomando pedidos hoy. Vuelve pronto.`;
 
@@ -260,6 +264,24 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
               </span>
             )}
           </div>
+
+          {socialLinks.length > 0 && (
+            <nav aria-label={`Redes de ${store.name}`} className="mt-4 flex flex-wrap gap-2">
+              {socialLinks.map(([k, url]) => (
+                <a
+                  key={k}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  aria-label={`${SOCIAL_INFO[k].label} de ${store.name}`}
+                  title={SOCIAL_INFO[k].label}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink ring-1 ring-inset ring-ink/15 transition-[background-color,transform] duration-200 hover:bg-cloud active:scale-95"
+                >
+                  <SocialIcon name={k} className="h-5 w-5" />
+                </a>
+              ))}
+            </nav>
+          )}
 
           <ul className="mt-6 hidden overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-ink/[0.08] sm:flex sm:divide-x sm:divide-ink/[0.07]">
             <li className="flex flex-1 items-center gap-3 px-4 py-3.5">

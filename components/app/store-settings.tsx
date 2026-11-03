@@ -19,6 +19,8 @@ import { PAYMENT_LABEL, prettyWhatsapp } from "@/lib/format";
 import { DEFAULT_DELIVERY, DELIVERY_INFO, DELIVERY_ORDER, validDelivery } from "@/lib/delivery";
 import { settingsFormSchema, type SettingsFormValues } from "@/lib/validators";
 import { slugify, slugifyInput } from "@/lib/slug";
+import { displaySocial, SOCIAL_INFO, SOCIAL_ORDER } from "@/lib/socials";
+import { SocialIcon } from "@/components/catalog/social-icon";
 import { ColorPicker } from "./color-picker";
 import type { DeliveryMethod, PaymentMethod, Store } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,11 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
       deliveryNote: store.deliveryNote,
       paymentMethods: [...store.paymentMethods],
       deliveryMethods: [...(validDelivery(store.deliveryMethods) ?? DEFAULT_DELIVERY)],
+      instagram: displaySocial("instagram", store.socials?.instagram),
+      facebook: displaySocial("facebook", store.socials?.facebook),
+      tiktok: displaySocial("tiktok", store.socials?.tiktok),
+      youtube: displaySocial("youtube", store.socials?.youtube),
+      web: displaySocial("web", store.socials?.web),
       accent: store.accent,
     }),
     [store]
@@ -59,7 +66,8 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
 
   const save = handleSubmit(
     async (v) => {
-      const res = await safe(() => updateStore({ ...v }));
+      const { instagram, facebook, tiktok, youtube, web, ...rest } = v;
+      const res = await safe(() => updateStore({ ...rest, socials: { instagram, facebook, tiktok, youtube, web } }));
       if (!res.ok) return toast.error(res.error);
       reset(v);
       toast.success("Tu tienda quedó actualizada.");
@@ -192,6 +200,21 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
               </div>
               <p className="mt-2 text-sm text-muted-foreground">Tus clientes eligen una al hacer el pedido. El cobro lo acuerdas tú por WhatsApp.</p>
             </div>
+          </div>
+        </Panel>
+
+        <Panel title="Redes sociales" description="Aparecen como botones en tu catálogo para que tus clientes te encuentren. Llena solo las que uses.">
+          <div className="grid grid-cols-1 gap-4">
+            {SOCIAL_ORDER.map((k) => (
+              <Field key={k} label={SOCIAL_INFO[k].label} htmlFor={`s-${k}`} error={errors[k]?.message}>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate" aria-hidden>
+                    <SocialIcon name={k} className="h-5 w-5" />
+                  </span>
+                  <Input id={`s-${k}`} {...register(k)} aria-invalid={!!errors[k]} inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="next" maxLength={200} placeholder={SOCIAL_INFO[k].placeholder} className="pl-11" />
+                </div>
+              </Field>
+            ))}
           </div>
         </Panel>
 
