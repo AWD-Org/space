@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, Camera, Loader2, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { uploadImage } from "@/lib/client/upload";
 import type { ImageRef } from "@/lib/types";
 import { cn } from "@/lib/utils";

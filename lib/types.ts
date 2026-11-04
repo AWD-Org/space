@@ -1,5 +1,6 @@
 export type Availability = "available" | "soldout" | "onrequest";
 export type PaymentMethod = "efectivo" | "transferencia" | "tarjeta";
+export type DeliveryMethod = "punto" | "domicilio" | "tienda";
 
 export interface ImageRef {
   path: string;
@@ -16,6 +17,10 @@ export interface Store {
   whatsapp: string; // solo dígitos con lada de país, ej. 525512345678
   deliveryNote: string;
   paymentMethods: PaymentMethod[];
+  /** Formas de entrega que el cliente puede elegir al pedir. Si falta (tiendas anteriores), se usan las de DEFAULT_DELIVERY. */
+  deliveryMethods?: DeliveryMethod[];
+  /** Redes sociales visibles en el catálogo (links https ya normalizados). */
+  socials?: Partial<Record<"instagram" | "facebook" | "tiktok" | "youtube", string>>;
   accent: string; // color de acento del catálogo
   logo: ImageRef | null;
   isOpen: boolean;

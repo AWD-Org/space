@@ -29,17 +29,16 @@ export function SheetContent({
 }) {
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+      <Dialog.Overlay className="motion-overlay fixed inset-0 z-50 bg-ink/40 backdrop-blur-[3px]" />
       <Dialog.Content
         style={style}
         className={cn(
-          "fixed z-50 flex flex-col bg-white shadow-xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "fixed z-50 flex flex-col bg-white shadow-xl outline-none",
           side === "bottom" &&
-            "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-3xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:max-h-[86dvh] sm:w-[min(560px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:data-[state=open]:slide-in-from-bottom-4 sm:data-[state=closed]:slide-out-to-bottom-4",
+            "motion-sheet motion-sheet-bottom inset-x-0 bottom-0 max-h-[92dvh] rounded-t-3xl sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:max-h-[86dvh] sm:w-[min(560px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl",
           side === "right" &&
-            "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-3xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-3xl sm:data-[state=closed]:slide-out-to-right sm:data-[state=open]:slide-in-from-right",
-          side === "center" &&
-            "left-1/2 top-1/2 w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-3xl data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+            "motion-sheet motion-sheet-right inset-x-0 bottom-0 max-h-[92dvh] rounded-t-3xl sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[420px] sm:rounded-none sm:rounded-l-3xl",
+          side === "center" && "motion-sheet motion-sheet-center left-1/2 top-1/2 w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-3xl",
           className
         )}
       >

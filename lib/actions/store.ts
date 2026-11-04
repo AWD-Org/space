@@ -3,6 +3,7 @@
 import { getDb } from "@/lib/db";
 import { requireUserForAction } from "@/lib/auth/session";
 import { getLimits, getStore, listProducts, slugPath, storePath } from "@/lib/data/queries";
+import { DEFAULT_DELIVERY } from "@/lib/delivery";
 import { slugProblem, slugify } from "@/lib/slug";
 import { createStoreSchema, firstError, updateStoreSchema } from "@/lib/validators";
 import type { ActionResult, Store } from "@/lib/types";
@@ -50,7 +51,8 @@ export async function createStore(input: { name: string; slug: string; whatsapp:
         tagline: "",
         whatsapp,
         deliveryNote: "",
-        paymentMethods: ["efectivo", "transferencia"],
+        paymentMethods: ["efectivo", "transferencia", "tarjeta"],
+        deliveryMethods: DEFAULT_DELIVERY,
         accent: accent ?? "#3B55E6",
         logo: null,
         isOpen: true,

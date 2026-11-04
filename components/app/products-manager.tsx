@@ -7,59 +7,107 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { EyeOff, GripVertical, Plus, Tags } from "lucide-react";
+import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { safe } from "@/lib/client/safe-action";
 import { Button } from "@/components/ui/button";
-import { reorderProducts, setAvailability } from "@/lib/actions/product";
-import { AVAILABILITY_LABEL, formatPrice } from "@/lib/format";
+import { bulkProducts, duplicateProduct, reorderProducts, setAvailability, type BulkOp } from "@/lib/actions/product";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { formatPrice } from "@/lib/format";
 import type { Availability, Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CategoriesSheet } from "./categories-sheet";
+import { ImportSheet } from "./import-sheet";
 
-function Row({ product, category, onAvailability }: { product: Product; category?: string; onAvailability: (a: Availability) => void }) {
+function Row({
+  product,
+  category,
+  selected,
+  onToggle,
+  onAvailability,
+  onVisible,
+  onDuplicate,
+  onDelete,
+  duplicating,
+}: {
+  product: Product;
+  category?: string;
+  selected: boolean;
+  onToggle: () => void;
+  onAvailability: (a: Availability) => void;
+  onVisible: (v: boolean) => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  duplicating: boolean;
+}) {
+  const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id });
+  const soldOut = product.availability === "soldout";
+  const body = (
+    <>
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
+        {product.images[0] && <Image src={product.images[0].url} alt="" fill sizes="56px" className={cn("object-cover", soldOut && "opacity-60")} />}
+      </div>
+      <div className="min-w-0">
+        <p className="line-clamp-2 font-medium leading-snug text-ink">{product.name}</p>
+        <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
+          <span className="tabular-nums">{formatPrice(product.price, product.priceFrom)}</span>
+          {category && <span>· {category}</span>}
+          {soldOut && <span className="font-medium text-[#9A3412]">· Agotado</span>}
+          {!product.visible && (
+            <span className="inline-flex items-center gap-1">
+              · <EyeOff className="h-3.5 w-3.5" aria-hidden /> Oculto
+            </span>
+          )}
+        </p>
+      </div>
+    </>
+  );
   return (
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-center gap-3 bg-white py-3 pr-3", isDragging && "relative z-10 rounded-xl shadow-lg")}
+      className={cn("flex items-center gap-1 bg-white py-3 pr-1 transition-colors sm:gap-2 sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]", duplicating && "pointer-events-none opacity-60")}
     >
-      <button type="button" className="touch-none cursor-grab px-1 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
+      <CheckBox checked={selected} onChange={onToggle} label={`Elegir ${product.name}`} />
+      <button type="button" className="touch-none cursor-grab px-0.5 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
         <GripVertical className="h-5 w-5" />
       </button>
       <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
-          {product.images[0] && <Image src={product.images[0].url} alt="" fill sizes="56px" className="object-cover" />}
-        </div>
-        <div className="min-w-0">
-          <p className="line-clamp-2 font-medium leading-snug text-ink">{product.name}</p>
-          <p className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-            <span className="tabular-nums">{formatPrice(product.price, product.priceFrom)}</span>
-            {category && <span>· {category}</span>}
-            {!product.visible && (
-              <span className="inline-flex items-center gap-1">
-                · <EyeOff className="h-3.5 w-3.5" aria-hidden /> Oculto
-              </span>
-            )}
-          </p>
-        </div>
+        {body}
       </Link>
-      <Select
-        variant="pill"
-        wrapperClassName="shrink-0"
-        value={product.availability}
-        onChange={(e) => onAvailability(e.target.value as Availability)}
-        aria-label={`Disponibilidad de ${product.name}`}
-        className={cn("w-[7.4rem] pl-3 pr-8 text-[0.8rem] sm:w-auto sm:pl-4 sm:pr-10 sm:text-sm", product.availability === "soldout" && "text-[#9A3412]")}
-      >
-        {(Object.keys(AVAILABILITY_LABEL) as Availability[]).map((a) => (
-          <option key={a} value={a}>
-            {AVAILABILITY_LABEL[a]}
-          </option>
-        ))}
-      </Select>
+      {(
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`Acciones de ${product.name}`}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-cloud hover:text-ink focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:bg-cloud"
+          >
+            {duplicating ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MoreVertical className="h-5 w-5" aria-hidden />}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => router.push(`/app/productos/${product.id}`)}>
+              <Pencil /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onAvailability(soldOut ? "available" : "soldout")}>
+              {soldOut ? <PackageCheck /> : <PackageX />}
+              {soldOut ? "Volver a disponible" : "Marcar como agotado"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onVisible(!product.visible)}>
+              {product.visible ? <EyeOff /> : <Eye />}
+              {product.visible ? "Ocultar del catálogo" : "Mostrar en el catálogo"}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={duplicating} onSelect={onDuplicate}>
+              <Copy /> Duplicar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem danger onSelect={onDelete}>
+              <Trash2 /> Eliminar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </li>
   );
 }
@@ -68,6 +116,12 @@ export function ProductsManager({ products: initial, categories, limit, category
   const router = useRouter();
   const [products, setProducts] = React.useState(initial);
   const [catsOpen, setCatsOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
+  const [picked, setPicked] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [toDelete, setToDelete] = React.useState<Product | null>(null);
+  const [dupBusy, setDupBusy] = React.useState<string | null>(null);
   React.useEffect(() => setProducts(initial), [initial]);
 
   const sensors = useSensors(
@@ -95,6 +149,64 @@ export function ProductsManager({ products: initial, categories, limit, category
     }
   }
 
+  async function changeVisible(id: string, visible: boolean) {
+    setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, visible } : p)));
+    const res = await safe(() => bulkProducts([id], { type: "visible", value: visible }));
+    if (!res.ok) {
+      toast.error(res.error);
+      router.refresh();
+      return;
+    }
+    toast.success(visible ? "Ya se ve en tu catálogo." : "Quedó oculto de tu catálogo.");
+  }
+
+  async function removeOne() {
+    if (!toDelete) return;
+    const id = toDelete.id;
+    const res = await toast.task(() => safe(() => bulkProducts([id], { type: "delete" })), { loading: "Eliminando producto…", success: "Producto eliminado." });
+    if (!res.ok) return;
+    setProducts((ps) => ps.filter((p) => p.id !== id));
+    router.refresh();
+  }
+
+  async function duplicate(id: string) {
+    setDupBusy(id);
+    const res = await toast.task(() => safe(() => duplicateProduct(id)), {
+      loading: "Duplicando producto…",
+      success: "Copia creada. Quedó oculta hasta que la muestres.",
+    });
+    setDupBusy(null);
+    if (!res.ok) return;
+    router.push(`/app/productos/${res.data!.id}`);
+  }
+
+  function toggle(id: string) {
+    setPicked((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function clearPicked() {
+    setPicked(new Set());
+  }
+
+  async function bulk(op: BulkOp, done: string) {
+    if (picked.size === 0) return;
+    setBulkBusy(true);
+    const ids = [...picked];
+    const res = await toast.task(() => safe(() => bulkProducts(ids, op)), {
+      loading: op.type === "delete" ? "Eliminando productos…" : "Aplicando cambios…",
+      success: (r) => done.replace("{n}", String(r.ok ? r.data!.count : 0)),
+    });
+    setBulkBusy(false);
+    if (!res.ok) return;
+    if (op.type === "delete") setProducts((ps) => ps.filter((p) => !picked.has(p.id)));
+    clearPicked();
+    router.refresh();
+  }
+
   const atLimit = products.length >= limit;
   const catName = new Map(categories.map((c) => [c.id, c.name]));
 
@@ -104,10 +216,14 @@ export function ProductsManager({ products: initial, categories, limit, category
         <div>
           <h1 className="font-display text-[1.75rem] font-semibold leading-tight text-ink sm:text-3xl">Productos</h1>
           <p className="mt-1 tabular-nums text-muted-foreground">
-            {products.length} de {limit} en tu plan gratis
+            {products.length} de {limit} en tu plan
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setImportOpen(true)}>
+            <FileSpreadsheet />
+            Importar
+          </Button>
           <Button variant="secondary" onClick={() => setCatsOpen(true)}>
             <Tags />
             Categorías
@@ -153,11 +269,75 @@ export function ProductsManager({ products: initial, categories, limit, category
         </div>
       ) : (
         <div className="rounded-2xl bg-white px-2 ring-1 ring-ink/5 sm:px-3">
+          <div className="flex h-14 items-center gap-2 border-b border-ink/5 pr-1 sm:gap-3 sm:pr-2">
+            <CheckBox
+              checked={picked.size === products.length ? true : picked.size > 0 ? "mixed" : false}
+              onChange={() => setPicked(picked.size === products.length ? new Set() : new Set(products.map((p) => p.id)))}
+              label="Seleccionar todos los productos"
+            />
+            <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground" aria-live="polite">
+              {picked.size === 0 ? "Seleccionar todo" : <span className="font-medium text-ink">{picked.size} {picked.size === 1 ? "seleccionado" : "seleccionados"}</span>}
+            </p>
+            {picked.size > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="sm" disabled={bulkBusy} className="motion-rise">
+                    Acciones
+                    <ChevronDown />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "soldout" }, "{n} marcados como agotados.")}>
+                    <PackageX /> Marcar como agotado
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "available" }, "{n} disponibles otra vez.")}>
+                    <PackageCheck /> Volver a disponible
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: false }, "{n} ocultos.")}>
+                    <EyeOff /> Ocultar del catálogo
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: true }, "{n} visibles.")}>
+                    <Eye /> Mostrar en el catálogo
+                  </DropdownMenuItem>
+                  {categories.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <FolderInput /> Mover a categoría
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onSelect={() => bulk({ type: "category", categoryId: null }, "Categoría cambiada en {n}.")}>Sin categoría</DropdownMenuItem>
+                        {categories.map((c) => (
+                          <DropdownMenuItem key={c.id} onSelect={() => bulk({ type: "category", categoryId: c.id }, "Categoría cambiada en {n}.")}>
+                            {c.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem danger onSelect={() => setConfirmDelete(true)}>
+                    <Trash2 /> Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
               <ul className="divide-y divide-ink/5">
                 {products.map((p) => (
-                  <Row key={p.id} product={p} category={p.categoryId ? catName.get(p.categoryId) : undefined} onAvailability={(a) => changeAvailability(p.id, a)} />
+                  <Row
+                    key={p.id}
+                    product={p}
+                    category={p.categoryId ? catName.get(p.categoryId) : undefined}
+                    selected={picked.has(p.id)}
+                    onToggle={() => toggle(p.id)}
+                    onAvailability={(a) => changeAvailability(p.id, a)}
+                    onVisible={(v) => changeVisible(p.id, v)}
+                    onDuplicate={() => duplicate(p.id)}
+                    onDelete={() => setToDelete(p)}
+                    duplicating={dupBusy === p.id}
+                  />
                 ))}
               </ul>
             </SortableContext>
@@ -166,7 +346,41 @@ export function ProductsManager({ products: initial, categories, limit, category
       )}
 
 
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`¿Eliminar ${picked.size} ${picked.size === 1 ? "producto" : "productos"}?`}
+        description="Se borran con sus fotos y no se pueden recuperar."
+        confirmLabel="Eliminar"
+        onConfirm={async () => { await bulk({ type: "delete" }, "{n} eliminados."); }}
+      />
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        title={toDelete ? `¿Eliminar “${toDelete.name}”?` : ""}
+        description="Se borra con sus fotos y no se puede recuperar."
+        confirmLabel="Eliminar"
+        onConfirm={removeOne}
+      />
+      <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />
       <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />
     </>
+  );
+}
+
+function CheckBox({ checked, onChange, label }: { checked: boolean | "mixed"; onChange: () => void; label: string }) {
+  const on = checked === true || checked === "mixed";
+  return (
+    <button type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onChange} className="group grid h-11 w-10 shrink-0 place-items-center rounded-full outline-none sm:w-11">
+      <span
+        className={cn(
+          "grid h-[1.4rem] w-[1.4rem] place-items-center rounded-md ring-1 ring-inset transition-[background-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-active:scale-90 group-focus-visible:ring-2 group-focus-visible:ring-primary",
+          on ? "bg-primary text-white ring-primary" : "bg-white ring-border group-hover:ring-slate"
+        )}
+      >
+        {checked === "mixed" ? <Minus className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : checked ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : null}
+      </span>
+    </button>
   );
 }

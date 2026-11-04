@@ -15,6 +15,7 @@ export function ProductCard({
   canOrder,
   sizes = "(min-width: 1536px) 15vw, (min-width: 1280px) 19vw, (min-width: 1024px) 23vw, (min-width: 640px) 30vw, 46vw",
   priority,
+  isNew = false,
   headingLevel = "h3",
 }: {
   product: Product;
@@ -22,6 +23,7 @@ export function ProductCard({
   canOrder: boolean;
   sizes?: string;
   priority?: boolean;
+  isNew?: boolean;
   headingLevel?: "h3" | "p";
 }) {
   const Title = headingLevel;
@@ -52,6 +54,9 @@ export function ProductCard({
           <span className="absolute inset-0 grid place-items-center px-4 text-center font-display text-lg font-medium text-[#2F43B8]">
             {product.name}
           </span>
+        )}
+        {product.availability === "available" && isNew && (
+          <span className="absolute left-2 top-2 rounded-full bg-[var(--accent)] px-2.5 py-1 text-xs font-medium text-white shadow-sm">Nuevo</span>
         )}
         {product.availability !== "available" && (
           <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-ink shadow-sm">

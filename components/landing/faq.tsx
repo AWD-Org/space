@@ -20,7 +20,7 @@ export const FAQ = [
   },
   {
     q: "¿Qué pasa cuando se me acaba algo?",
-    a: "Lo marcas como “Se acabó” en un toque. Sigue en tu catálogo, pero ya no se puede agregar a la bolsa hasta que lo vuelvas a activar.",
+    a: "Lo marcas como “Agotado” en un toque. Sigue en tu catálogo, pero ya no se puede agregar a la bolsa hasta que lo vuelvas a activar.",
   },
   {
     q: "¿Sirve si no vendo comida?",

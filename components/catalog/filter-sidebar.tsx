@@ -37,6 +37,10 @@ export function FilterSidebar({
   onlyAvailable,
   onToggleAvailable,
   availableCount,
+  hasNew,
+  onlyNew,
+  onToggleNew,
+  newCount,
   showPrice,
   min,
   max,
@@ -52,6 +56,10 @@ export function FilterSidebar({
   onlyAvailable: boolean;
   onToggleAvailable: () => void;
   availableCount: number;
+  hasNew: boolean;
+  onlyNew: boolean;
+  onToggleNew: () => void;
+  newCount: number;
   showPrice: boolean;
   min: string;
   max: string;
@@ -82,10 +90,11 @@ export function FilterSidebar({
           </fieldset>
         )}
 
-        {hasSoldOut && (
+        {(hasSoldOut || hasNew) && (
           <fieldset>
             <legend className="mb-2 font-display text-base font-semibold text-ink">Disponibilidad</legend>
-            <CheckRow checked={onlyAvailable} onChange={onToggleAvailable} label="Solo disponibles" count={availableCount} />
+            {hasNew && <CheckRow checked={onlyNew} onChange={onToggleNew} label="Novedades" count={newCount} />}
+            {hasSoldOut && <CheckRow checked={onlyAvailable} onChange={onToggleAvailable} label="Solo disponibles" count={availableCount} />}
           </fieldset>
         )}
 

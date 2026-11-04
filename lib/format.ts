@@ -32,7 +32,7 @@ export function centsToInput(cents: number | null | undefined) {
 
 export const AVAILABILITY_LABEL: Record<Availability, string> = {
   available: "Disponible",
-  soldout: "Se acabó",
+  soldout: "Agotado",
   onrequest: "Sobre pedido",
 };
 
@@ -74,4 +74,12 @@ export function todayKey(date = new Date()) {
 export function storeInitials(name: string) {
   const words = name.split(/\s+/).filter((w) => w && !["de", "del", "la", "las", "el", "los", "y", "e"].includes(w.toLowerCase()));
   return (words.length ? words : [name]).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+}
+
+/** Días que un producto cuenta como "nuevo" en el catálogo. */
+export const NEW_DAYS = 14;
+
+/** ¿Se agregó hace poco? `now` llega del navegador (el catálogo está en caché, no se calcula en el servidor). */
+export function isNewProduct(createdAt: number, now: number | null) {
+  return now !== null && createdAt > now - NEW_DAYS * 86_400_000;
 }

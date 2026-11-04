@@ -72,6 +72,15 @@ export async function removeAllUserImages(uid: string) {
   }
 }
 
+/** Copia una foto como otra independiente (para duplicar un producto sin que borrar uno afecte al otro). */
+export async function copyImage(uid: string, img: ImageRef, newName: string): Promise<ImageRef | null> {
+  const id = img.url.startsWith("/media/") ? img.url.slice("/media/".length) : "";
+  if (!ownsPath(uid, img.path)) return null;
+  const src = await readImage(id);
+  if (!src) return null;
+  return saveImage(`u/${uid}/product/${newName}`, src.data, src.contentType);
+}
+
 const EXT_TYPES: Record<string, string> = { webp: "image/webp", jpg: "image/jpeg", png: "image/png" };
 
 export async function readImage(id: string): Promise<{ data: Buffer; contentType: string } | null> {

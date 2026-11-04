@@ -19,10 +19,15 @@ export function buildOrderMessage(opts: {
   storeName: string;
   lines: BagLine[];
   customerName?: string;
+  /** Forma de entrega ya en texto ("Envío a domicilio"). */
   delivery?: string;
+  /** Dirección, o punto y hora, según la forma de entrega. */
+  deliveryDetail?: string;
+  deliveryDetailLabel?: string;
+  payment?: string;
   note?: string;
 }) {
-  const { storeName, lines, customerName, delivery, note } = opts;
+  const { storeName, lines, customerName, delivery, deliveryDetail, deliveryDetailLabel, payment, note } = opts;
   const out: string[] = [];
   out.push(`Hola ${storeName}, quiero hacer un pedido:`);
   out.push("");
@@ -37,6 +42,8 @@ export function buildOrderMessage(opts: {
   }
   if (customerName?.trim()) out.push(`A nombre de: ${customerName.trim()}`);
   if (delivery?.trim()) out.push(`Entrega: ${delivery.trim()}`);
+  if (deliveryDetail?.trim()) out.push(`${deliveryDetailLabel?.trim() || "Detalle"}: ${deliveryDetail.trim()}`);
+  if (payment?.trim()) out.push(`Forma de pago: ${payment.trim()}`);
   if (note?.trim()) out.push(`Nota: ${note.trim()}`);
   out.push("");
   out.push("(Pedido armado en Space®)");
