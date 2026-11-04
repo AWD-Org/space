@@ -59,6 +59,23 @@ export const updateStoreSchema = z
 
 export const imageRefSchema = z.object({ path: z.string().min(3).max(200), url: z.string().min(3).max(500) });
 
+export const MAX_OPTION_VALUES = 12;
+export const optionValueSchema = z.string().trim().min(1, "Escribe un valor.").max(20, "Máximo 20 caracteres por valor.");
+export const productOptionsSchema = z
+  .array(
+    z.object({
+      name: z.enum(["Talla", "Tamaño", "Color"]),
+      values: z.array(optionValueSchema).min(1, "Agrega al menos un valor.").max(MAX_OPTION_VALUES, `Máximo ${MAX_OPTION_VALUES} valores por variante.`),
+    })
+  )
+  .max(3)
+  .superRefine((opts, ctx) => {
+    if (new Set(opts.map((o) => o.name)).size !== opts.length) ctx.addIssue({ code: "custom", message: "No repitas Talla, Tamaño o Color." });
+    for (const o of opts) {
+      if (new Set(o.values.map((v) => v.toLowerCase())).size !== o.values.length) ctx.addIssue({ code: "custom", message: `Hay valores repetidos en ${o.name}.` });
+    }
+  });
+
 export const productSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(2, "El nombre necesita al menos 2 letras.").max(60, "Máximo 60 caracteres."),
@@ -69,6 +86,7 @@ export const productSchema = z.object({
   visible: z.boolean(),
   categoryId: z.string().nullable(),
   images: z.array(imageRefSchema).max(10),
+  options: productOptionsSchema.optional(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

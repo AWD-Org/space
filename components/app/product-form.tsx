@@ -20,7 +20,8 @@ import { deleteProduct, saveProduct } from "@/lib/actions/product";
 import { createCategory } from "@/lib/actions/category";
 import { centsToInput, parsePriceInput } from "@/lib/format";
 import { categoryNameSchema, productFormSchema, type ProductFormValues } from "@/lib/validators";
-import type { Category, ImageRef, Product } from "@/lib/types";
+import type { Category, ImageRef, Product, ProductOption } from "@/lib/types";
+import { VariantsEditor } from "./variants-editor";
 import { ImageUploader } from "./image-uploader";
 import { SaveBar } from "./save-bar";
 
@@ -42,6 +43,7 @@ export function ProductForm({
 }) {
   const router = useRouter();
   const [images, setImages] = React.useState<ImageRef[]>(product?.images ?? []);
+  const [options, setOptions] = React.useState<ProductOption[]>(product?.options ?? []);
   const [categories, setCategories] = React.useState(initialCategories);
   const [uploading, setUploading] = React.useState(false);
   const [saving, setSaving] = React.useState<null | "save" | "another">(null);
@@ -69,10 +71,13 @@ export function ProductForm({
   } = useForm<ProductFormValues>({ resolver: zodResolver(productFormSchema), mode: "onTouched", defaultValues: initial });
   const imageKey = (list: ImageRef[]) => list.map((i) => i.path).join("|");
   const baselineImages = React.useRef(imageKey(product?.images ?? []));
-  const changed = isDirty || imageKey(images) !== baselineImages.current;
+  const optKey = (list: ProductOption[]) => JSON.stringify(list);
+  const baselineOptions = React.useRef(optKey(product?.options ?? []));
+  const changed = isDirty || imageKey(images) !== baselineImages.current || optKey(options) !== baselineOptions.current;
   function discard() {
     reset(initial);
     setImages(product?.images ?? []);
+    setOptions(product?.options ?? []);
     setNewCat(null);
   }
   const name = watch("name");
@@ -82,6 +87,7 @@ export function ProductForm({
   async function persist(v: ProductFormValues, another: boolean) {
     setError(null);
     if (uploading) return toast.info("Espera a que terminen de subir las fotos.");
+    if (options.some((o) => o.values.length === 0)) return setError("Agrega al menos un valor en cada variante o quítala.");
     setSaving(another ? "another" : "save");
     const res = await toast.task(() => safe(() => saveProduct({
       id: product?.id,
@@ -93,6 +99,7 @@ export function ProductForm({
       visible: v.visible,
       categoryId: v.categoryId,
       images,
+      options,
     })), { loading: "Guardando producto…", showError: false, success: product ? "Cambios guardados." : "Producto agregado a tu catálogo." });
     setSaving(null);
     if (!res.ok) return setError(res.error);
@@ -182,6 +189,14 @@ export function ProductForm({
           </Field>
         )}
       </section>
+
+      {!compact && (
+        <section className="rounded-2xl bg-white p-5 ring-1 ring-ink/5 sm:p-6">
+          <h2 className="font-display text-lg font-semibold text-ink">Variantes</h2>
+          <p className="mb-4 mt-1 text-sm text-muted-foreground">Si tu producto viene en tallas, tamaños o colores, quien pida elige uno antes de agregarlo. El precio es el mismo para todas.</p>
+          <VariantsEditor value={options} onChange={setOptions} />
+        </section>
+      )}
 
       {!compact && (
         <section className="space-y-6 rounded-2xl bg-white p-5 ring-1 ring-ink/5 sm:p-6">
