@@ -48,6 +48,7 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
       visible: data.visible,
       categoryId: data.categoryId,
       images: data.images.map(({ path, url }) => ({ path, url })),
+      options: (data.options ?? []).map((o) => ({ name: o.name, values: o.values })),
       updatedAt: now,
     };
 
@@ -166,6 +167,7 @@ export async function duplicateProduct(id: string): Promise<ActionResult<{ id: s
           visible: false,
           categoryId: source.categoryId,
           images: copies,
+          options: source.options ?? [],
           order: now,
           createdAt: now,
           updatedAt: now,

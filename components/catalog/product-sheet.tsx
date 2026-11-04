@@ -7,7 +7,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { formatPrice, AVAILABILITY_LABEL } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useBag } from "./bag";
+import { useBag, variantText } from "./bag";
 
 export function QtyStepper({ value, onChange, label }: { value: number; onChange: (n: number) => void; label: string }) {
   return (
@@ -42,12 +42,16 @@ export function ProductSheet({
 }) {
   const { add } = useBag();
   const [qty, setQty] = React.useState(1);
+  const [picked, setPicked] = React.useState<Record<string, string>>({});
+  const [missing, setMissing] = React.useState(false);
   const [slide, setSlide] = React.useState(0);
   const scroller = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (open) {
       setQty(1);
+      setPicked({});
+      setMissing(false);
       setSlide(0);
       scroller.current?.scrollTo({ left: 0 });
     }
@@ -55,6 +59,8 @@ export function ProductSheet({
 
   if (!product) return null;
   const soldOut = product.availability === "soldout";
+  const options = product.options ?? [];
+  const lacking = options.filter((o) => !picked[o.name]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -102,6 +108,38 @@ export function ProductSheet({
               </p>
             )}
             {product.description && <p className="mt-4 whitespace-pre-line text-[1.0625rem] leading-relaxed text-muted-foreground">{product.description}</p>}
+            {options.length > 0 && !soldOut && canOrder && (
+              <div className="mt-5 space-y-4">
+                {options.map((o) => (
+                  <fieldset key={o.name} id={`opt-${o.name}`} className="scroll-mt-4">
+                    <legend className={cn("mb-2 text-sm font-medium", missing && !picked[o.name] ? "text-destructive" : "text-ink")}>
+                      {o.name}
+                      {picked[o.name] && <span className="font-normal text-muted-foreground"> · {picked[o.name]}</span>}
+                    </legend>
+                    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={o.name}>
+                      {o.values.map((v) => {
+                        const on = picked[o.name] === v;
+                        return (
+                          <button
+                            key={v}
+                            type="button"
+                            role="radio"
+                            aria-checked={on}
+                            onClick={() => setPicked((cur) => ({ ...cur, [o.name]: v }))}
+                            className={cn(
+                              "inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2",
+                              on ? "bg-[var(--accent)] text-white" : "bg-white text-ink ring-1 ring-inset ring-ink/20 hover:bg-cloud"
+                            )}
+                          >
+                            {v}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                ))}
+              </div>
+            )}
 
           </div>
         </div>
@@ -116,13 +154,18 @@ export function ProductSheet({
                   <button
                     type="button"
                     onClick={() => {
-                      add(product, qty);
+                      if (lacking.length > 0) {
+                        setMissing(true);
+                        document.getElementById(`opt-${lacking[0].name}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+                        return;
+                      }
+                      add(product, qty, variantText(product, picked) || undefined);
                       onOpenChange(false);
                     }}
                     className="h-12 flex-1 rounded-full bg-[var(--accent)] px-5 font-medium text-white transition-[filter] hover:brightness-110"
                   >
-                    Agregar
-                    {product.price != null && <span className="tabular-nums"> · {formatPrice(product.price * qty)}</span>}
+                    {missing && lacking.length > 0 ? `Elige ${lacking.map((o) => o.name.toLowerCase()).join(" y ")}` : "Agregar"}
+                    {!(missing && lacking.length > 0) && product.price != null && <span className="tabular-nums"> · {formatPrice(product.price * qty)}</span>}
                   </button>
                 </div>
               )}

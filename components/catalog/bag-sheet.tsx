@@ -16,7 +16,7 @@ import { PAYMENT_LABEL } from "@/lib/format";
 import { Select } from "@/components/ui/select";
 import type { DeliveryMethod, PaymentMethod } from "@/lib/types";
 import { bagTotal, buildOrderMessage, whatsappLink } from "@/lib/whatsapp";
-import { useBag } from "./bag";
+import { itemKey, useBag } from "./bag";
 import { QtyStepper } from "./product-sheet";
 
 export function WhatsAppGlyph({ className }: { className?: string }) {
@@ -104,15 +104,16 @@ export function BagSheet({
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 sm:px-6">
               <ul className="divide-y divide-ink/10">
                 {items.map((item) => (
-                  <li key={item.productId} className="flex items-center gap-3 py-3">
+                  <li key={itemKey(item)} className="flex items-center gap-3 py-3">
                     <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
                       {item.image && <Image src={item.image} alt="" fill sizes="56px" className="object-cover" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-ink">{item.name}</p>
+                      {item.variant && <p className="truncate text-sm text-muted-foreground">{item.variant}</p>}
                       <p className="text-sm tabular-nums text-muted-foreground">{formatPrice(item.price != null ? item.price * item.qty : null, item.priceFrom)}</p>
                     </div>
-                    <QtyStepper value={item.qty} onChange={(n) => setQty(item.productId, n)} label={item.name} />
+                    <QtyStepper value={item.qty} onChange={(n) => setQty(itemKey(item), n)} label={item.variant ? `${item.name}, ${item.variant}` : item.name} />
                   </li>
                 ))}
               </ul>

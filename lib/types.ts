@@ -42,6 +42,14 @@ export interface Category {
   order: number;
 }
 
+/** Variantes de un producto: solo talla, tamaño o color; la persona elige un valor de cada una. */
+export const OPTION_NAMES = ["Talla", "Tamaño", "Color"] as const;
+export type OptionName = (typeof OPTION_NAMES)[number];
+export interface ProductOption {
+  name: OptionName;
+  values: string[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -53,6 +61,8 @@ export interface Product {
   visible: boolean;
   categoryId: string | null;
   images: ImageRef[];
+  /** Talla, tamaño y/o color a elegir al pedir. Sin precio ni inventario por variante. */
+  options?: ProductOption[];
   order: number;
   createdAt: number;
   updatedAt: number;

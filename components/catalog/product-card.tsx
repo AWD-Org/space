@@ -27,9 +27,10 @@ export function ProductCard({
   headingLevel?: "h3" | "p";
 }) {
   const Title = headingLevel;
-  const { add, setQty, items } = useBag();
+  const { add, setQty, countOf } = useBag();
+  const hasOptions = (product.options ?? []).length > 0;
   const reduce = useReducedMotion();
-  const inBag = items.find((i) => i.productId === product.id)?.qty ?? 0;
+  const inBag = countOf(product.id);
   const soldOut = product.availability === "soldout";
   const image = product.images[0];
 
@@ -67,7 +68,21 @@ export function ProductCard({
 
       {canOrder && !soldOut && (
         <div className="absolute bottom-2.5 right-2.5">
-          {inBag ? (
+          {hasOptions ? (
+            <button
+              type="button"
+              onClick={onOpen}
+              className="relative grid h-11 w-11 place-items-center rounded-full bg-white text-ink shadow-[0_6px_18px_-4px_rgba(0,0,0,0.3)] ring-1 ring-black/5 transition-colors hover:bg-cloud"
+              aria-label={`Elegir opciones de ${product.name}`}
+            >
+              <Plus className="h-5 w-5" aria-hidden />
+              {inBag > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--accent)] px-1 text-[0.7rem] font-semibold tabular-nums text-white" aria-label={`${inBag} en tu bolsa`}>
+                  {inBag}
+                </span>
+              )}
+            </button>
+          ) : inBag ? (
             <div className="flex items-center rounded-full bg-white p-1 shadow-[0_6px_18px_-4px_rgba(0,0,0,0.3)] ring-1 ring-black/5">
               <button type="button" onClick={() => setQty(product.id, inBag - 1)} className="grid h-9 w-9 place-items-center rounded-full text-ink active:bg-cloud" aria-label={`Quitar uno de ${product.name}`}>
                 <Minus className="h-4 w-4" aria-hidden />

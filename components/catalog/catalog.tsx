@@ -10,7 +10,7 @@ import { bagTotal } from "@/lib/whatsapp";
 import type { Category, Product, Store } from "@/lib/types";
 import { validDelivery } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
-import { BagProvider, useBag } from "./bag";
+import { BagProvider, itemKey, useBag } from "./bag";
 import { ProductCard } from "./product-card";
 import { SocialIcon } from "./social-icon";
 import { cleanSocials, SOCIAL_INFO, SOCIAL_ORDER } from "@/lib/socials";
@@ -36,7 +36,7 @@ interface CatalogProps {
   ownerPreview?: boolean;
 }
 
-const WRAP = "mx-auto w-full max-w-[1360px] px-3 sm:px-6 lg:px-6";
+const WRAP = "mx-auto w-full max-w-[1360px] px-5 sm:px-6 lg:px-6";
 type Sort = "default" | "asc" | "desc";
 
 function track(storeId: string, kind: "view" | "order" | "product", productId?: string) {
@@ -229,31 +229,52 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         </div>
 
         <div className={WRAP}>
-          <div className="-mt-10 flex flex-col gap-3 sm:-mt-14 sm:flex-row sm:items-end sm:gap-6">
+          <div className="-mt-10 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-start sm:gap-6">
             <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-3xl bg-[var(--accent)] font-display text-2xl font-semibold text-white shadow-[0_12px_32px_-8px_rgba(0,0,0,0.35)] ring-4 ring-white sm:h-28 sm:w-28 sm:rounded-[1.75rem] sm:text-4xl">
               {store.logo ? <Image src={store.logo.url} alt={`Logo de ${store.name}`} fill sizes="112px" className="object-cover" priority /> : storeInitials(store.name)}
             </div>
-            <div className="min-w-0 flex-1 sm:pb-1">
+            <div className="min-w-0 flex-1 sm:mt-20">
               <h1 className="text-balance font-display text-[2rem] font-semibold leading-[1.05] tracking-tight text-ink sm:text-5xl">{store.name}</h1>
               {store.tagline && <p className="mt-2 max-w-xl text-[1.0625rem] leading-snug text-muted-foreground">{store.tagline}</p>}
             </div>
-            <div className="flex items-center gap-2 sm:pb-2">
+            <div className="mt-1 flex items-center gap-2 sm:mt-[5.25rem]">
               {store.whatsapp && (
                 <a
                   href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, vi tu catálogo en Space®.`)}`}
                   target="_blank"
                   rel="noopener"
-                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white transition-colors hover:bg-ink/90 sm:flex-none"
+                  className={cn("inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-ink px-4 text-sm font-medium text-white transition-colors hover:bg-ink/90 sm:flex-none sm:px-5", socialLinks.length >= 3 && "max-sm:aspect-square max-sm:flex-none max-sm:px-0")}
                 >
                   <MessageCircle className="h-[18px] w-[18px]" aria-hidden />
-                  Escribir
+                  {/* Con las 4 redes no cabe el texto en móvil: queda el ícono y el lector sigue leyendo «Escribir». */}
+                  <span className={cn(socialLinks.length >= 3 && "sr-only sm:not-sr-only")}>Escribir</span>
                 </a>
               )}
               <ShareButton name={store.name} slug={store.slug} />
+              {socialLinks.length > 0 && (
+                <>
+                  <span className="mx-0.5 hidden h-6 w-px bg-ink/10 sm:block" aria-hidden />
+                  <nav aria-label={`Redes de ${store.name}`} className="flex items-center gap-2">
+                    {socialLinks.map(([k, url]) => (
+                      <a
+                        key={k}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        aria-label={`${SOCIAL_INFO[k].label} de ${store.name}`}
+                        title={SOCIAL_INFO[k].label}
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-ink ring-1 ring-inset ring-ink/15 transition-[background-color,transform] duration-200 hover:bg-cloud active:scale-95"
+                      >
+                        <SocialIcon name={k} className="h-5 w-5" />
+                      </a>
+                    ))}
+                  </nav>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2 text-sm sm:hidden">
+          <div className="mt-6 flex flex-wrap gap-2 text-sm sm:hidden">
             <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium", store.isOpen ? "bg-[#E7F6EE] text-[#146C3B]" : "bg-cloud text-muted-foreground")}>
               <span className={cn("h-2 w-2 rounded-full", store.isOpen ? "bg-[#1A8D4A]" : "bg-slate")} aria-hidden />
               {store.isOpen ? "Tomando pedidos" : "Hoy no está vendiendo"}
@@ -266,25 +287,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             )}
           </div>
 
-          {socialLinks.length > 0 && (
-            <nav aria-label={`Redes de ${store.name}`} className="mt-4 flex flex-wrap gap-2">
-              {socialLinks.map(([k, url]) => (
-                <a
-                  key={k}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  aria-label={`${SOCIAL_INFO[k].label} de ${store.name}`}
-                  title={SOCIAL_INFO[k].label}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink ring-1 ring-inset ring-ink/15 transition-[background-color,transform] duration-200 hover:bg-cloud active:scale-95"
-                >
-                  <SocialIcon name={k} className="h-5 w-5" />
-                </a>
-              ))}
-            </nav>
-          )}
-
-          <ul className="mt-6 hidden overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-ink/[0.08] sm:flex sm:divide-x sm:divide-ink/[0.07]">
+          <ul className="mt-7 hidden overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-ink/[0.08] sm:flex sm:divide-x sm:divide-ink/[0.07]">
             <li className="flex flex-1 items-center gap-3 px-4 py-3.5">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", store.isOpen ? "bg-[#E7F6EE]" : "bg-cloud")}>
                 <span className={cn("h-2.5 w-2.5 rounded-full", store.isOpen ? "bg-[#1A8D4A]" : "bg-slate")} aria-hidden />
@@ -348,7 +351,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
           </div>
 
           {(usedCategories.length > 0 || hasSoldOut || hasNew) && (
-            <div className="no-scrollbar -mr-3 mt-2.5 flex gap-2 overflow-x-auto pr-3 sm:mr-0 sm:pr-0 lg:hidden" role="group" aria-label="Filtros">
+            <div className="no-scrollbar -mr-5 mt-2.5 flex gap-2 overflow-x-auto pr-5 sm:mr-0 sm:pr-0 lg:hidden" role="group" aria-label="Filtros">
               {usedCategories.length > 0 &&
                 [{ id: null as string | null, name: "Todo" }, ...usedCategories, ...(hasUncategorized ? [{ id: "__none", name: "Otros" }] : [])].map((c) => (
                   <button
@@ -506,7 +509,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             >
               <span className="flex -space-x-2.5" aria-hidden>
                 {items.slice(0, 3).map((it) => (
-                  <span key={it.productId} className="relative h-10 w-10 overflow-hidden rounded-full bg-white/25 ring-2 ring-[var(--accent)]">
+                  <span key={itemKey(it)} className="relative h-10 w-10 overflow-hidden rounded-full bg-white/25 ring-2 ring-[var(--accent)]">
                     {it.image && <Image src={it.image} alt="" fill sizes="40px" className="object-cover" />}
                   </span>
                 ))}

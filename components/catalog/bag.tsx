@@ -6,6 +6,10 @@ import type { BagLine } from "@/lib/whatsapp";
 
 export interface BagItem {
   productId: string;
+  /** Producto + variante elegida; un mismo producto con otra talla o color es otra línea. */
+  key?: string;
+  /** Texto de la variante elegida, p. ej. «Talla M · Color Rojo». */
+  variant?: string;
   name: string;
   price: number | null;
   priceFrom: boolean;
@@ -13,9 +17,15 @@ export interface BagItem {
   image?: string;
 }
 
+export const itemKey = (i: Pick<BagItem, "productId" | "key">) => i.key ?? i.productId;
+/** Las opciones elegidas (p. ej. { Talla: "M", Color: "Rojo" }) como texto, en el orden del producto. */
+export function variantText(product: Product, picked: Record<string, string>) {
+  return (product.options ?? []).filter((o) => picked[o.name]).map((o) => `${o.name} ${picked[o.name]}`).join(" · ");
+}
+
 type Action =
-  | { type: "add"; product: Product; qty?: number }
-  | { type: "set"; productId: string; qty: number }
+  | { type: "add"; product: Product; qty?: number; variant?: string }
+  | { type: "set"; key: string; qty: number }
   | { type: "clear" }
   | { type: "load"; items: BagItem[] };
 
@@ -23,15 +33,16 @@ function reducer(state: BagItem[], action: Action): BagItem[] {
   switch (action.type) {
     case "add": {
       const qty = action.qty ?? 1;
-      const found = state.find((i) => i.productId === action.product.id);
-      if (found) return state.map((i) => (i.productId === action.product.id ? { ...i, qty: Math.min(99, i.qty + qty) } : i));
+      const key = action.variant ? `${action.product.id}|${action.variant}` : action.product.id;
+      const found = state.find((i) => itemKey(i) === key);
+      if (found) return state.map((i) => (itemKey(i) === key ? { ...i, qty: Math.min(99, i.qty + qty) } : i));
       const p = action.product;
-      return [...state, { productId: p.id, name: p.name, price: p.price, priceFrom: p.priceFrom, qty, image: p.images[0]?.url }];
+      return [...state, { productId: p.id, key, variant: action.variant || undefined, name: p.name, price: p.price, priceFrom: p.priceFrom, qty, image: p.images[0]?.url }];
     }
     case "set":
       return action.qty <= 0
-        ? state.filter((i) => i.productId !== action.productId)
-        : state.map((i) => (i.productId === action.productId ? { ...i, qty: Math.min(99, action.qty) } : i));
+        ? state.filter((i) => itemKey(i) !== action.key)
+        : state.map((i) => (itemKey(i) === action.key ? { ...i, qty: Math.min(99, action.qty) } : i));
     case "clear":
       return [];
     case "load":
@@ -42,8 +53,10 @@ function reducer(state: BagItem[], action: Action): BagItem[] {
 interface BagContextValue {
   items: BagItem[];
   count: number;
-  add: (p: Product, qty?: number) => void;
-  setQty: (productId: string, qty: number) => void;
+  add: (p: Product, qty?: number, variant?: string) => void;
+  /** Cantidad de un producto sumando todas sus variantes. */
+  countOf: (productId: string) => number;
+  setQty: (key: string, qty: number) => void;
   clear: () => void;
   lines: BagLine[];
 }
@@ -90,10 +103,11 @@ export function BagProvider({
     () => ({
       items,
       count: items.reduce((n, i) => n + i.qty, 0),
-      add: (product, qty) => dispatch({ type: "add", product, qty }),
-      setQty: (productId, qty) => dispatch({ type: "set", productId, qty }),
+      add: (product, qty, variant) => dispatch({ type: "add", product, qty, variant }),
+      countOf: (productId) => items.filter((i) => i.productId === productId).reduce((n, i) => n + i.qty, 0),
+      setQty: (key, qty) => dispatch({ type: "set", key, qty }),
       clear: () => dispatch({ type: "clear" }),
-      lines: items.map((i) => ({ name: i.name, qty: i.qty, price: i.price, priceFrom: i.priceFrom })),
+      lines: items.map((i) => ({ name: i.name, variant: i.variant, qty: i.qty, price: i.price, priceFrom: i.priceFrom })),
     }),
     [items]
   );

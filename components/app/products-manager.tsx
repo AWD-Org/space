@@ -207,6 +207,12 @@ export function ProductsManager({ products: initial, categories, limit, category
     router.refresh();
   }
 
+  // Las acciones del menú son contextuales: solo aparecen las que cambian algo en lo seleccionado.
+  const chosen = products.filter((p) => picked.has(p.id));
+  const canSoldOut = chosen.some((p) => p.availability !== "soldout");
+  const canAvailable = chosen.some((p) => p.availability === "soldout");
+  const canHide = chosen.some((p) => p.visible);
+  const canShow = chosen.some((p) => !p.visible);
   const atLimit = products.length >= limit;
   const catName = new Map(categories.map((c) => [c.id, c.name]));
 
@@ -287,18 +293,26 @@ export function ProductsManager({ products: initial, categories, limit, category
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "soldout" }, "{n} marcados como agotados.")}>
-                    <PackageX /> Marcar como agotado
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "available" }, "{n} disponibles otra vez.")}>
-                    <PackageCheck /> Volver a disponible
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: false }, "{n} ocultos.")}>
-                    <EyeOff /> Ocultar del catálogo
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: true }, "{n} visibles.")}>
-                    <Eye /> Mostrar en el catálogo
-                  </DropdownMenuItem>
+                  {canSoldOut && (
+                    <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "soldout" }, "{n} marcados como agotados.")}>
+                      <PackageX /> Marcar como agotado
+                    </DropdownMenuItem>
+                  )}
+                  {canAvailable && (
+                    <DropdownMenuItem onSelect={() => bulk({ type: "availability", value: "available" }, "{n} disponibles otra vez.")}>
+                      <PackageCheck /> Volver a disponible
+                    </DropdownMenuItem>
+                  )}
+                  {canHide && (
+                    <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: false }, "{n} ocultos.")}>
+                      <EyeOff /> Ocultar del catálogo
+                    </DropdownMenuItem>
+                  )}
+                  {canShow && (
+                    <DropdownMenuItem onSelect={() => bulk({ type: "visible", value: true }, "{n} visibles.")}>
+                      <Eye /> Mostrar en el catálogo
+                    </DropdownMenuItem>
+                  )}
                   {categories.length > 0 && (
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>

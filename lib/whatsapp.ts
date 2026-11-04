@@ -2,6 +2,8 @@ import { formatPrice } from "./format";
 
 export interface BagLine {
   name: string;
+  /** Variante elegida, p. ej. «Talla M · Color Rojo». */
+  variant?: string;
   qty: number;
   price: number | null; // centavos
   priceFrom?: boolean;
@@ -33,7 +35,7 @@ export function buildOrderMessage(opts: {
   out.push("");
   for (const l of lines) {
     const price = l.price != null ? ` · ${formatPrice(l.price * l.qty)}` : "";
-    out.push(`• ${l.qty} × ${l.name}${price}`);
+    out.push(`• ${l.qty} × ${l.name}${l.variant ? ` (${l.variant})` : ""}${price}`);
   }
   const { total, partial } = bagTotal(lines);
   if (total > 0) {
