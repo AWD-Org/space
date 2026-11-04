@@ -80,7 +80,7 @@ export function HelpCard({ id, title, children }: { id: TutorialId; title: strin
   const reduce = useReducedMotion();
   const t = reduce ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const };
   return (
-    <AnimatePresence initial>
+    <AnimatePresence initial={false}>
       {isPending(id) && (
         <motion.div
           key={id}
