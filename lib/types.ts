@@ -42,12 +42,17 @@ export interface Category {
   order: number;
 }
 
-/** Variantes de un producto: solo talla, tamaño o color; la persona elige un valor de cada una. */
-export const OPTION_NAMES = ["Talla", "Tamaño", "Color"] as const;
-export type OptionName = (typeof OPTION_NAMES)[number];
+/** Opciones de un producto (talla, tamaño, sabor…): nombre libre; la persona elige un valor de cada una. */
+export const OPTION_SUGGESTIONS = ["Talla", "Tamaño", "Color", "Sabor", "Presentación"] as const;
+export interface OptionValue {
+  label: string;
+  /** Precio extra en centavos (≥ 0) que suma este valor al precio base. */
+  extra?: number;
+  soldOut?: boolean;
+}
 export interface ProductOption {
-  name: OptionName;
-  values: string[];
+  name: string;
+  values: OptionValue[];
 }
 
 export interface Product {
@@ -61,7 +66,7 @@ export interface Product {
   visible: boolean;
   categoryId: string | null;
   images: ImageRef[];
-  /** Talla, tamaño y/o color a elegir al pedir. Sin precio ni inventario por variante. */
+  /** Opciones a elegir al pedir; cada valor puede sumar un precio extra o marcarse agotado. */
   options?: ProductOption[];
   order: number;
   createdAt: number;

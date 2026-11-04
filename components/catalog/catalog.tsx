@@ -10,6 +10,7 @@ import { bagTotal } from "@/lib/whatsapp";
 import type { Category, Product, Store } from "@/lib/types";
 import { validDelivery } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { isSoldOut } from "@/lib/options";
 import { BagProvider, itemKey, useBag } from "./bag";
 import { ProductCard } from "./product-card";
 import { SocialIcon } from "./social-icon";
@@ -80,7 +81,7 @@ function ShareButton({ name, slug }: { name: string; slug: string }) {
 
 export function Catalog(props: CatalogProps) {
   return (
-    <BagProvider storageKey={`space-bag-${props.store.id}`} validIds={props.products.map((p) => p.id)}>
+    <BagProvider storageKey={`space-bag-${props.store.id}`} validIds={props.products.map((p) => p.id)} products={props.products}>
       <CatalogInner {...props} />
     </BagProvider>
   );
@@ -138,7 +139,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   const minCents = minPrice ? Number(minPrice) * 100 : null;
   const maxCents = maxPrice ? Number(maxPrice) * 100 : null;
   const matches = (p: Product, skip?: "cats") => {
-    if (onlyAvailable && p.availability === "soldout") return false;
+    if (onlyAvailable && isSoldOut(p)) return false;
     if (onlyNew && !isNewProduct(p.createdAt, now)) return false;
     if (skip !== "cats" && cats.length && !cats.some((c) => (c === "__none" ? !p.categoryId : p.categoryId === c))) return false;
     if (minCents !== null || maxCents !== null) {
@@ -157,7 +158,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   // Lo agotado va al final
   const priceOf = (p: Product, empty: number) => (typeof p.price === "number" ? p.price : empty);
   visible.sort((a, b) => {
-    const sold = Number(a.availability === "soldout") - Number(b.availability === "soldout");
+    const sold = Number(isSoldOut(a)) - Number(isSoldOut(b));
     if (sold) return sold;
     if (sort === "asc") return priceOf(a, Infinity) - priceOf(b, Infinity);
     if (sort === "desc") return priceOf(b, -Infinity) - priceOf(a, -Infinity);
@@ -173,7 +174,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
   const countFor = (id: string | null) => products.filter((p) => (id === null ? true : id === "__none" ? !p.categoryId : p.categoryId === id) && matches(p, "cats")).length;
   const categoryOptions = [...usedCategories.map((c) => ({ id: c.id, label: c.name })), ...(hasUncategorized ? [{ id: "__none", label: "Otros" }] : [])].map((o) => ({ ...o, count: countFor(o.id) }));
   const pricedCount = products.filter((p) => typeof p.price === "number").length;
-  const hasSoldOut = products.some((p) => p.availability === "soldout");
+  const hasSoldOut = products.some((p) => isSoldOut(p));
   const showSidebar = categoryOptions.length > 0 || hasSoldOut || hasNew || pricedCount > 1;
   const filtering = Boolean(normalized) || cats.length > 0 || onlyAvailable || onlyNew || minPrice !== "" || maxPrice !== "";
   function clearFilters() {
@@ -412,7 +413,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
               hasSoldOut={hasSoldOut}
               onlyAvailable={onlyAvailable}
               onToggleAvailable={() => setOnlyAvailable((v) => !v)}
-              availableCount={products.filter((p) => p.availability !== "soldout").length}
+              availableCount={products.filter((p) => !isSoldOut(p)).length}
               hasNew={hasNew}
               onlyNew={onlyNew}
               onToggleNew={() => setOnlyNew((v) => !v)}

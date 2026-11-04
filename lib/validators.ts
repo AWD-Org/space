@@ -60,19 +60,26 @@ export const updateStoreSchema = z
 export const imageRefSchema = z.object({ path: z.string().min(3).max(200), url: z.string().min(3).max(500) });
 
 export const MAX_OPTION_VALUES = 12;
-export const optionValueSchema = z.string().trim().min(1, "Escribe un valor.").max(20, "Máximo 20 caracteres por valor.");
+export const MAX_OPTION_GROUPS = 3;
+export const optionLabelSchema = z.string().trim().min(1, "Escribe un valor.").max(20, "Máximo 20 caracteres por valor.");
+export const optionNameSchema = z.string().trim().min(1, "Escribe el nombre de la opción.").max(20, "Máximo 20 caracteres en el nombre.");
+export const optionValueSchema = z.object({
+  label: optionLabelSchema,
+  extra: z.number().int("Revisa el precio extra.").min(0, "El precio extra no puede ser negativo.").max(10_000_000 * 100, "Revisa el precio extra.").optional(),
+  soldOut: z.boolean().optional(),
+});
 export const productOptionsSchema = z
   .array(
     z.object({
-      name: z.enum(["Talla", "Tamaño", "Color"]),
-      values: z.array(optionValueSchema).min(1, "Agrega al menos un valor.").max(MAX_OPTION_VALUES, `Máximo ${MAX_OPTION_VALUES} valores por variante.`),
+      name: optionNameSchema,
+      values: z.array(optionValueSchema).min(1, "Agrega al menos un valor.").max(MAX_OPTION_VALUES, `Máximo ${MAX_OPTION_VALUES} valores por opción.`),
     })
   )
-  .max(3)
+  .max(MAX_OPTION_GROUPS, `Máximo ${MAX_OPTION_GROUPS} opciones por producto.`)
   .superRefine((opts, ctx) => {
-    if (new Set(opts.map((o) => o.name)).size !== opts.length) ctx.addIssue({ code: "custom", message: "No repitas Talla, Tamaño o Color." });
+    if (new Set(opts.map((o) => o.name.toLowerCase())).size !== opts.length) ctx.addIssue({ code: "custom", message: "No repitas el nombre de una opción." });
     for (const o of opts) {
-      if (new Set(o.values.map((v) => v.toLowerCase())).size !== o.values.length) ctx.addIssue({ code: "custom", message: `Hay valores repetidos en ${o.name}.` });
+      if (new Set(o.values.map((v) => v.label.toLowerCase())).size !== o.values.length) ctx.addIssue({ code: "custom", message: `Hay valores repetidos en ${o.name}.` });
     }
   });
 
