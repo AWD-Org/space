@@ -100,12 +100,11 @@ export function OptionsEditor({ value, onChange, hasPrice }: { value: ProductOpt
           aria-checked={on}
           aria-labelledby="opt-switch-label"
           onClick={toggle}
-          className={cn(
-            "relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-            on ? "bg-primary" : "bg-ink/20"
-          )}
+          className="-mr-1 grid h-11 w-14 shrink-0 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          <span className={cn("absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform", on && "translate-x-5")} />
+          <span className={cn("relative block h-7 w-12 rounded-full transition-colors", on ? "bg-primary" : "bg-ink/20")}>
+            <span className={cn("absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform", on && "translate-x-5")} />
+          </span>
         </button>
       </div>
 
