@@ -233,11 +233,11 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-3xl bg-[var(--accent)] font-display text-2xl font-semibold text-white shadow-[0_12px_32px_-8px_rgba(0,0,0,0.35)] ring-4 ring-white sm:h-28 sm:w-28 sm:rounded-[1.75rem] sm:text-4xl">
               {store.logo ? <Image src={store.logo.url} alt={`Logo de ${store.name}`} fill sizes="112px" className="object-cover" priority /> : storeInitials(store.name)}
             </div>
-            <div className="min-w-0 flex-1 sm:mt-[3.75rem]">
+            <div className="min-w-0 flex-1 sm:mt-20">
               <h1 className="text-balance font-display text-[2rem] font-semibold leading-[1.05] tracking-tight text-ink sm:text-5xl">{store.name}</h1>
               {store.tagline && <p className="mt-2 max-w-xl text-[1.0625rem] leading-snug text-muted-foreground">{store.tagline}</p>}
             </div>
-            <div className="mt-1 flex items-center gap-2 sm:mt-[4.25rem]">
+            <div className="mt-1 flex items-center gap-2 sm:mt-[5.25rem]">
               {store.whatsapp && (
                 <a
                   href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Hola ${store.name}, vi tu catálogo en Space®.`)}`}
