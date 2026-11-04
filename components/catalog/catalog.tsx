@@ -357,7 +357,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                     aria-pressed={c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id}
                     onClick={() => setCats(c.id === null ? [] : [c.id])}
                     className={cn(
-                      "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                      "min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
                       (c.id === null ? cats.length === 0 : cats.length === 1 && cats[0] === c.id) ? "bg-ink text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
                     )}
                   >
@@ -371,7 +371,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                   aria-pressed={onlyNew}
                   onClick={() => setOnlyNew((v) => !v)}
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
                     onlyNew ? "bg-[var(--accent)] text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
                   )}
                 >
@@ -386,7 +386,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                   aria-pressed={onlyAvailable}
                   onClick={() => setOnlyAvailable((v) => !v)}
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors",
                     onlyAvailable ? "bg-[var(--accent)] text-white" : "text-ink ring-1 ring-inset ring-ink/15 hover:bg-cloud"
                   )}
                 >
