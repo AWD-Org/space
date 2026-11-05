@@ -1,0 +1,52 @@
+name: Bug
+description: Algo no funciona como debería
+labels: ["tipo: bug"]
+body:
+  - type: dropdown
+    id: severidad
+    attributes:
+      label: Severidad
+      description: Si dudas, elige la más baja; se ajusta en el triage.
+      options:
+        - S1 crítica (pérdida de datos, brecha de seguridad o flujo core roto)
+        - S2 alta (función importante rota o sin salida)
+        - S3 media (molestia o caso borde)
+        - S4 baja (cosmético)
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options: [Catálogo, Panel, Importar/exportar, Cuenta y acceso, Landing, SEO y rendimiento, Accesibilidad]
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: "1. Entro a… 2. Doy clic en… 3. Veo…"
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Qué esperabas y qué pasó
+    validations:
+      required: true
+  - type: input
+    id: entorno
+    attributes:
+      label: Dónde pasó
+      description: Producción, dev o local; dispositivo y navegador.
+      placeholder: "dev, iPhone 14, Safari"
+  - type: input
+    id: qa
+    attributes:
+      label: ID de la matriz de QA (si aplica)
+      placeholder: OPT2-23
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: Capturas, video o mensajes de error. No pegues datos personales de clientes.

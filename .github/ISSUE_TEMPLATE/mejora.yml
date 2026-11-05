@@ -1,0 +1,28 @@
+name: Mejora o funcionalidad
+description: Trabajo ya decidido, listo para planear
+labels: ["tipo: mejora"]
+body:
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: Qué cambia para quien usa Space cuando esto esté listo.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Una lista verificable; sirve también para escribir las pruebas.
+      placeholder: "- [ ] Dado… cuando… entonces…"
+    validations:
+      required: true
+  - type: textarea
+    id: fuera
+    attributes:
+      label: Fuera de alcance
+  - type: dropdown
+    id: tamano
+    attributes:
+      label: Tamaño estimado
+      options: ["S (medio día)", "M (1 a 2 días)", "L (más de 2 días; conviene partirlo)"]
