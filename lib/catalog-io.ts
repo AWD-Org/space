@@ -250,6 +250,8 @@ export function parseTable(table: unknown[][]): TableResult {
     const category = get("Categoría");
     const priceRaw = col.Precio === undefined ? null : r[col.Precio];
     const problems: string[] = [];
+    // Más celdas llenas que encabezados: casi siempre es un texto con coma o «;» sin comillas que movió las columnas.
+    if (r.slice(head.r.length).some((c) => cellText(c) !== "")) problems.push("tiene más columnas que el encabezado (si un texto lleva comas o «;», ponlo entre comillas)");
     if (name.length < 2) problems.push("el nombre necesita al menos 2 letras");
     if (name.length > 60) problems.push("el nombre pasa de 60 caracteres");
     if (description.length > 400) problems.push("la descripción pasa de 400 caracteres");
