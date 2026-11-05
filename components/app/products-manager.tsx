@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, Boxes, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/lib/toast";
@@ -16,10 +16,13 @@ import { Button } from "@/components/ui/button";
 import { bulkProducts, duplicateProduct, reorderProducts, setAvailability, type BulkOp } from "@/lib/actions/product";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatPrice } from "@/lib/format";
+import { isSoldOut } from "@/lib/options";
+import { stockLabel } from "@/lib/stock";
 import type { Availability, Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CategoriesSheet } from "./categories-sheet";
 import { ImportSheet } from "./import-sheet";
+import { StockSheet } from "./stock-sheet";
 
 function Row({
   product,
@@ -27,6 +30,7 @@ function Row({
   selected,
   onToggle,
   onAvailability,
+  onStock,
   onVisible,
   onDuplicate,
   onDelete,
@@ -37,6 +41,7 @@ function Row({
   selected: boolean;
   onToggle: () => void;
   onAvailability: (a: Availability) => void;
+  onStock: () => void;
   onVisible: (v: boolean) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -45,6 +50,8 @@ function Row({
   const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id });
   const soldOut = product.availability === "soldout";
+  const out = isSoldOut(product);
+  const stock = stockLabel(product);
   const body = (
     <>
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
@@ -55,7 +62,8 @@ function Row({
         <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
           <span className="tabular-nums">{formatPrice(product.price, product.priceFrom)}</span>
           {category && <span>· {category}</span>}
-          {soldOut && <span className="font-medium text-[#9A3412]">· Agotado</span>}
+          {out && <span className="font-medium text-[#9A3412]">· Agotado</span>}
+          {stock && !(out && stock === "Sin stock") && <span className="tabular-nums">· {stock}</span>}
           {!product.visible && (
             <span className="inline-flex items-center gap-1">
               · <EyeOff className="h-3.5 w-3.5" aria-hidden /> Oculto
@@ -90,6 +98,9 @@ function Row({
             <DropdownMenuItem onSelect={() => router.push(`/app/productos/${product.id}`)}>
               <Pencil /> Editar
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onStock}>
+              <Boxes /> Vendí / ajustar stock
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onAvailability(soldOut ? "available" : "soldout")}>
               {soldOut ? <PackageCheck /> : <PackageX />}
               {soldOut ? "Volver a disponible" : "Marcar como agotado"}
@@ -122,6 +133,8 @@ export function ProductsManager({ products: initial, categories, limit, category
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [toDelete, setToDelete] = React.useState<Product | null>(null);
   const [dupBusy, setDupBusy] = React.useState<string | null>(null);
+  const [stockFor, setStockFor] = React.useState<Product | null>(null);
+  const [stockOpen, setStockOpen] = React.useState(false);
   React.useEffect(() => setProducts(initial), [initial]);
 
   const sensors = useSensors(
@@ -347,6 +360,10 @@ export function ProductsManager({ products: initial, categories, limit, category
                     selected={picked.has(p.id)}
                     onToggle={() => toggle(p.id)}
                     onAvailability={(a) => changeAvailability(p.id, a)}
+                    onStock={() => {
+                      setStockFor(p);
+                      setStockOpen(true);
+                    }}
                     onVisible={(v) => changeVisible(p.id, v)}
                     onDuplicate={() => duplicate(p.id)}
                     onDelete={() => setToDelete(p)}
@@ -377,6 +394,7 @@ export function ProductsManager({ products: initial, categories, limit, category
         confirmLabel="Eliminar"
         onConfirm={removeOne}
       />
+      <StockSheet product={stockFor ? products.find((x) => x.id === stockFor.id) ?? stockFor : null} open={stockOpen} onOpenChange={setStockOpen} />
       <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />
       <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />
     </>

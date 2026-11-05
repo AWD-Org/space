@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
-import { getStats, getStoreForView, topViewedProducts } from "@/lib/data/queries";
-import { todayKey } from "@/lib/format";
+import { getSales, getStats, getStoreForView, topViewedProducts } from "@/lib/data/queries";
+import { formatPrice, todayKey } from "@/lib/format";
+import { UndoSaleButton } from "@/components/app/undo-sale-button";
 import { PageHeader, Panel } from "@/components/app/shell";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
   const user = await requireUser();
   const { dias } = await searchParams;
   const range = (RANGES as readonly number[]).includes(Number(dias)) ? Number(dias) : 30;
-  const [store, stats] = await Promise.all([getStoreForView(user.uid), getStats(user.uid, range)]);
+  const [store, stats, sales] = await Promise.all([getStoreForView(user.uid), getStats(user.uid, range), getSales(user.uid, range)]);
   if (!store) return null;
 
   const days = Array.from({ length: range }, (_, i) => todayKey(new Date(Date.now() - (range - 1 - i) * 86_400_000)));
@@ -29,6 +30,19 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
   const pv = new Map<string, number>();
   for (const s of stats) for (const [id, n] of Object.entries(s.productViews ?? {})) pv.set(id, (pv.get(id) ?? 0) + n);
   const top = await topViewedProducts(user.uid, pv, 10);
+
+  const units = sales.reduce((n, s) => n + s.qty, 0);
+  const priced = sales.filter((s) => s.unitPrice != null);
+  const revenue = priced.reduce((n, s) => n + s.qty * s.unitPrice!, 0);
+  const byProduct = new Map<string, { name: string; units: number; revenue: number }>();
+  for (const s of sales) {
+    const cur = byProduct.get(s.productId) ?? { name: s.productName, units: 0, revenue: 0 };
+    cur.units += s.qty;
+    cur.revenue += s.unitPrice != null ? s.qty * s.unitPrice : 0;
+    byProduct.set(s.productId, cur);
+  }
+  const bestSellers = [...byProduct.values()].sort((a, b) => b.units - a.units).slice(0, 10);
+  const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
   return (
     <>
@@ -73,6 +87,54 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
           <p className="mt-2 text-xs text-muted-foreground">
             {views ? `Tu mejor día fue el ${dayFmt.format(new Date(best.date + "T12:00:00"))}, con ${best.views} visitas.` : "Todavía no hay visitas en este periodo. Comparte tu link para empezar."} Un pedido enviado es cuando alguien toca “Mandar pedido por WhatsApp”.
           </p>
+        </Panel>
+        <Panel title="Ventas registradas">
+          {sales.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Cuando registres una venta con “Vendí” en tus productos, aquí verás cuántas piezas y cuánto vendiste.</p>
+          ) : (
+            <>
+              <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Piezas vendidas</dt>
+                  <dd className="font-display text-4xl font-semibold tabular-nums text-ink">{units}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Ventas registradas</dt>
+                  <dd className="font-display text-4xl font-semibold tabular-nums text-ink">{sales.length}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Ingresos</dt>
+                  <dd className="font-display text-4xl font-semibold tabular-nums text-ink">{formatPrice(revenue)}</dd>
+                </div>
+              </dl>
+              {priced.length < sales.length && <p className="mt-2 text-xs text-muted-foreground">Los ingresos no incluyen ventas de productos sin precio.</p>}
+              <h3 className="mt-6 text-sm font-medium text-ink">Lo que más vendes</h3>
+              <ol className="mt-1 divide-y divide-ink/5">
+                {bestSellers.map((b, i) => (
+                  <li key={b.name + i} className="flex items-center justify-between gap-3 py-2.5 text-[0.95rem]">
+                    <span className="min-w-0 truncate text-ink">
+                      <span className="mr-2 tabular-nums text-muted-foreground">{i + 1}.</span>
+                      {b.name}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">{b.units} {b.units === 1 ? "pieza" : "piezas"}{b.revenue ? ` · ${formatPrice(b.revenue)}` : ""}</span>
+                  </li>
+                ))}
+              </ol>
+              <h3 className="mt-6 text-sm font-medium text-ink">Últimas ventas</h3>
+              <ul className="mt-1 divide-y divide-ink/5">
+                {sales.slice(0, 15).map((s) => (
+                  <li key={s.id} className="flex items-center justify-between gap-3 py-1.5 text-[0.95rem]">
+                    <span className="min-w-0 truncate text-ink">
+                      {s.qty} × {s.productName}
+                      {s.value && <span className="text-muted-foreground"> · {s.value}</span>}
+                      <span className="text-muted-foreground"> · {when.format(new Date(s.at))}</span>
+                    </span>
+                    <UndoSaleButton saleId={s.id} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </Panel>
         <Panel title="Productos más vistos">
           {top.length === 0 ? (

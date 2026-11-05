@@ -51,8 +51,16 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
       images: data.images.map(({ path, url }) => ({ path, url })),
       options: (data.options ?? []).map((o) => ({
         name: o.name,
-        values: o.values.map((v) => ({ label: v.label, ...(data.price != null && v.extra ? { extra: v.extra } : {}), ...(v.soldOut ? { soldOut: true } : {}) })),
+        values: o.values.map((v) => ({
+          label: v.label,
+          ...(data.price != null && v.extra ? { extra: v.extra } : {}),
+          ...(v.soldOut ? { soldOut: true } : {}),
+          // El stock por valor solo existe cuando el producto tiene una única opción.
+          ...((data.options ?? []).length === 1 && v.stock != null ? { stock: v.stock } : {}),
+        })),
       })),
+      // Con una sola opción el stock vive en cada valor; si no, en el producto. null = no se lleva la cuenta.
+      stock: (data.options ?? []).length === 1 ? null : data.stock ?? null,
       updatedAt: now,
     };
 
@@ -171,7 +179,9 @@ export async function duplicateProduct(id: string): Promise<ActionResult<{ id: s
           visible: false,
           categoryId: source.categoryId,
           images: copies,
-          options: normalizeOptions(source.options),
+          // La copia no duplica existencias: queda sin cuenta hasta que el vendedor la defina.
+          options: normalizeOptions(source.options).map((o) => ({ ...o, values: o.values.map(({ stock: _stock, ...v }) => v) })),
+          stock: null,
           order: now,
           createdAt: now,
           updatedAt: now,

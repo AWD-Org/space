@@ -4,7 +4,7 @@ import { firstError, productOptionsSchema } from "./validators";
 
 /** Importar y exportar el catálogo en CSV o Excel. Todo aquí es puro (sin base de datos) para poder probarlo solo. */
 
-export const IMPORT_HEADERS = ["Nombre", "Descripción", "Precio", "Categoría", "Disponibilidad", "Opciones"] as const;
+export const IMPORT_HEADERS = ["Nombre", "Descripción", "Precio", "Categoría", "Disponibilidad", "Opciones", "Stock"] as const;
 export const MAX_OPTIONS_CELL = 1500;
 export const MAX_IMPORT_ROWS = 500;
 export const MAX_IMPORT_BYTES = 1_000_000;
@@ -44,6 +44,8 @@ export interface ParsedRow {
   availability: Availability;
   /** Opciones del producto (talla, tamaño, sabor…); vacío si no trae. */
   options: ProductOption[];
+  /** Existencias del producto (sin opciones o con 2–3); null = sin cuenta. Con una sola opción el stock va por valor. */
+  stock: number | null;
 }
 
 export interface RowIssue {
@@ -158,6 +160,7 @@ const HEADER_ALIASES: Record<(typeof IMPORT_HEADERS)[number], string[]> = {
   Categoría: ["categoria", "categorias", "category", "tipo"],
   Disponibilidad: ["disponibilidad", "estado", "existencia", "availability"],
   Opciones: ["opciones", "variantes", "opciones del producto", "options", "variants"],
+  Stock: ["stock", "existencias", "inventario", "cantidad", "unidades", "piezas"],
 };
 
 export interface TableResult {
@@ -172,7 +175,9 @@ export interface TableResult {
 
 /**
  * Formato de la celda «Opciones»: grupos separados por «;» (o salto de línea) y valores por «|».
- * Cada valor puede llevar «+precio» y «(agotado)». Ejemplo: Tamaño: Ch | Md +15 | Gd +30; Leche: Entera | Avena +10 | Soya (agotado)
+ * Cada valor puede llevar «+precio», «(agotado)» y las existencias entre paréntesis «(5)».
+ * Ejemplo: Tamaño: Ch (3) | Md +15 (5) | Gd +30 (0); Leche: Entera | Avena +10 | Soya (agotado)
+ * Las existencias por valor solo aplican cuando el producto tiene una única opción.
  */
 export function parseOptionsCell(raw: string): { options: ProductOption[] } | { error: string } {
   const text = raw.trim();
@@ -188,8 +193,21 @@ export function parseOptionsCell(raw: string): { options: ProductOption[] } | { 
     const body = part.slice(colon + 1);
     const tokens = (body.includes("|") ? body.split("|") : body.split(",")).map((t) => t.trim()).filter(Boolean);
     const values: ProductOption["values"] = [];
-    for (const token of tokens) {
-      const m = /^(.*?)(?:\s*\+\s*\$?\s*([\d.,]+))?(?:\s*\(\s*agotad[oa]\s*\))?\s*$/i.exec(token);
+    for (const raw of tokens) {
+      // Se quitan del final, en cualquier orden, «(agotado)» y «(N)»; lo demás es nombre y precio extra.
+      let token = raw;
+      let soldOut = false;
+      let stock: number | undefined;
+      for (;;) {
+        const tail = /\s*\(\s*(agotad[oa]|\d+)\s*\)\s*$/i.exec(token);
+        if (!tail) break;
+        if (/^\d+$/.test(tail[1]!)) {
+          if (stock !== undefined) break;
+          stock = Number(tail[1]);
+        } else soldOut = true;
+        token = token.slice(0, tail.index);
+      }
+      const m = /^(.*?)(?:\s*\+\s*\$?\s*([\d.,]+))?\s*$/i.exec(token);
       const label = (m?.[1] ?? token).trim();
       // «Rojo +abc»: el «+» con espacio antes indica precio extra; si no es un número, se avisa en vez de guardarlo como parte del nombre.
       if (!m?.[2] && /\s\+/.test(token)) return { error: `el precio extra de «${token.split(/\s\+/)[0]!.trim()}» no es válido` };
@@ -199,21 +217,20 @@ export function parseOptionsCell(raw: string): { options: ProductOption[] } | { 
         if (cents === "invalid" || cents === null) return { error: `el precio extra de «${label}» no es válido` };
         if (cents > 0) extra = cents;
       }
-      const soldOut = /\(\s*agotad[oa]\s*\)\s*$/i.test(token);
-      values.push({ label, ...(extra ? { extra } : {}), ...(soldOut ? { soldOut: true } : {}) });
+      values.push({ label, ...(extra ? { extra } : {}), ...(soldOut ? { soldOut: true } : {}), ...(stock !== undefined ? { stock } : {}) });
     }
     options.push({ name, values });
   }
   const checked = productOptionsSchema.safeParse(options);
   if (!checked.success) return { error: firstError(checked.error).replace(/\.$/, "").replace(/^./, (c) => c.toLowerCase()) };
-  return { options: checked.data.map((o) => ({ name: o.name, values: o.values.map((v) => ({ label: v.label, ...(v.extra ? { extra: v.extra } : {}), ...(v.soldOut ? { soldOut: true } : {}) })) })) };
+  return { options: checked.data.map((o) => ({ name: o.name, values: o.values.map((v) => ({ label: v.label, ...(v.extra ? { extra: v.extra } : {}), ...(v.soldOut ? { soldOut: true } : {}), ...(v.stock !== undefined ? { stock: v.stock } : {}) })) })) };
 }
 
 /** Inverso de parseOptionsCell, para exportar y para la plantilla. */
 export function formatOptionsCell(options: ProductOption[] | undefined): string {
   return (options ?? [])
     .map((o) => {
-      const vals = o.values.map((v) => `${v.label.replace(/[;|]/g, "/")}${v.extra ? ` +${centsToInput(v.extra)}` : ""}${v.soldOut ? " (agotado)" : ""}`);
+      const vals = o.values.map((v) => `${v.label.replace(/[;|]/g, "/")}${v.extra ? ` +${centsToInput(v.extra)}` : ""}${v.stock != null ? ` (${v.stock})` : ""}${v.soldOut ? " (agotado)" : ""}`);
       return `${o.name.replace(/[;|:]/g, "-")}: ${vals.join(" | ")}`;
     })
     .join("; ");
@@ -272,11 +289,19 @@ export function parseTable(table: unknown[][]): TableResult {
         if (price == null && options.some((x) => x.values.some((v) => v.extra))) problems.push("no puedes poner precio extra si el producto no tiene precio");
       }
     }
+    let stock: number | null = null;
+    const stockText = get("Stock");
+    if (stockText) {
+      if (!/^\d{1,5}$/.test(stockText.replace(/[\s,]/g, ""))) problems.push("el stock debe ser un número entero de 0 a 99,999");
+      else if (options.length === 1) problems.push("con una sola opción el stock va dentro de Opciones, por valor (por ejemplo «Ch (3) | Gd (5)»); deja la columna Stock vacía");
+      else stock = Number(stockText.replace(/[\s,]/g, ""));
+    }
+    if (options.length !== 1 && options.some((x) => x.values.some((v) => v.stock !== undefined))) problems.push("el stock por valor solo se usa cuando el producto tiene una única opción; usa la columna Stock");
     if (problems.length) {
       issues.push({ row, message: `Fila ${row}: ${problems.join("; ")}.` });
       continue;
     }
-    rows.push({ row, name, description, price: price as number | null, category, availability: availability!, options });
+    rows.push({ row, name, description, price: price as number | null, category, availability: availability!, options, stock });
   }
   return { rows, issues };
 }
@@ -348,6 +373,7 @@ export interface ExportItem {
   category: string;
   availability: Availability;
   options?: ProductOption[];
+  stock?: number | null;
 }
 
 /** Evita que Excel ejecute como fórmula un texto que empieza con = + - @. */
@@ -356,7 +382,7 @@ const guard = (v: string) => (/^[=+\-@]/.test(v) ? `'${v}` : v);
 export function exportRows(items: ExportItem[]): string[][] {
   return [
     [...IMPORT_HEADERS],
-    ...items.map((i) => [guard(i.name), guard(i.description), centsToInput(i.price), guard(i.category), AVAILABILITY_TEXT[i.availability], guard(formatOptionsCell(i.options))]),
+    ...items.map((i) => [guard(i.name), guard(i.description), centsToInput(i.price), guard(i.category), AVAILABILITY_TEXT[i.availability], guard(formatOptionsCell(i.options)), i.stock != null ? String(i.stock) : ""]),
   ];
 }
 
@@ -368,6 +394,6 @@ export function toCsv(rows: string[][]): string {
 
 export const TEMPLATE_EXAMPLES: ExportItem[] = [
   { name: "Pastel de chocolate", description: "Para 10 personas, con ganache.", price: 450_00, category: "Pasteles", availability: "available", options: [{ name: "Tamaño", values: [{ label: "Chico" }, { label: "Mediano", extra: 100_00 }, { label: "Grande", extra: 200_00 }] }, { name: "Sabor", values: [{ label: "Chocolate" }, { label: "Vainilla" }, { label: "Zarzamora", extra: 20_00 }] }] },
-  { name: "Caja de galletas", description: "12 piezas surtidas.", price: 180_00, category: "Galletas", availability: "available" },
+  { name: "Caja de galletas", description: "12 piezas surtidas.", price: 180_00, category: "Galletas", availability: "available", stock: 20 },
   { name: "Mesa de postres para eventos", description: "Cotizamos según número de invitados.", price: null, category: "Eventos", availability: "onrequest" },
 ];
