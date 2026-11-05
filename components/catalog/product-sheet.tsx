@@ -8,9 +8,11 @@ import { formatPrice, AVAILABILITY_LABEL } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { hasPriceExtras, isSoldOut, unitPrice } from "@/lib/options";
+import { LOW_STOCK, availabilityNote, availableFor, valueUnavailable } from "@/lib/stock";
+import { toast } from "@/lib/toast";
 import { useBag } from "./bag";
 
-export function QtyStepper({ value, onChange, label }: { value: number; onChange: (n: number) => void; label: string }) {
+export function QtyStepper({ value, onChange, label, max = 99 }: { value: number; onChange: (n: number) => void; label: string; max?: number }) {
   return (
     <div className="inline-flex items-center rounded-full bg-cloud ring-1 ring-inset ring-border">
       <button type="button" onClick={() => onChange(value - 1)} className="grid h-11 w-11 place-items-center rounded-full text-ink hover:bg-ink/5" aria-label={`Quitar uno de ${label}`}>
@@ -19,7 +21,7 @@ export function QtyStepper({ value, onChange, label }: { value: number; onChange
       <span className="w-7 text-center font-semibold tabular-nums" aria-live="polite">
         {value}
       </span>
-      <button type="button" onClick={() => onChange(value + 1)} className="grid h-11 w-11 place-items-center rounded-full text-ink hover:bg-ink/5" aria-label={`Agregar uno de ${label}`}>
+      <button type="button" disabled={value >= max} onClick={() => onChange(value + 1)} className="grid h-11 w-11 place-items-center rounded-full text-ink hover:bg-ink/5 disabled:opacity-35 disabled:hover:bg-transparent" aria-label={`Agregar uno de ${label}`}>
         <Plus className="h-4 w-4" />
       </button>
     </div>
@@ -41,7 +43,7 @@ export function ProductSheet({
   closedReason?: string;
   accent: string;
 }) {
-  const { add } = useBag();
+  const { add, roomFor } = useBag();
   const [qty, setQty] = React.useState(1);
   const [picked, setPicked] = React.useState<Record<string, string>>({});
   const [missing, setMissing] = React.useState(false);
@@ -58,11 +60,21 @@ export function ProductSheet({
     }
   }, [open, product?.id]);
 
+  const limit = product ? roomFor(product, picked) : Infinity;
+  React.useEffect(() => {
+    if (Number.isFinite(limit) && limit >= 1) setQty((q) => Math.min(q, limit));
+  }, [limit]);
+
   if (!product) return null;
   const soldOut = isSoldOut(product);
   const options = product.options ?? [];
   const lacking = options.filter((o) => !picked[o.name]);
   const unit = unitPrice(product, picked);
+  const available = availableFor(product, picked);
+  const room = roomFor(product, picked);
+  const maxQty = Math.max(1, Math.min(99, Number.isFinite(room) ? room : 99));
+  const note = availabilityNote(available);
+  const full = available !== null && room <= 0;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -104,6 +116,9 @@ export function ProductSheet({
           <div className="flex flex-col p-5 sm:p-0 sm:pt-10">
             <h2 className="font-display text-2xl font-semibold leading-tight text-ink sm:text-3xl">{product.name}</h2>
             <p className="mt-2 text-xl font-semibold tabular-nums text-ink">{formatPrice(unit, product.priceFrom || (hasPriceExtras(product) && lacking.length > 0))}</p>
+            {note && !soldOut && (
+              <p className={cn("mt-3 inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset", available! <= LOW_STOCK ? "bg-[#FFF4E5] text-[#9A3412] ring-[#F5D9B8]" : "bg-cloud text-ink ring-border")}>{note}</p>
+            )}
             {product.availability !== "available" && (
               <p className="mt-3 inline-flex w-fit rounded-full bg-cloud px-3 py-1 text-sm font-medium text-ink ring-1 ring-inset ring-border">
                 {AVAILABILITY_LABEL[product.availability]}
@@ -127,17 +142,17 @@ export function ProductSheet({
                             type="button"
                             role="radio"
                             aria-checked={on}
-                            disabled={v.soldOut}
-                            aria-label={v.soldOut ? `${v.label}, agotado` : undefined}
+                            disabled={valueUnavailable(v)}
+                            aria-label={valueUnavailable(v) ? `${v.label}, agotado` : undefined}
                             onClick={() => setPicked((cur) => ({ ...cur, [o.name]: v.label }))}
                             className={cn(
                               "inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2",
-                              v.soldOut && "cursor-not-allowed bg-cloud text-muted-foreground line-through ring-1 ring-inset ring-ink/10",
-                              !v.soldOut && (on ? "bg-[var(--accent)] text-white" : "bg-white text-ink ring-1 ring-inset ring-ink/20 hover:bg-cloud")
+                              valueUnavailable(v) && "cursor-not-allowed bg-cloud text-muted-foreground line-through ring-1 ring-inset ring-ink/10",
+                              !valueUnavailable(v) && (on ? "bg-[var(--accent)] text-white" : "bg-white text-ink ring-1 ring-inset ring-ink/20 hover:bg-cloud")
                             )}
                           >
                             {v.label}
-                            {!!v.extra && !v.soldOut && <span className={cn("text-xs font-normal tabular-nums", on ? "text-white/85" : "text-muted-foreground")}>+${(v.extra / 100).toLocaleString("es-MX")}</span>}
+                            {!!v.extra && !valueUnavailable(v) && <span className={cn("text-xs font-normal tabular-nums", on ? "text-white/85" : "text-muted-foreground")}>+${(v.extra / 100).toLocaleString("es-MX")}</span>}
                           </button>
                         );
                       })}
@@ -156,7 +171,7 @@ export function ProductSheet({
                 <p className="rounded-2xl bg-cloud p-4 text-sm text-muted-foreground">Este producto está agotado por ahora.</p>
               ) : (
                 <div className="flex items-center gap-3">
-                  <QtyStepper value={qty} onChange={(n) => setQty(Math.max(1, Math.min(99, n)))} label={product.name} />
+                  <QtyStepper value={Math.min(qty, maxQty)} onChange={(n) => setQty(Math.max(1, Math.min(maxQty, n)))} label={product.name} max={maxQty} />
                   <button
                     type="button"
                     onClick={() => {
@@ -165,13 +180,16 @@ export function ProductSheet({
                         document.getElementById(`opt-${lacking[0].name}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
                         return;
                       }
-                      add(product, qty, picked);
+                      if (full) return;
+                      const added = add(product, Math.min(qty, maxQty), picked);
+                      if (added < qty) toast.info(added > 0 ? `Solo hay ${available} disponibles; agregamos ${added}.` : "Ya tienes en tu bolsa todas las que hay.");
                       onOpenChange(false);
                     }}
-                    className="h-12 flex-1 rounded-full bg-[var(--accent)] px-5 font-medium text-white transition-[filter] hover:brightness-110"
+                    disabled={full}
+                    className="h-12 flex-1 rounded-full bg-[var(--accent)] px-5 font-medium text-white transition-[filter] hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
                   >
-                    {missing && lacking.length > 0 ? `Elige ${lacking.map((o) => o.name.toLowerCase()).join(" y ")}` : "Agregar"}
-                    {!(missing && lacking.length > 0) && unit != null && <span className="tabular-nums"> · {formatPrice(unit * qty)}</span>}
+                    {full ? "Ya tienes todas las que hay" : missing && lacking.length > 0 ? `Elige ${lacking.map((o) => o.name.toLowerCase()).join(" y ")}` : "Agregar"}
+                    {!full && !(missing && lacking.length > 0) && unit != null && <span className="tabular-nums"> · {formatPrice(unit * qty)}</span>}
                   </button>
                 </div>
               )}

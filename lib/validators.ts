@@ -67,6 +67,7 @@ export const optionValueSchema = z.object({
   label: optionLabelSchema,
   extra: z.number().int("Revisa el precio extra.").min(0, "El precio extra no puede ser negativo.").max(10_000_000 * 100, "Revisa el precio extra.").optional(),
   soldOut: z.boolean().optional(),
+  stock: z.number().int("El stock debe ser un número entero.").min(0, "El stock no puede ser negativo.").max(99_999, "Máximo 99,999 unidades.").optional(),
 });
 export const productOptionsSchema = z
   .array(
@@ -94,6 +95,7 @@ export const productSchema = z.object({
   categoryId: z.string().nullable(),
   images: z.array(imageRefSchema).max(10),
   options: productOptionsSchema.optional(),
+  stock: z.number().int("El stock debe ser un número entero.").min(0, "El stock no puede ser negativo.").max(99_999, "Máximo 99,999 unidades.").nullable().optional(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;
@@ -169,6 +171,7 @@ export const productFormSchema = z.object({
   categoryId: z.string().nullable(),
   availability: z.enum(["available", "soldout", "onrequest"]),
   visible: z.boolean(),
+  stock: z.string().refine((v) => !v.trim() || /^\d{1,5}$/.test(v.trim()), "El stock es un número entero, por ejemplo 12."),
 });
 export type ProductFormValues = z.infer<typeof productFormSchema>;
 

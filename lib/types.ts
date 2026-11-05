@@ -49,6 +49,8 @@ export interface OptionValue {
   /** Precio extra en centavos (≥ 0) que suma este valor al precio base. */
   extra?: number;
   soldOut?: boolean;
+  /** Unidades disponibles de este valor (solo cuando el producto tiene una única opción). Sin valor: no se lleva la cuenta. */
+  stock?: number;
 }
 export interface ProductOption {
   name: string;
@@ -68,9 +70,27 @@ export interface Product {
   images: ImageRef[];
   /** Opciones a elegir al pedir; cada valor puede sumar un precio extra o marcarse agotado. */
   options?: ProductOption[];
+  /** Unidades disponibles del producto (sin opciones, o con 2 o 3 opciones). null o ausente: no se lleva la cuenta. */
+  stock?: number | null;
   order: number;
   createdAt: number;
   updatedAt: number;
+}
+
+/** Una venta registrada por el vendedor desde el panel. */
+export interface Sale {
+  id: string;
+  productId: string;
+  productName: string;
+  /** Valor elegido cuando el producto tiene una única opción. */
+  value?: string;
+  qty: number;
+  /** Precio por pieza al momento de la venta (centavos); null si el producto no tenía precio. */
+  unitPrice: number | null;
+  /** ¿Descontó del stock? Sirve para devolverlo al deshacer. */
+  tracked: boolean;
+  at: number;
+  date: string; // AAAA-MM-DD
 }
 
 export interface DayStats {

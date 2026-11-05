@@ -59,6 +59,7 @@ export function ProductForm({
     categoryId: product?.categoryId ?? null,
     availability: product?.availability ?? "available",
     visible: product?.visible ?? true,
+    stock: product?.stock != null ? String(product.stock) : "",
   };
   const {
     register,
@@ -101,6 +102,7 @@ export function ProductForm({
       categoryId: v.categoryId,
       images,
       options,
+      stock: options.length === 1 || !v.stock.trim() ? null : Number(v.stock.trim()),
     })), { loading: "Guardando producto…", showError: false, success: product ? "Cambios guardados." : "Producto agregado a tu catálogo." });
     setSaving(null);
     if (!res.ok) return setError(res.error);
@@ -219,6 +221,21 @@ export function ProductForm({
               )}
             />
           </div>
+
+          {options.length !== 1 && (
+            <Field
+              label="Stock (opcional)"
+              htmlFor="p-stock"
+              error={errors.stock?.message}
+              hint={
+                options.length > 1
+                  ? "Unidades en total, sumando todas las opciones. Déjalo vacío si no quieres llevar la cuenta."
+                  : "Cuántas unidades tienes. Quien compra ve cuántas quedan y se agota solo al llegar a 0. Déjalo vacío si no quieres llevar la cuenta."
+              }
+            >
+              <Input id="p-stock" {...register("stock")} aria-invalid={!!errors.stock} inputMode="numeric" autoComplete="off" maxLength={5} placeholder="Sin cuenta" className="sm:max-w-40" />
+            </Field>
+          )}
 
           <Field label="Categoría" htmlFor={newCat ? "p-newcat" : "p-cat"} error={newCat?.error}>
             {newCat ? (

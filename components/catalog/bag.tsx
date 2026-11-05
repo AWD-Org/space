@@ -4,6 +4,7 @@ import * as React from "react";
 import type { Product } from "@/lib/types";
 import type { BagLine } from "@/lib/whatsapp";
 import { pickValid, unitPrice, variantText } from "@/lib/options";
+import { availableFor, sharesPool } from "@/lib/stock";
 import { toast } from "@/lib/toast";
 
 export interface BagItem {
@@ -19,9 +20,22 @@ export interface BagItem {
   priceFrom: boolean;
   qty: number;
   image?: string;
+  /** Tope de unidades según el stock al agregarlo; ausente = sin límite. Se revisa al volver a abrir la bolsa. */
+  max?: number;
+  /** El tope se comparte entre todas las variantes del producto (stock por producto con varias opciones). */
+  pool?: boolean;
 }
 
 export const itemKey = (i: Pick<BagItem, "productId" | "key">) => i.key ?? i.productId;
+const HARD_MAX = 99;
+
+/** Cuántas unidades admite esta línea, descontando las demás líneas del mismo producto cuando comparten stock. */
+function allowedFor(state: BagItem[], line: Pick<BagItem, "productId" | "key" | "max" | "pool">) {
+  if (line.max === undefined) return HARD_MAX;
+  const used = line.pool ? state.filter((i) => i.productId === line.productId && itemKey(i) !== itemKey(line)).reduce((n, i) => n + i.qty, 0) : 0;
+  return Math.max(0, Math.min(HARD_MAX, line.max - used));
+}
+
 type Action =
   | { type: "add"; product: Product; qty?: number; picked?: Record<string, string> }
   | { type: "set"; key: string; qty: number }
@@ -36,14 +50,19 @@ function reducer(state: BagItem[], action: Action): BagItem[] {
       const variant = picked ? variantText(action.product, picked) : "";
       const key = variant ? `${action.product.id}|${variant}` : action.product.id;
       const found = state.find((i) => itemKey(i) === key);
-      if (found) return state.map((i) => (itemKey(i) === key ? { ...i, qty: Math.min(99, i.qty + qty) } : i));
       const p = action.product;
-      return [...state, { productId: p.id, key, variant: variant || undefined, picked, name: p.name, price: unitPrice(p, picked ?? {}), priceFrom: p.priceFrom, qty, image: p.images[0]?.url }];
+      const max = availableFor(p, picked) ?? undefined;
+      const line = { productId: p.id, key, max, pool: sharesPool(p) };
+      const allowed = allowedFor(state, line);
+      if (found) return state.map((i) => (itemKey(i) === key ? { ...i, max, pool: line.pool, qty: Math.min(allowed, i.qty + qty) } : i));
+      const first = Math.min(allowed, qty);
+      if (first <= 0) return state;
+      return [...state, { productId: p.id, key, variant: variant || undefined, picked, name: p.name, price: unitPrice(p, picked ?? {}), priceFrom: p.priceFrom, qty: first, image: p.images[0]?.url, max, pool: line.pool }];
     }
     case "set":
       return action.qty <= 0
         ? state.filter((i) => itemKey(i) !== action.key)
-        : state.map((i) => (itemKey(i) === action.key ? { ...i, qty: Math.min(99, action.qty) } : i));
+        : state.map((i) => (itemKey(i) === action.key ? { ...i, qty: Math.max(1, Math.min(allowedFor(state, i), action.qty)) } : i));
     case "clear":
       return [];
     case "load":
@@ -54,7 +73,12 @@ function reducer(state: BagItem[], action: Action): BagItem[] {
 interface BagContextValue {
   items: BagItem[];
   count: number;
-  add: (p: Product, qty?: number, picked?: Record<string, string>) => void;
+  /** Devuelve cuántas unidades se agregaron (pueden ser menos si el stock no alcanza). */
+  add: (p: Product, qty?: number, picked?: Record<string, string>) => number;
+  /** Unidades que todavía se pueden agregar de esta variante (Infinity si no hay límite). */
+  roomFor: (p: Product, picked?: Record<string, string>) => number;
+  /** Máximo de unidades que admite una línea de la bolsa. */
+  maxFor: (item: BagItem) => number;
   /** Cantidad de un producto sumando todas sus variantes. */
   countOf: (productId: string) => number;
   setQty: (key: string, qty: number) => void;
@@ -88,6 +112,7 @@ export function BagProvider({
       const allowed = validIds ? new Set(validIds) : null;
       const byId = new Map((products ?? []).map((p) => [p.id, p]));
       let dropped = 0;
+      let adjusted = 0;
       const kept: BagItem[] = [];
       for (const i of saved) {
         if (allowed && !allowed.has(i.productId)) continue;
@@ -106,9 +131,29 @@ export function BagProvider({
           dropped += 1;
           continue;
         }
-        kept.push({ ...i, name: p.name, price: unitPrice(p, i.picked ?? {}), priceFrom: p.priceFrom });
+        const max = availableFor(p, i.picked) ?? undefined;
+        if (max === 0) {
+          dropped += 1;
+          continue;
+        }
+        const next: BagItem = { ...i, name: p.name, price: unitPrice(p, i.picked ?? {}), priceFrom: p.priceFrom, max, pool: sharesPool(p) };
+        if (max === undefined) {
+          delete next.max;
+          delete next.pool;
+        }
+        const room = allowedFor(kept, next);
+        if (room <= 0) {
+          dropped += 1;
+          continue;
+        }
+        if (next.qty > room) {
+          next.qty = room;
+          adjusted += 1;
+        }
+        kept.push(next);
       }
       dispatch({ type: "load", items: kept });
+      if (adjusted > 0) toast.info("Ajustamos las cantidades de tu bolsa a lo que hay disponible.");
       if (dropped > 0) toast.info(dropped === 1 ? "Quitamos 1 producto de tu bolsa: ya no está disponible." : `Quitamos ${dropped} productos de tu bolsa: ya no están disponibles.`);
     } catch {
       /* almacenamiento no disponible */
@@ -130,7 +175,23 @@ export function BagProvider({
     () => ({
       items,
       count: items.reduce((n, i) => n + i.qty, 0),
-      add: (product, qty, picked) => dispatch({ type: "add", product, qty, picked }),
+      add: (product, qty, picked) => {
+        const action: Action = { type: "add", product, qty, picked };
+        const total = (list: BagItem[]) => list.filter((i) => i.productId === product.id).reduce((n, i) => n + i.qty, 0);
+        const added = total(reducer(items, action)) - total(items);
+        if (added > 0) dispatch(action);
+        return added;
+      },
+      roomFor: (product, picked) => {
+        const max = availableFor(product, picked) ?? undefined;
+        if (max === undefined) return Infinity;
+        const variant = picked && Object.keys(picked).length ? variantText(product, picked) : "";
+        const key = variant ? `${product.id}|${variant}` : product.id;
+        const line = { productId: product.id, key, max, pool: sharesPool(product) };
+        const have = items.find((i) => itemKey(i) === key)?.qty ?? 0;
+        return Math.max(0, allowedFor(items, line) - have);
+      },
+      maxFor: (item) => allowedFor(items, item),
       countOf: (productId) => items.filter((i) => i.productId === productId).reduce((n, i) => n + i.qty, 0),
       setQty: (key, qty) => dispatch({ type: "set", key, qty }),
       clear: () => dispatch({ type: "clear" }),

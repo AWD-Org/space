@@ -39,6 +39,30 @@ function ExtraInput({ cents, onChange, label }: { cents: number | undefined; onC
   );
 }
 
+function StockInput({ stock, onChange, label }: { stock: number | undefined; onChange: (n: number | undefined) => void; label: string }) {
+  const [text, setText] = React.useState(stock !== undefined ? String(stock) : "");
+  React.useEffect(() => {
+    if ((text.trim() === "" ? undefined : Number(text)) !== stock) setText(stock !== undefined ? String(stock) : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stock]);
+  return (
+    <input
+      value={text}
+      inputMode="numeric"
+      autoComplete="off"
+      maxLength={5}
+      aria-label={label}
+      placeholder="Stock"
+      onChange={(e) => {
+        const v = e.target.value.replace(/\D/g, "");
+        setText(v);
+        onChange(v === "" ? undefined : Number(v));
+      }}
+      className={cn(FIELD, "w-full")}
+    />
+  );
+}
+
 /**
  * Editor de opciones: cada opción tiene un nombre libre (con sugerencias) y hasta 12 valores.
  * Cada valor puede sumar un precio extra y marcarse agotado.
@@ -180,7 +204,12 @@ export function OptionsEditor({ value, onChange, hasPrice }: { value: ProductOpt
                           <X className="h-4 w-4" aria-hidden />
                         </button>
                       </div>
-                      <div className="mt-2 flex items-center gap-3">
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        {value.length === 1 && (
+                          <div className="w-28 shrink-0">
+                            <StockInput stock={v.stock} onChange={(n) => setValue(gi, vi, { stock: n })} label={`Stock de ${v.label || "valor"}`} />
+                          </div>
+                        )}
                         {hasPrice && (
                           <div className="w-32 shrink-0">
                             <ExtraInput cents={v.extra} onChange={(c) => setValue(gi, vi, { extra: c })} label={`Precio extra de ${v.label || "valor"}`} />
@@ -248,6 +277,7 @@ export function OptionsEditor({ value, onChange, hasPrice }: { value: ProductOpt
               <Plus className="h-4 w-4" aria-hidden /> Agregar otra opción
             </button>
           )}
+          {value.length === 1 && <p className="text-sm text-muted-foreground">El stock por valor es opcional: si lo dejas vacío, ese valor no lleva la cuenta. Con dos o más opciones, el stock se pone en el producto completo.</p>}
           {!hasPrice && <p className="text-sm text-muted-foreground">Para sumar un precio extra por valor, primero escribe el precio del producto.</p>}
         </div>
       )}

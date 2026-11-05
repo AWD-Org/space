@@ -4,13 +4,14 @@ import { unstable_cache } from "next/cache";
 import { getDb } from "@/lib/db";
 import { FREE_PLAN, type PlanLimits } from "@/lib/plan";
 import { todayKey } from "@/lib/format";
-import type { Category, DayStats, Product, Store } from "@/lib/types";
+import type { Category, DayStats, Product, Sale, Store } from "@/lib/types";
 import { withOptions } from "@/lib/options";
 
 export const storePath = (uid: string) => `stores/${uid}`;
 export const productsPath = (uid: string) => `stores/${uid}/products`;
 export const categoriesPath = (uid: string) => `stores/${uid}/categories`;
 export const statsPath = (uid: string) => `stores/${uid}/stats`;
+export const salesPath = (uid: string) => `stores/${uid}/sales`;
 export const slugPath = (slug: string) => `slugs/${slug}`;
 
 export const catalogTag = (slug: string) => `catalog-${slug}`;
@@ -111,4 +112,11 @@ export async function getStats(uid: string, days: number) {
   const db = await getDb();
   const since = todayKey(new Date(Date.now() - (days - 1) * 86_400_000));
   return db.list<DayStats>(statsPath(uid), { where: [["date", ">=", since]], orderBy: ["date", "asc"] });
+}
+
+/** Ventas registradas en los últimos N días, de la más reciente a la más antigua. */
+export async function getSales(uid: string, days: number) {
+  const db = await getDb();
+  const since = Date.now() - days * 86_400_000;
+  return db.list<Sale>(salesPath(uid), { where: [["at", ">=", since]], orderBy: ["at", "desc"] });
 }

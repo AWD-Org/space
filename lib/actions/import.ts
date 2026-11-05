@@ -19,6 +19,7 @@ const rowSchema = z.object({
   category: z.string().trim().max(30),
   availability: z.enum(["available", "soldout", "onrequest"]),
   options: productOptionsSchema.default([]),
+  stock: z.number().int().min(0).max(99_999).nullable().default(null),
 });
 
 export interface ImportResult {
@@ -82,8 +83,9 @@ export async function importProducts(input: unknown): Promise<ActionResult<Impor
           images: [],
           options: r.options.map((o) => ({
             name: o.name,
-            values: o.values.map((v) => ({ label: v.label, ...(r.price != null && v.extra ? { extra: v.extra } : {}), ...(v.soldOut ? { soldOut: true } : {}) })),
+            values: o.values.map((v) => ({ label: v.label, ...(r.price != null && v.extra ? { extra: v.extra } : {}), ...(v.soldOut ? { soldOut: true } : {}), ...(r.options.length === 1 && v.stock != null ? { stock: v.stock } : {}) })),
           })),
+          stock: r.options.length === 1 ? null : r.stock ?? null,
           order: now + 1000 + i,
           createdAt: now,
           updatedAt: now,

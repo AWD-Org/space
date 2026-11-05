@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
       category: p.categoryId ? (cat.get(p.categoryId) ?? "") : "",
       availability: p.availability,
       options: p.options,
+      stock: p.stock ?? null,
     }))
   );
   const base = `catalogo-${store.slug}`;

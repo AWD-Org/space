@@ -1,4 +1,5 @@
 import type { OptionValue, Product, ProductOption } from "./types";
+import { hasStockNumber, productStockOut, valueUnavailable } from "./stock";
 
 /** Lee opciones guardadas: acepta el formato anterior (valores como texto) y el nuevo (objetos). */
 export function normalizeOptions(raw: unknown): ProductOption[] {
@@ -12,7 +13,7 @@ export function normalizeOptions(raw: unknown): ProductOption[] {
         if (v.trim()) values.push({ label: v });
       } else if (v && typeof v === "object" && typeof (v as OptionValue).label === "string" && (v as OptionValue).label.trim()) {
         const x = v as OptionValue;
-        values.push({ label: x.label, ...(x.extra && x.extra > 0 ? { extra: x.extra } : {}), ...(x.soldOut ? { soldOut: true } : {}) });
+        values.push({ label: x.label, ...(x.extra && x.extra > 0 ? { extra: x.extra } : {}), ...(x.soldOut ? { soldOut: true } : {}), ...(hasStockNumber(x.stock) ? { stock: x.stock } : {}) });
       }
     }
     if (values.length) out.push({ name: (o as ProductOption).name, values });
@@ -21,8 +22,8 @@ export function normalizeOptions(raw: unknown): ProductOption[] {
 }
 
 /** Producto con las opciones en formato actual. */
-export function withOptions<T extends { options?: unknown }>(p: T): T & { options: ProductOption[] } {
-  return { ...p, options: normalizeOptions(p.options) };
+export function withOptions<T extends { options?: unknown; stock?: unknown }>(p: T): T & { options: ProductOption[]; stock: number | null } {
+  return { ...p, options: normalizeOptions(p.options), stock: hasStockNumber(p.stock) ? p.stock : null };
 }
 
 export const hasOptions = (p: Pick<Product, "options">) => (p.options ?? []).length > 0;
@@ -32,13 +33,14 @@ export function hasPriceExtras(p: Pick<Product, "options" | "price">) {
   return p.price != null && (p.options ?? []).some((o) => o.values.some((v) => (v.extra ?? 0) > 0));
 }
 
-/** Si todos los valores de una opción están agotados, el producto no se puede pedir. */
+/** Si todos los valores de una opción están agotados (a mano o con stock en 0), el producto no se puede pedir. */
 export function optionsBlocked(p: Pick<Product, "options">) {
-  return (p.options ?? []).some((o) => o.values.length > 0 && o.values.every((v) => v.soldOut));
+  return (p.options ?? []).some((o) => o.values.length > 0 && o.values.every(valueUnavailable));
 }
 
-export function isSoldOut(p: Pick<Product, "availability" | "options">) {
-  return p.availability === "soldout" || optionsBlocked(p);
+/** Agotado a mano, por opciones sin existencias o porque el stock llegó a 0. */
+export function isSoldOut(p: Pick<Product, "availability" | "options" | "stock">) {
+  return p.availability === "soldout" || optionsBlocked(p) || productStockOut(p);
 }
 
 /** Precio de una pieza: base + extras de los valores elegidos. Sin precio base, queda en consulta. */
@@ -59,5 +61,5 @@ export function pickValid(p: Pick<Product, "options">, picked: Record<string, st
   const opts = p.options ?? [];
   if (!opts.length) return !picked || Object.keys(picked).length === 0;
   if (!picked) return false;
-  return opts.every((o) => o.values.some((v) => v.label === picked[o.name] && !v.soldOut));
+  return opts.every((o) => o.values.some((v) => v.label === picked[o.name] && !valueUnavailable(v)));
 }
