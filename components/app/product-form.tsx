@@ -19,9 +19,9 @@ import { Switch } from "@/components/ui/switch";
 import { deleteProduct, saveProduct } from "@/lib/actions/product";
 import { createCategory } from "@/lib/actions/category";
 import { centsToInput, parsePriceInput } from "@/lib/format";
-import { categoryNameSchema, productFormSchema, type ProductFormValues } from "@/lib/validators";
+import { categoryNameSchema, firstError, productFormSchema, productOptionsSchema, type ProductFormValues } from "@/lib/validators";
 import type { Category, ImageRef, Product, ProductOption } from "@/lib/types";
-import { VariantsEditor } from "./variants-editor";
+import { OptionsEditor } from "./options-editor";
 import { ImageUploader } from "./image-uploader";
 import { SaveBar } from "./save-bar";
 
@@ -87,7 +87,8 @@ export function ProductForm({
   async function persist(v: ProductFormValues, another: boolean) {
     setError(null);
     if (uploading) return toast.info("Espera a que terminen de subir las fotos.");
-    if (options.some((o) => o.values.length === 0)) return setError("Agrega al menos un valor en cada variante o quítala.");
+    const optCheck = productOptionsSchema.safeParse(options);
+    if (!optCheck.success) return setError(firstError(optCheck.error));
     setSaving(another ? "another" : "save");
     const res = await toast.task(() => safe(() => saveProduct({
       id: product?.id,
@@ -192,9 +193,8 @@ export function ProductForm({
 
       {!compact && (
         <section className="rounded-2xl bg-white p-5 ring-1 ring-ink/5 sm:p-6">
-          <h2 className="font-display text-lg font-semibold text-ink">Variantes</h2>
-          <p className="mb-4 mt-1 text-sm text-muted-foreground">Si tu producto viene en tallas, tamaños o colores, quien pida elige uno antes de agregarlo. El precio es el mismo para todas.</p>
-          <VariantsEditor value={options} onChange={setOptions} />
+          <h2 className="mb-4 font-display text-lg font-semibold text-ink">Opciones</h2>
+          <OptionsEditor value={options} onChange={setOptions} hasPrice={parsePriceInput(watch("price") ?? "") != null} />
         </section>
       )}
 

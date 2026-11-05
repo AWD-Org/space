@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { FREE_PLAN, type PlanLimits } from "@/lib/plan";
 import { todayKey } from "@/lib/format";
 import type { Category, DayStats, Product, Store } from "@/lib/types";
+import { withOptions } from "@/lib/options";
 
 export const storePath = (uid: string) => `stores/${uid}`;
 export const productsPath = (uid: string) => `stores/${uid}/products`;
@@ -26,7 +27,7 @@ export const getStoreForView = cache((uid: string) => getStore(uid));
 export async function getProductsByIds(uid: string, ids: string[]) {
   const db = await getDb();
   const rows = await Promise.all(ids.map((id) => db.get<Product>(`${productsPath(uid)}/${id}`)));
-  return rows.filter((p): p is NonNullable<typeof p> => Boolean(p));
+  return rows.filter((p): p is NonNullable<typeof p> => Boolean(p)).map(withOptions);
 }
 
 /** Los más vistos que todavía existen, leyendo solo los ids necesarios. */
@@ -43,12 +44,13 @@ export async function hasVisibleProduct(uid: string) {
 
 export async function listProducts(uid: string) {
   const db = await getDb();
-  return db.list<Product>(productsPath(uid), { orderBy: ["order", "asc"] });
+  return (await db.list<Product>(productsPath(uid), { orderBy: ["order", "asc"] })).map(withOptions);
 }
 
 export async function getProduct(uid: string, id: string) {
   const db = await getDb();
-  return db.get<Product>(`${productsPath(uid)}/${id}`);
+  const p = await db.get<Product>(`${productsPath(uid)}/${id}`);
+  return p ? withOptions(p) : p;
 }
 
 export async function listCategories(uid: string) {
@@ -89,7 +91,7 @@ async function loadCatalogBySlug(slug: string, includeDraft: boolean): Promise<P
     db.list<Product>(productsPath(store.id), { orderBy: ["order", "asc"] }),
   ]);
   const paused = typeof store.pausedUntil === "number" && store.pausedUntil > Date.now();
-  return { store: paused ? { ...store, isOpen: false } : store, categories, products: products.filter((p) => p.visible) };
+  return { store: paused ? { ...store, isOpen: false } : store, categories, products: products.filter((p) => p.visible).map(withOptions) };
 }
 
 /** Catálogo publicado, en caché hasta que el vendedor cambie algo. */

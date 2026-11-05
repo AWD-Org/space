@@ -1,0 +1,52 @@
+name: Bug
+description: Something does not work as it should
+labels: ["type: bug"]
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: If unsure, pick the lowest; it gets adjusted during triage.
+      options:
+        - S1 critical (data loss, security breach or broken core flow)
+        - S2 high (important feature broken or no way out)
+        - S3 medium (annoyance or edge case)
+        - S4 low (cosmetic)
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Catalog, Panel, Import/export, Account and access, Landing, SEO and performance, Accessibility]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. I go to… 2. I click… 3. I see…"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Where it happened
+      description: Production, dev or local; device and browser.
+      placeholder: "dev, iPhone 14, Safari"
+  - type: input
+    id: qa
+    attributes:
+      label: QA matrix ID (if any)
+      placeholder: OPT2-23
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: "Screenshots, video or error messages. This repository is public, so do not paste customer data, emails, phone numbers or keys."

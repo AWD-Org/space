@@ -16,7 +16,7 @@ interface Preview {
   rows: ParsedRow[];
   issues: { row: number; message: string }[];
   willCreate: number;
-  sample: { name: string; price: number | null; category: string; availability: Availability }[];
+  sample: { name: string; price: number | null; category: string; availability: Availability; options: number }[];
   newCategories: string[];
   alreadyExist: number;
   repeatedInFile: number;
@@ -113,6 +113,9 @@ export function ImportSheet({ open, onOpenChange, hasProducts }: { open: boolean
             <p className="mt-2 text-sm text-muted-foreground">
               La categoría es opcional: si la pones, la creamos por ti sin repetirla. Las fotos las subes después, producto por producto.
             </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Las opciones también son opcionales. Escríbelas así: <span className="font-medium text-ink">Tamaño: Ch | Md +15 | Gd +30</span>. Separa varias opciones con «;», suma un precio extra con «+» y marca «(agotado)» lo que no haya.
+            </p>
 
             <input ref={input} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => onFile(e.target.files?.[0])} />
             <Button type="button" variant="secondary" className="mt-3" onClick={() => input.current?.click()} disabled={busy !== null}>
@@ -143,7 +146,7 @@ export function ImportSheet({ open, onOpenChange, hasProducts }: { open: boolean
                     <ul className="mt-2 divide-y divide-ink/10 text-sm">
                       {p.sample.map((s, i) => (
                         <li key={i} className="flex items-baseline justify-between gap-3 py-1.5">
-                          <span className="min-w-0 truncate text-ink">{s.name}{s.category && <span className="text-muted-foreground"> · {s.category}</span>}</span>
+                          <span className="min-w-0 truncate text-ink">{s.name}{s.category && <span className="text-muted-foreground"> · {s.category}</span>}{s.options > 0 && <span className="text-muted-foreground"> · {s.options === 1 ? "1 opción" : `${s.options} opciones`}</span>}</span>
                           <span className="shrink-0 tabular-nums text-muted-foreground">{formatPrice(s.price)}</span>
                         </li>
                       ))}

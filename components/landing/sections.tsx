@@ -56,7 +56,7 @@ export async function HowItWorks() {
 }
 
 const benefits = [
-  { title: "Lo que ves es lo que hay", body: "Cambias un precio o marcas que algo se acabó y tu link lo muestra al momento. No queda ningún archivo viejo circulando." },
+  { title: "Lo que ves es lo que hay", body: "Cambias un precio o marcas un producto como agotado y tu link lo muestra al momento. No queda ningún archivo viejo circulando." },
   { title: "El pedido trae las cuentas hechas", body: "La bolsa suma los precios, avisa cuando algún producto va a consultar y arma el mensaje con cantidades, nombre de quien pide y entrega." },
   { title: "Pausas cuando no vendes", body: "Un interruptor cambia tu tienda a “Hoy no está vendiendo” y apaga la bolsa. El catálogo se sigue viendo." },
   { title: "Sabes qué se mira", body: "Visitas, productos más abiertos y pedidos enviados, de los últimos 30 días, sin instalar nada más." },

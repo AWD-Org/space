@@ -7,6 +7,7 @@ import * as React from "react";
 import { formatPrice, AVAILABILITY_LABEL } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { hasPriceExtras, isSoldOut } from "@/lib/options";
 import { useBag } from "./bag";
 
 export function ProductCard({
@@ -31,7 +32,7 @@ export function ProductCard({
   const hasOptions = (product.options ?? []).length > 0;
   const reduce = useReducedMotion();
   const inBag = countOf(product.id);
-  const soldOut = product.availability === "soldout";
+  const soldOut = isSoldOut(product);
   const image = product.images[0];
 
   return (
@@ -59,9 +60,9 @@ export function ProductCard({
         {product.availability === "available" && isNew && (
           <span className="absolute left-2 top-2 rounded-full bg-[var(--accent)] px-2.5 py-1 text-xs font-medium text-white shadow-sm">Nuevo</span>
         )}
-        {product.availability !== "available" && (
+        {(product.availability !== "available" || soldOut) && (
           <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-ink shadow-sm">
-            {AVAILABILITY_LABEL[product.availability]}
+            {AVAILABILITY_LABEL[soldOut ? "soldout" : product.availability]}
           </span>
         )}
       </button>
@@ -84,13 +85,13 @@ export function ProductCard({
             </button>
           ) : inBag ? (
             <div className="flex items-center rounded-full bg-white p-1 shadow-[0_6px_18px_-4px_rgba(0,0,0,0.3)] ring-1 ring-black/5">
-              <button type="button" onClick={() => setQty(product.id, inBag - 1)} className="grid h-9 w-9 place-items-center rounded-full text-ink active:bg-cloud" aria-label={`Quitar uno de ${product.name}`}>
+              <button type="button" onClick={() => setQty(product.id, inBag - 1)} className="grid h-11 w-11 place-items-center rounded-full text-ink active:bg-cloud" aria-label={`Quitar uno de ${product.name}`}>
                 <Minus className="h-4 w-4" aria-hidden />
               </button>
               <span className="w-6 text-center text-sm font-semibold tabular-nums text-ink" aria-live="polite">
                 {inBag}
               </span>
-              <button type="button" onClick={() => add(product)} className="grid h-9 w-9 place-items-center rounded-full bg-[var(--accent)] text-white active:brightness-90" aria-label={`Agregar otro ${product.name}`}>
+              <button type="button" onClick={() => add(product)} className="grid h-11 w-11 place-items-center rounded-full bg-[var(--accent)] text-white active:brightness-90" aria-label={`Agregar otro ${product.name}`}>
                 <Plus className="h-4 w-4" aria-hidden />
               </button>
             </div>
@@ -111,7 +112,7 @@ export function ProductCard({
 
       <button type="button" onClick={onOpen} className="mt-2.5 text-left">
         <Title className="line-clamp-2 font-display text-[1rem] font-medium leading-snug text-ink">{product.name}</Title>
-        <p className="mt-0.5 text-[0.95rem] font-semibold tabular-nums text-ink">{formatPrice(product.price, product.priceFrom)}</p>
+        <p className="mt-0.5 text-[0.95rem] font-semibold tabular-nums text-ink">{formatPrice(product.price, product.priceFrom || hasPriceExtras(product))}</p>
       </button>
     </article>
   );

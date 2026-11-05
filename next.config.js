@@ -4,8 +4,14 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
-  // Parte de CSP que no requiere nonces; script-src queda como siguiente paso.
+  // CSP obligatoria: la parte que no requiere nonces.
+  // script-src va en modo solo-reporte: Next inyecta scripts en línea, así que 'unsafe-inline' sigue hasta migrar a nonces.
+  // Se revisa la consola en dev/staging; si no aparecen violaciones, se promueve a obligatoria.
   { key: "Content-Security-Policy", value: "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" },
+  {
+    key: "Content-Security-Policy-Report-Only",
+    value: "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com",
+  },
   { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
 ];
 

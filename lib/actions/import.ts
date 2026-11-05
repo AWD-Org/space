@@ -5,6 +5,7 @@ import { getDb, increment } from "@/lib/db";
 import { requireUserForAction } from "@/lib/auth/session";
 import { categoriesPath, getLimits, listCategories, listProducts, productsPath, storePath } from "@/lib/data/queries";
 import { MAX_IMPORT_ROWS, normKey, planImport } from "@/lib/catalog-io";
+import { productOptionsSchema } from "@/lib/validators";
 import { rateLimited } from "@/lib/rate-limit";
 import { slugify } from "@/lib/slug";
 import type { ActionResult, Store } from "@/lib/types";
@@ -17,6 +18,7 @@ const rowSchema = z.object({
   price: z.number().int().min(0).max(10_000_000 * 100).nullable(),
   category: z.string().trim().max(30),
   availability: z.enum(["available", "soldout", "onrequest"]),
+  options: productOptionsSchema.default([]),
 });
 
 export interface ImportResult {
@@ -78,6 +80,10 @@ export async function importProducts(input: unknown): Promise<ActionResult<Impor
           visible: true,
           categoryId: r.categoryKey ? (catId.get(r.categoryKey) ?? null) : null,
           images: [],
+          options: r.options.map((o) => ({
+            name: o.name,
+            values: o.values.map((v) => ({ label: v.label, ...(r.price != null && v.extra ? { extra: v.extra } : {}), ...(v.soldOut ? { soldOut: true } : {}) })),
+          })),
           order: now + 1000 + i,
           createdAt: now,
           updatedAt: now,
