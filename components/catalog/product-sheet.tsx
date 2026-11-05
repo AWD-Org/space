@@ -13,13 +13,13 @@ import { useBag } from "./bag";
 export function QtyStepper({ value, onChange, label }: { value: number; onChange: (n: number) => void; label: string }) {
   return (
     <div className="inline-flex items-center rounded-full bg-cloud ring-1 ring-inset ring-border">
-      <button type="button" onClick={() => onChange(value - 1)} className="grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-ink/5" aria-label={`Quitar uno de ${label}`}>
+      <button type="button" onClick={() => onChange(value - 1)} className="grid h-11 w-11 place-items-center rounded-full text-ink hover:bg-ink/5" aria-label={`Quitar uno de ${label}`}>
         <Minus className="h-4 w-4" />
       </button>
       <span className="w-7 text-center font-semibold tabular-nums" aria-live="polite">
         {value}
       </span>
-      <button type="button" onClick={() => onChange(value + 1)} className="grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-ink/5" aria-label={`Agregar uno de ${label}`}>
+      <button type="button" onClick={() => onChange(value + 1)} className="grid h-11 w-11 place-items-center rounded-full text-ink hover:bg-ink/5" aria-label={`Agregar uno de ${label}`}>
         <Plus className="h-4 w-4" />
       </button>
     </div>
@@ -153,7 +153,7 @@ export function ProductSheet({
               {!canOrder ? (
                 <p className="rounded-2xl bg-cloud p-4 text-sm text-muted-foreground">{closedReason}</p>
               ) : soldOut ? (
-                <p className="rounded-2xl bg-cloud p-4 text-sm text-muted-foreground">Este producto se acabó por ahora.</p>
+                <p className="rounded-2xl bg-cloud p-4 text-sm text-muted-foreground">Este producto está agotado por ahora.</p>
               ) : (
                 <div className="flex items-center gap-3">
                   <QtyStepper value={qty} onChange={(n) => setQty(Math.max(1, Math.min(99, n)))} label={product.name} />

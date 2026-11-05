@@ -43,7 +43,11 @@ export function buildOrderMessage(opts: {
     out.push(`Total${partial ? " aproximado" : ""}: ${formatPrice(total)}`);
   }
   if (customerName?.trim()) out.push(`A nombre de: ${customerName.trim()}`);
-  if (delivery?.trim()) out.push(`Entrega: ${delivery.trim()}`);
+  if (delivery?.trim()) {
+    // Las etiquetas ya dicen «Entrega en…» o «Envío a…»: no repetir el prefijo.
+    const d = delivery.trim();
+    out.push(/^(entrega|envío|envio)\b/i.test(d) ? d : `Entrega: ${d}`);
+  }
   if (deliveryDetail?.trim()) out.push(`${deliveryDetailLabel?.trim() || "Detalle"}: ${deliveryDetail.trim()}`);
   if (payment?.trim()) out.push(`Forma de pago: ${payment.trim()}`);
   if (note?.trim()) out.push(`Nota: ${note.trim()}`);

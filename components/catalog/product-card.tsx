@@ -85,13 +85,13 @@ export function ProductCard({
             </button>
           ) : inBag ? (
             <div className="flex items-center rounded-full bg-white p-1 shadow-[0_6px_18px_-4px_rgba(0,0,0,0.3)] ring-1 ring-black/5">
-              <button type="button" onClick={() => setQty(product.id, inBag - 1)} className="grid h-9 w-9 place-items-center rounded-full text-ink active:bg-cloud" aria-label={`Quitar uno de ${product.name}`}>
+              <button type="button" onClick={() => setQty(product.id, inBag - 1)} className="grid h-11 w-11 place-items-center rounded-full text-ink active:bg-cloud" aria-label={`Quitar uno de ${product.name}`}>
                 <Minus className="h-4 w-4" aria-hidden />
               </button>
               <span className="w-6 text-center text-sm font-semibold tabular-nums text-ink" aria-live="polite">
                 {inBag}
               </span>
-              <button type="button" onClick={() => add(product)} className="grid h-9 w-9 place-items-center rounded-full bg-[var(--accent)] text-white active:brightness-90" aria-label={`Agregar otro ${product.name}`}>
+              <button type="button" onClick={() => add(product)} className="grid h-11 w-11 place-items-center rounded-full bg-[var(--accent)] text-white active:brightness-90" aria-label={`Agregar otro ${product.name}`}>
                 <Plus className="h-4 w-4" aria-hidden />
               </button>
             </div>
