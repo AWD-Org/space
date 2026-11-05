@@ -1,0 +1,9 @@
+{
+  "name": "space-smoke",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled smoke tests for Space (dev/staging). Kept apart from the app dependencies.",
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}
