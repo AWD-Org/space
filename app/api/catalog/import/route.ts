@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     rows: parsed.rows,
     issues: parsed.issues,
     willCreate: plan.accepted.length,
-    sample: plan.accepted.slice(0, 5).map((r) => ({ name: r.name, price: r.price, category: r.category, availability: r.availability })),
+    sample: plan.accepted.slice(0, 5).map((r) => ({ name: r.name, price: r.price, category: r.category, availability: r.availability, options: r.options.length })),
     newCategories: plan.newCategories,
     alreadyExist: plan.alreadyExist.length,
     repeatedInFile: plan.repeatedInFile.length,

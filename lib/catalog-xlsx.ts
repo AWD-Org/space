@@ -14,7 +14,7 @@ export async function buildXlsx(rows: string[][], sheet: string): Promise<Buffer
       })
     ),
   ];
-  const columns = [{ width: 34 }, { width: 48 }, { width: 14 }, { width: 20 }, { width: 18 }];
+  const columns = [{ width: 34 }, { width: 48 }, { width: 14 }, { width: 20 }, { width: 18 }, { width: 60 }];
   const out = await writeExcelFile(data as any, { columns, sheet }).toBuffer();
   return Buffer.from(out);
 }
