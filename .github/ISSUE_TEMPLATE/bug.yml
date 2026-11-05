@@ -1,52 +1,52 @@
 name: Bug
-description: Algo no funciona como debería
-labels: ["tipo: bug"]
+description: Something does not work as it should
+labels: ["type: bug"]
 body:
   - type: dropdown
-    id: severidad
+    id: severity
     attributes:
-      label: Severidad
-      description: Si dudas, elige la más baja; se ajusta en el triage.
+      label: Severity
+      description: If unsure, pick the lowest; it gets adjusted during triage.
       options:
-        - S1 crítica (pérdida de datos, brecha de seguridad o flujo core roto)
-        - S2 alta (función importante rota o sin salida)
-        - S3 media (molestia o caso borde)
-        - S4 baja (cosmético)
+        - S1 critical (data loss, security breach or broken core flow)
+        - S2 high (important feature broken or no way out)
+        - S3 medium (annoyance or edge case)
+        - S4 low (cosmetic)
     validations:
       required: true
   - type: dropdown
     id: area
     attributes:
-      label: Área
-      options: [Catálogo, Panel, Importar/exportar, Cuenta y acceso, Landing, SEO y rendimiento, Accesibilidad]
+      label: Area
+      options: [Catalog, Panel, Import/export, Account and access, Landing, SEO and performance, Accessibility]
     validations:
       required: true
   - type: textarea
-    id: pasos
+    id: steps
     attributes:
-      label: Pasos para reproducirlo
-      placeholder: "1. Entro a… 2. Doy clic en… 3. Veo…"
+      label: Steps to reproduce
+      placeholder: "1. I go to… 2. I click… 3. I see…"
     validations:
       required: true
   - type: textarea
-    id: esperado
+    id: expected
     attributes:
-      label: Qué esperabas y qué pasó
+      label: What you expected and what happened
     validations:
       required: true
   - type: input
-    id: entorno
+    id: environment
     attributes:
-      label: Dónde pasó
-      description: Producción, dev o local; dispositivo y navegador.
+      label: Where it happened
+      description: Production, dev or local; device and browser.
       placeholder: "dev, iPhone 14, Safari"
   - type: input
     id: qa
     attributes:
-      label: ID de la matriz de QA (si aplica)
+      label: QA matrix ID (if any)
       placeholder: OPT2-23
   - type: textarea
-    id: evidencia
+    id: evidence
     attributes:
-      label: Evidencia
-      description: "Capturas, video o mensajes de error. Este repositorio es público, así que no pegues datos de clientes, correos, teléfonos ni llaves."
+      label: Evidence
+      description: "Screenshots, video or error messages. This repository is public, so do not paste customer data, emails, phone numbers or keys."

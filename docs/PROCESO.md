@@ -1,35 +1,36 @@
-# Cómo organizamos el trabajo en Space
+# How we organize work on Space
 
-Kanban ligero con milestones. Sin sprints ni fechas fijas: lo que importa es que todo tenga dueño, estado y un siguiente paso.
+Lightweight kanban with milestones. No sprints or fixed dates: what matters is that everything has an owner, a status and a next step.
 
-## Dónde vive todo
-- **Tickets:** issues de este repositorio. Es público: nada de datos de clientes, correos, teléfonos ni llaves en tickets, capturas o comentarios.
-- **Tablero:** el proyecto «Space» de la organización, con una vista por tipo de trabajo (Bugs, Funcionalidades, Ideas) y las de apoyo que se vayan necesitando. Cada vista filtra por etiqueta de tipo, así que un ticket cae en su vista solo con tener la etiqueta correcta.
-- **Plantillas:** al crear un issue se elige Bug, Funcionalidad nueva, Mejora o Solicitud (intake). Cada una pone su etiqueta de tipo.
+## Where everything lives
+- **Tickets:** issues in this repository. It is public: no customer data, emails, phone numbers or keys in tickets, screenshots or comments.
+- **Board:** the "Space" project of the organization, with one view per kind of work (Bugs, Features, Ideas, Improvements, Critical, Board). Each view filters by label, so a ticket lands in its view just by carrying the right label.
+- **Templates:** when creating an issue, pick Bug, Feature, Improvement or Request (intake). Each one sets its type label.
 
-## Flujo de un ticket
-`Intake` → `Listo` → `En progreso` → `En revisión (QA)` → `Hecho`
+## Ticket flow
+`Intake` → `Ready` → `In progress` → `In review (QA)` → `Done`
 
-- **Intake:** todo lo nuevo entra como «Solicitud» o «Bug». Una persona hace triage una vez por semana: confirma tipo, área y severidad, o lo cierra con motivo.
-- **Listo:** tiene objetivo y criterios de aceptación claros, y cabe en menos de 2 días. Si es más grande, se parte.
-- **En revisión (QA):** pasó `tsc` y la matriz de pruebas sin fallas nuevas.
-- **Bloqueado** y **necesita info** son etiquetas, no estados: el ticket se queda donde estaba.
+- **Intake:** everything new enters as a "Request" or a "Bug". One person triages once a week: confirms type, area and severity, or closes it with a reason.
+- **Ready:** it has a clear goal and acceptance criteria and fits in under 2 days. If it is bigger, split it.
+- **In review (QA):** `tsc` passes and the test matrix shows no new failures.
+- **blocked** and **needs info** are labels, not states: the ticket stays where it was.
 
-Los estados son los valores del campo Status del proyecto. Si el proyecto no los tiene todavía, se agregan ahí.
+States are the values of the project's Status field. If the project does not have them yet, add them there.
 
-## Etiquetas
-- **Tipo:** bug, mejora, funcionalidad, solicitud, deuda técnica.
-- **Severidad (solo bugs):** S1 crítica, S2 alta, S3 media, S4 baja (la misma escala de la matriz de QA). Quien reporta la sugiere en el formulario; en el triage se confirma y se pone la etiqueta.
-- **Área:** catálogo, panel, importar/exportar, cuenta y acceso, landing, SEO y rendimiento, accesibilidad.
+## Labels
+- **Type:** `type: bug`, `type: improvement`, `type: feature`, `type: request`, `type: tech debt`.
+- **Severity (bugs only):** `S1: critical`, `S2: high`, `S3: medium`, `S4: low` (same scale as the QA matrix). The reporter suggests it in the form; triage confirms it and sets the label.
+- **Area:** `area: catalog`, `panel`, `import-export`, `account`, `landing`, `seo-performance`, `accessibility`.
+- **Other:** `blocked`, `needs info`, `found in QA`.
 
 ## Milestones
-Agrupan tickets por objetivo, no por fecha. Se cierran cuando todos sus tickets están hechos y desplegados.
+They group tickets by goal, not by date. They close when all their tickets are done and deployed.
 
-## Ramas y despliegue
-- Se trabaja en ramas `feat/…`, `fix/…` o `chore/…` que salen de `dev`.
-- Cada PR enlaza su ticket con `Closes #n`.
-- `dev` es la rama de integración. `main` es producción: solo se actualiza con confirmación explícita, después de la matriz de QA y de revisar el despliegue de `dev`.
-- Cada release guarda el commit anterior como punto de retorno.
+## Branches and deployment
+- Work happens on `feat/…`, `fix/…` or `chore/…` branches that start from `dev`.
+- Each PR links its ticket with `Closes #n`.
+- `dev` is the integration branch. `main` is production: it is only updated with explicit confirmation, after the QA matrix and a review of the `dev` deployment.
+- Each release keeps the previous commit as a rollback point.
 
 ## Bugs
-El título dice qué falla y dónde. Lleva pasos, esperado vs. obtenido y evidencia. Si lo encontró el QA, se agrega el ID de la matriz y la etiqueta «encontrado en QA». Los bugs reportados con la extensión Bug Box llegan ya como issue con la etiqueta `tipo: bug`.
+The title says what fails and where. It carries steps, expected vs. actual result and evidence. If QA found it, add the matrix ID and the `found in QA` label. Bugs reported with the Bug Box extension arrive already as an issue with the `type: bug` label.

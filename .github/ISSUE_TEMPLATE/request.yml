@@ -1,0 +1,26 @@
+name: Request (intake)
+description: An idea, customer request or need that is not defined yet
+labels: ["type: request"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What is needed and why
+      description: Describe the problem, not the solution. What can't be done today?
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Who asked for it
+      placeholder: "Customer, team or user"
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Perceived urgency
+      options: ["Can wait", "This week", "Blocking someone today"]
+  - type: textarea
+    id: example
+    attributes:
+      label: Concrete example
+      description: A real case (for example, what the store sells) helps decide the scope.

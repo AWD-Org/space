@@ -1,0 +1,28 @@
+name: Feature
+description: Something Space does not do yet, already decided to build
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What people using Space can do once this is ready.
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      description: A verifiable list; it also feeds the tests.
+      placeholder: "- [ ] Given… when… then…"
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+  - type: dropdown
+    id: size
+    attributes:
+      label: Estimated size
+      options: ["S (half a day)", "M (1 to 2 days)", "L (more than 2 days; consider splitting)"]

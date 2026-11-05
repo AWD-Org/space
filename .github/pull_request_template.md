@@ -1,15 +1,15 @@
-## Qué cambia
-<!-- Una o dos frases: qué ve o puede hacer ahora quien usa Space. -->
+## What changes
+<!-- One or two sentences: what people using Space see or can do now. -->
 
 ## Ticket
 Closes #
 
-## Cómo se probó
-- [ ] `tsc` sin errores
-- [ ] Matriz de QA corrida en base limpia (indica casos nuevos y resultado)
-- [ ] Probado en móvil (390 px)
+## How it was tested
+- [ ] `tsc` passes
+- [ ] QA matrix run on a clean database (list new cases and result)
+- [ ] Tested on mobile (390 px)
 
-## Notas para quien revisa
-<!-- Riesgos, datos que se migran, variables de entorno nuevas, cómo revertir. -->
+## Notes for the reviewer
+<!-- Risks, data migrations, new environment variables, how to revert. -->
 
-> La rama sale de `dev`. Nada va a `main` sin confirmación explícita.
+> The branch comes from `dev`. Nothing goes to `main` without explicit confirmation.
