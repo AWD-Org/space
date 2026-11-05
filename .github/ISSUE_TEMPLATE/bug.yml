@@ -49,4 +49,4 @@ body:
     id: evidencia
     attributes:
       label: Evidencia
-      description: Capturas, video o mensajes de error. No pegues datos personales de clientes.
+      description: "Capturas, video o mensajes de error. Este repositorio es público, así que no pegues datos de clientes, correos, teléfonos ni llaves."
