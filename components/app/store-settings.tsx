@@ -169,7 +169,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
                       type="button"
                       aria-pressed={on}
                       onClick={() => setValue("deliveryMethods", on ? deliveries.filter((x) => x !== m) : DELIVERY_ORDER.filter((x) => x === m || deliveries.includes(x)), { shouldDirty: true })}
-                      className={cn("rounded-full px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors", on ? "bg-ink text-white ring-ink" : "bg-white text-ink ring-border hover:bg-cloud")}
+                      className={cn("min-h-11 rounded-full px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors", on ? "bg-ink text-white ring-ink" : "bg-white text-ink ring-border hover:bg-cloud")}
                     >
                       {DELIVERY_INFO[m].label}
                     </button>
@@ -189,7 +189,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
                       type="button"
                       aria-pressed={on}
                       onClick={() => setValue("paymentMethods", on ? payments.filter((x) => x !== m) : [...payments, m], { shouldDirty: true })}
-                      className={cn("rounded-full px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors", on ? "bg-ink text-white ring-ink" : "bg-white text-ink ring-border hover:bg-cloud")}
+                      className={cn("min-h-11 rounded-full px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors", on ? "bg-ink text-white ring-ink" : "bg-white text-ink ring-border hover:bg-cloud")}
                     >
                       {PAYMENT_LABEL[m]}
                     </button>

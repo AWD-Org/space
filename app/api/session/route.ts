@@ -23,9 +23,11 @@ export async function POST(req: NextRequest) {
   if (rateLimited(`session:${clientIp(req)}`, 20, 60_000)) {
     return NextResponse.json({ ok: false, error: "Demasiados intentos. Espera un minuto e intenta de nuevo." }, { status: 429 });
   }
-  const body = (await req.json().catch(() => ({}))) as { idToken?: string; local?: { email?: string; name?: string } };
+  const parsedBody: unknown = await req.json().catch(() => null);
+  // Un cuerpo que no sea un objeto (null, lista, texto) se trata como vacío: responde 400, nunca 500.
+  const body = (parsedBody && typeof parsedBody === "object" && !Array.isArray(parsedBody) ? parsedBody : {}) as { idToken?: string; local?: { email?: string; name?: string } };
 
-  if (body.local && isLocalMode) {
+  if (body.local && typeof body.local === "object" && isLocalMode) {
     const email = String(body.local.email ?? "").trim().toLowerCase();
     if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ ok: false, error: "Correo no válido." }, { status: 400 });
     const uid = "local_" + crypto.createHash("sha1").update(email).digest("hex").slice(0, 20);

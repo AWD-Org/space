@@ -6,7 +6,7 @@ export default function NotFound() {
       <div className="max-w-md text-center">
         <h1 className="font-display text-4xl font-semibold text-ink">Este link no lleva a ningún catálogo</h1>
         <p className="mt-3 text-muted-foreground">Puede que la tienda haya cambiado su link o que todavía no lo publique.</p>
-        <Link href="/" className="mt-6 inline-block font-medium text-blueInk underline-offset-4 hover:underline">
+        <Link href="/" className="mt-6 inline-flex min-h-11 items-center font-medium text-blueInk underline-offset-4 hover:underline">
           Conoce Space
         </Link>
       </div>

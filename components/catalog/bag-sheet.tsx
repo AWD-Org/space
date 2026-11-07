@@ -170,7 +170,7 @@ export function BagSheet({
                 <WhatsAppGlyph className="h-5 w-5" />
                 Mandar pedido por WhatsApp
               </button>
-              <button type="button" onClick={clear} className="mt-2 w-full py-2 text-sm text-muted-foreground hover:text-ink">
+              <button type="button" onClick={clear} className="mt-2 min-h-11 w-full py-2 text-sm text-muted-foreground hover:text-ink">
                 Vaciar bolsa
               </button>
             </div>

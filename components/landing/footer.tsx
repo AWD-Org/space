@@ -32,7 +32,7 @@ export function LandingFooter() {
           <Link href="/registro" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Crear catálogo
           </Link>
-          <Link href="/entrar" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
+          <Link href="/entrar" className="inline-flex min-h-11 min-w-11 items-center text-ink/80 hover:text-ink">
             Entrar
           </Link>
           <a href="#preguntas" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
@@ -47,7 +47,7 @@ export function LandingFooter() {
         </nav>
         <p className="text-sm text-muted-foreground">
           Desarrollado por{" "}
-          <a href="https://amoxtli.tech" target="_blank" rel="noopener" className="font-medium text-ink hover:underline">
+          <a href="https://amoxtli.tech" target="_blank" rel="noopener" className="inline-flex min-h-11 items-center font-medium text-ink hover:underline">
             AMOXTLI®
           </a>
         </p>

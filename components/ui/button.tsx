@@ -18,10 +18,10 @@ const buttonVariants = cva(
         ink: "bg-ink text-white hover:bg-black",
       },
       size: {
-        sm: "h-9 px-4 text-sm",
+        sm: "h-9 px-4 text-sm max-sm:h-11",
         md: "h-11 px-5 text-[0.95rem]",
         lg: "h-12 px-6 text-base",
-        icon: "h-10 w-10 px-0",
+        icon: "h-10 w-10 px-0 max-sm:h-11 max-sm:w-11",
         iconLg: "h-12 w-12 px-0",
       },
     },

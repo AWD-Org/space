@@ -21,7 +21,7 @@ export function Showcase() {
             aria-selected={active === s.key}
             aria-controls={`panel-${s.key}`}
             onClick={() => setActive(s.key)}
-            className={cn("relative shrink-0 rounded-full px-5 py-2.5 text-[0.95rem] font-medium transition-colors", active === s.key ? "text-white" : "bg-white text-ink ring-1 ring-ink/10 hover:bg-spaceMist/60 hover:text-blueInk")}
+            className={cn("relative min-h-11 shrink-0 rounded-full px-5 py-2.5 text-[0.95rem] font-medium transition-colors", active === s.key ? "text-white" : "bg-white text-ink ring-1 ring-ink/10 hover:bg-spaceMist/60 hover:text-blueInk")}
           >
             {active === s.key && (
               <motion.span layoutId="showcase-pill" className="absolute inset-0 -z-0 rounded-full bg-blueInk" transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 480, damping: 36 }} />

@@ -149,7 +149,7 @@ export function ProductForm({
     <form onSubmit={submitSave} className="space-y-6" noValidate>
       {!compact && (
         <div className="flex items-center justify-between gap-3">
-          <Link href="/app/productos" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-ink">
+          <Link href="/app/productos" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-ink">
             <ArrowLeft className="h-4 w-4" />
             Productos
           </Link>
