@@ -313,7 +313,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         </div>
       </header>
 
-      <div className="sticky top-0 z-20 mt-5 border-b border-ink/5 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
+      <div role="search" aria-label="Buscar y filtrar productos" className="sticky top-0 z-20 mt-5 border-b border-ink/5 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/80">
         <div className={cn(WRAP, "py-2.5")}>
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
@@ -329,7 +329,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                 className="h-12 w-full rounded-full bg-cloud pl-11 pr-11 text-base text-ink placeholder:text-slate focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)] [&::-webkit-search-cancel-button]:hidden"
               />
               {query && (
-                <button type="button" onClick={() => setQuery("")} className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-ink/10 text-ink hover:bg-ink/15" aria-label="Borrar búsqueda">
+                <button type="button" onClick={() => setQuery("")} className="absolute right-0.5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-ink/10 text-ink hover:bg-ink/15" aria-label="Borrar búsqueda">
                   <X className="h-4 w-4" />
                 </button>
               )}
@@ -435,7 +435,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
                   {filtering ? `${visible.length} de ${products.length} productos` : `${products.length} productos`}
                 </p>
                 {filtering && (
-                  <button type="button" onClick={clearFilters} className={cn("rounded-full px-3 py-1.5 font-medium text-ink underline underline-offset-4 hover:bg-cloud", showSidebar && "lg:hidden")}>
+                  <button type="button" onClick={clearFilters} className={cn("min-h-11 rounded-full px-3 py-1.5 font-medium text-ink underline underline-offset-4 hover:bg-cloud", showSidebar && "lg:hidden")}>
                     Limpiar
                   </button>
                 )}
@@ -485,7 +485,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
       </main>
 
       <footer className={cn(WRAP, "mt-16 text-center text-sm text-muted-foreground")}>
-        <Link href="/?ref=catalogo" className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 hover:text-ink">
+        <Link href="/?ref=catalogo" className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-2 hover:text-ink">
           <svg viewBox="0 0 64 64" className="h-3.5 w-3.5" aria-hidden>
             <path d="M32 8l8 16 16 8-16 8-8 16-8-16-16-8 16-8z" fill="#4F6BFF" />
           </svg>

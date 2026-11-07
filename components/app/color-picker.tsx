@@ -43,7 +43,7 @@ export function ColorPicker({ value, onChange, label = "Color de tu tienda" }: {
                 onChange(a.value);
               }}
               style={{ backgroundColor: a.value }}
-              className={cn("grid h-10 w-10 place-items-center rounded-full text-white outline-offset-2 transition-transform duration-200 hover:scale-110 active:scale-95", on && "ring-2 ring-ink ring-offset-2")}
+              className={cn("grid h-11 w-11 place-items-center rounded-full text-white outline-offset-2 transition-transform duration-200 hover:scale-110 active:scale-95", on && "ring-2 ring-ink ring-offset-2")}
             >
               {on && <Check className="h-4 w-4" aria-hidden />}
             </button>
@@ -58,7 +58,7 @@ export function ColorPicker({ value, onChange, label = "Color de tu tienda" }: {
           title="Color personalizado"
           onClick={() => setOpen((o) => !o)}
           style={!preset ? { backgroundColor: value } : { background: "conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #06b6d4, #3b82f6, #a855f7, #ef4444)" }}
-          className={cn("grid h-10 w-10 place-items-center rounded-full text-white outline-offset-2 transition-transform duration-200 hover:scale-110 active:scale-95", !preset && "ring-2 ring-ink ring-offset-2")}
+          className={cn("grid h-11 w-11 place-items-center rounded-full text-white outline-offset-2 transition-transform duration-200 hover:scale-110 active:scale-95", !preset && "ring-2 ring-ink ring-offset-2")}
         >
           {!preset ? <Check className="h-4 w-4" aria-hidden /> : <span className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-ink"><Plus className="h-3.5 w-3.5" aria-hidden /></span>}
         </button>

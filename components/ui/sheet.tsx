@@ -49,7 +49,7 @@ export function SheetContent({
           </div>
           {!description && hideTitle && <Dialog.Description className="sr-only">{title}</Dialog.Description>}
           <Dialog.Close
-            className={cn("-mr-2 ml-auto rounded-full p-2 text-slate hover:bg-ink/5 hover:text-ink", hideTitle && "mr-0 bg-white/95 text-ink shadow-md hover:bg-white")}
+            className={cn("-mr-2 ml-auto grid h-11 w-11 place-items-center rounded-full text-slate hover:bg-ink/5 hover:text-ink", hideTitle && "mr-0 bg-white/95 text-ink shadow-md hover:bg-white")}
             aria-label="Cerrar"
           >
             <X className="h-5 w-5" />

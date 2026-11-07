@@ -52,7 +52,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
         action={
           <nav aria-label="Periodo" className="flex gap-1 rounded-full bg-cloud p-1">
             {RANGES.map((r) => (
-              <Link key={r} href={`/app/estadisticas?dias=${r}`} aria-current={r === range ? "page" : undefined} className={cn("rounded-full px-3.5 py-1.5 text-sm font-medium", r === range ? "bg-white text-ink shadow-sm" : "text-muted-foreground hover:text-ink")}>
+              <Link key={r} href={`/app/estadisticas?dias=${r}`} aria-current={r === range ? "page" : undefined} className={cn("inline-flex min-h-11 items-center rounded-full px-3.5 py-1.5 text-sm font-medium", r === range ? "bg-white text-ink shadow-sm" : "text-muted-foreground hover:text-ink")}>
                 {r} días
               </Link>
             ))}

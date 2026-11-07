@@ -110,7 +110,7 @@ export function BeforeAfter() {
             aria-selected={mode === value}
             aria-controls={`chat-${value}`}
             onClick={() => setMode(value)}
-            className={cn("relative z-10 rounded-full px-5 py-2.5 text-sm font-medium transition-colors", mode === value ? "text-white" : "text-ink hover:text-blueInk")}
+            className={cn("relative z-10 min-h-11 rounded-full px-5 py-2.5 text-sm font-medium transition-colors", mode === value ? "text-white" : "text-ink hover:text-blueInk")}
           >
             {mode === value && (
               <motion.span layoutId="ba-pill" className="absolute inset-0 -z-10 rounded-full bg-ink" transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }} />

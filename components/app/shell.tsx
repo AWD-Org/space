@@ -84,18 +84,18 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
 
       <div className="min-w-0">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-1 border-b border-ink/10 bg-white/95 px-4 backdrop-blur lg:hidden">
-          <Link href="/app" className="flex min-w-0 items-center gap-2">
+          <Link href="/app" className="flex min-h-11 min-w-0 items-center gap-2">
             <SpaceLogo variant="mark" size={22} />
             <span className="truncate font-display font-semibold text-ink">{storeName}</span>
           </Link>
-          <a href={`/${slug}`} data-tour="catalogo" target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-blueInk hover:bg-spaceMist">
+          <a href={`/${slug}`} data-tour="catalogo" target="_blank" rel="noopener" className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-blueInk hover:bg-spaceMist">
             Ver catálogo
             <ExternalLink className="h-4 w-4" aria-hidden />
           </a>
-          <Link href="/app/cuenta" aria-label="Mi cuenta" className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <Link href="/app/cuenta" aria-label="Mi cuenta" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <UserRound className="h-5 w-5" aria-hidden />
           </Link>
-          <button type="button" onClick={logout} aria-label="Cerrar sesión" className="ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <button type="button" onClick={logout} aria-label="Cerrar sesión" className="ml-1 grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-cloud hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <LogOut className="h-5 w-5" aria-hidden />
           </button>
         </header>
