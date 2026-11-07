@@ -20,9 +20,12 @@ import { isSoldOut } from "@/lib/options";
 import { stockLabel } from "@/lib/stock";
 import type { Availability, Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { CategoriesSheet } from "./categories-sheet";
-import { ImportSheet } from "./import-sheet";
-import { StockSheet } from "./stock-sheet";
+import dynamic from "next/dynamic";
+
+// Las hojas se descargan la primera vez que se abren: la lista abre más rápido y bloquea menos el hilo principal.
+const CategoriesSheet = dynamic(() => import("./categories-sheet").then((m) => m.CategoriesSheet), { ssr: false });
+const ImportSheet = dynamic(() => import("./import-sheet").then((m) => m.ImportSheet), { ssr: false });
+const StockSheet = dynamic(() => import("./stock-sheet").then((m) => m.StockSheet), { ssr: false });
 
 function Row({
   product,
@@ -82,7 +85,7 @@ function Row({
     >
       <div className="flex items-center gap-1 sm:gap-2">
         <CheckBox checked={selected} onChange={onToggle} label={`Elegir ${product.name}`} />
-        <button type="button" className="touch-none cursor-grab px-0.5 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
+        <button type="button" className="grid h-11 w-11 shrink-0 touch-none cursor-grab place-items-center text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
           <GripVertical className="h-5 w-5" />
         </button>
         <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
@@ -138,7 +141,12 @@ export function ProductsManager({ products: initial, categories, limit, category
   const [toDelete, setToDelete] = React.useState<Product | null>(null);
   const [dupBusy, setDupBusy] = React.useState<string | null>(null);
   const [stockFor, setStockFor] = React.useState<Product | null>(null);
+  // Una hoja se monta la primera vez que se abre y se queda montada para conservar su animación de cierre.
+  const sheetsSeen = React.useRef({ stock: false, import: false, cats: false });
   const [stockOpen, setStockOpen] = React.useState(false);
+  if (stockOpen) sheetsSeen.current.stock = true;
+  if (importOpen) sheetsSeen.current.import = true;
+  if (catsOpen) sheetsSeen.current.cats = true;
   React.useEffect(() => setProducts(initial), [initial]);
 
   const sensors = useSensors(
@@ -398,9 +406,9 @@ export function ProductsManager({ products: initial, categories, limit, category
         confirmLabel="Eliminar"
         onConfirm={removeOne}
       />
-      <StockSheet product={stockFor ? products.find((x) => x.id === stockFor.id) ?? stockFor : null} open={stockOpen} onOpenChange={setStockOpen} />
-      <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />
-      <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />
+      {sheetsSeen.current.stock && <StockSheet product={stockFor ? products.find((x) => x.id === stockFor.id) ?? stockFor : null} open={stockOpen} onOpenChange={setStockOpen} />}
+      {sheetsSeen.current.import && <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />}
+      {sheetsSeen.current.cats && <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />}
     </>
   );
 }
@@ -408,7 +416,7 @@ export function ProductsManager({ products: initial, categories, limit, category
 function CheckBox({ checked, onChange, label }: { checked: boolean | "mixed"; onChange: () => void; label: string }) {
   const on = checked === true || checked === "mixed";
   return (
-    <button type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onChange} className="group grid h-11 w-10 shrink-0 place-items-center rounded-full outline-none sm:w-11">
+    <button type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onChange} className="group grid h-11 w-11 shrink-0 place-items-center rounded-full outline-none">
       <span
         className={cn(
           "grid h-[1.4rem] w-[1.4rem] place-items-center rounded-md ring-1 ring-inset transition-[background-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-active:scale-90 group-focus-visible:ring-2 group-focus-visible:ring-primary",
