@@ -17,6 +17,9 @@ const SOLID = {
 const ON_COLOR = { title: "!text-white", description: "!text-white/90", badge: "!bg-white/20 !text-white" };
 const solid = (state: keyof typeof SOLID) => ({ fill: SOLID[state], styles: ON_COLOR });
 
+/** El ícono por defecto del error es una «X», que se confunde con el botón de cerrar (#19): se usa una señal de alerta. */
+const errorIcon = () => createElement(TriangleAlert, { size: 16, "aria-hidden": true });
+
 const SHORT = { error: "No se pudo completar", warning: "Revisa esto" } as const;
 
 type Result = { ok: boolean; error?: string };
@@ -30,8 +33,7 @@ function say(message: string, label: string) {
 export const toast = {
   success: (message: string) => sileo.success({ ...say(message, "Listo"), ...solid("success") }),
   info: (message: string) => sileo.info(say(message, "Aviso")),
-  // El ícono por defecto del error es una «X», que se confunde con el botón de cerrar (#19): se usa una señal de alerta.
-  error: (message: string) => sileo.error({ title: SHORT.error, description: message, icon: createElement(TriangleAlert, { size: 16, "aria-hidden": true }), ...solid("error") }),
+  error: (message: string) => sileo.error({ title: SHORT.error, description: message, icon: errorIcon(), ...solid("error") }),
   warning: (message: string) => sileo.warning({ title: SHORT.warning, description: message, ...solid("warning") }),
   /** Cierra todos los avisos visibles. */
   dismiss: () => sileo.clear(),
@@ -68,7 +70,7 @@ export const toast = {
       await sileo.promise(job, {
         loading: { title: msgs.loading },
         success: (r) => ({ ...say(successTitle(r as T), "Listo"), ...solid("success") }),
-        error: (e) => ({ title: SHORT.error, description: e instanceof Error ? e.message : msgs.error ?? "Inténtalo de nuevo.", ...solid("error") }),
+        error: (e) => ({ title: SHORT.error, description: e instanceof Error ? e.message : msgs.error ?? "Inténtalo de nuevo.", icon: errorIcon(), ...solid("error") }),
       });
     } catch {
       /* el aviso de error ya se mostró */
