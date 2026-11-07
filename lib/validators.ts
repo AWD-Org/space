@@ -5,6 +5,10 @@ import { slugProblem } from "./slug";
 import { DELIVERY_INFO } from "./delivery";
 import { normalizeSocial, SOCIAL_INFO, SOCIAL_ORDER, cleanSocials } from "./socials";
 
+// Sin compilación JIT: zod prueba `new Function` y una CSP estricta lo reporta como violación aunque el error se atrape.
+// Los esquemas son pequeños; validar sin JIT no se nota y deja la CSP lista para pasar a obligatoria.
+z.config({ jitless: true });
+
 export const ACCENTS = [
   { value: "#3B55E6", label: "Azul Space" },
   { value: "#B4235A", label: "Frambuesa" },

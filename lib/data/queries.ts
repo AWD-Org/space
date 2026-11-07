@@ -91,8 +91,17 @@ async function loadCatalogBySlug(slug: string, includeDraft: boolean): Promise<P
     db.list<Category>(categoriesPath(store.id), { orderBy: ["order", "asc"] }),
     db.list<Product>(productsPath(store.id), { orderBy: ["order", "asc"] }),
   ]);
-  const paused = typeof store.pausedUntil === "number" && store.pausedUntil > Date.now();
-  return { store: paused ? { ...store, isOpen: false } : store, categories, products: products.filter((p) => p.visible).map(withOptions) };
+  return { store, categories, products: products.filter((p) => p.visible).map(withOptions) };
+}
+
+/**
+ * La pausa se evalúa al leer, no al guardar en caché: así la tienda vuelve a tomar pedidos en cuanto
+ * vence la pausa, sin esperar a que la caché se renueve (hasta una hora después).
+ */
+function applyPause(catalog: PublicCatalog | null): PublicCatalog | null {
+  if (!catalog) return catalog;
+  const paused = typeof catalog.store.pausedUntil === "number" && catalog.store.pausedUntil > Date.now();
+  return paused ? { ...catalog, store: { ...catalog.store, isOpen: false } } : catalog;
 }
 
 /** Catálogo publicado, en caché hasta que el vendedor cambie algo. */
@@ -100,12 +109,12 @@ export function getPublicCatalog(slug: string) {
   return unstable_cache(() => loadCatalogBySlug(slug, false), ["catalog", slug], {
     tags: [catalogTag(slug)],
     revalidate: 3600,
-  })();
+  })().then(applyPause);
 }
 
 /** Vista del dueño: incluye borradores y no usa caché. */
 export function getOwnerCatalog(slug: string) {
-  return loadCatalogBySlug(slug, true);
+  return loadCatalogBySlug(slug, true).then(applyPause);
 }
 
 export async function getStats(uid: string, days: number) {

@@ -1,6 +1,8 @@
 "use client";
 
+import { createElement } from "react";
 import { sileo } from "sileo";
+import { TriangleAlert } from "lucide-react";
 
 /**
  * Avisos de Space (Sileo). Mantiene la forma sencilla `toast.success("mensaje")` y agrega `toast.task`
@@ -28,7 +30,8 @@ function say(message: string, label: string) {
 export const toast = {
   success: (message: string) => sileo.success({ ...say(message, "Listo"), ...solid("success") }),
   info: (message: string) => sileo.info(say(message, "Aviso")),
-  error: (message: string) => sileo.error({ title: SHORT.error, description: message, ...solid("error") }),
+  // El ícono por defecto del error es una «X», que se confunde con el botón de cerrar (#19): se usa una señal de alerta.
+  error: (message: string) => sileo.error({ title: SHORT.error, description: message, icon: createElement(TriangleAlert, { size: 16, "aria-hidden": true }), ...solid("error") }),
   warning: (message: string) => sileo.warning({ title: SHORT.warning, description: message, ...solid("warning") }),
   /** Cierra todos los avisos visibles. */
   dismiss: () => sileo.clear(),
