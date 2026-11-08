@@ -218,13 +218,13 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
           style={{ background: "linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 52%, #0B0C10))" }}
           aria-hidden
         >
-          {store.logo && <Image src={store.logo.url} alt="" fill sizes="100vw" className="scale-125 object-cover opacity-40 blur-2xl" priority />}
+          {store.logo && <Image src={store.logo.url} alt="" fill sizes="112px" className="scale-125 object-cover opacity-40 blur-2xl" />}
           <div
             className="absolute inset-0"
             style={{ backgroundImage: "radial-gradient(60% 90% at 88% 0%, rgba(255,255,255,0.32), transparent 62%), radial-gradient(50% 80% at 0% 100%, rgba(255,255,255,0.16), transparent 62%)" }}
           />
           <div
-            className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
+            className="absolute inset-0 hidden opacity-[0.14] mix-blend-overlay sm:block"
             style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")" }}
           />
         </div>

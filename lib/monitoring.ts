@@ -1,5 +1,4 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
 
 /**
  * Reporte de errores a Sentry sin SDK (cero peso en el cliente y sin tocar la configuración de Next).
@@ -37,7 +36,7 @@ export type ErrorReport = {
 export async function reportError(r: ErrorReport): Promise<void> {
   const dsn = parseDsn(process.env.SENTRY_DSN);
   if (!dsn) return;
-  const eventId = randomUUID().replace(/-/g, "");
+  const eventId = crypto.randomUUID().replace(/-/g, "");
   const event = {
     event_id: eventId,
     timestamp: Date.now() / 1000,
