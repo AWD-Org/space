@@ -1,3 +1,4 @@
+import { ErrorReporter } from "@/components/error-reporter";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/toaster";
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh font-sans">
         {children}
         <Toaster />
+        <ErrorReporter />
       </body>
     </html>
   );
