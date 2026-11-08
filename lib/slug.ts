@@ -41,3 +41,25 @@ export function slugProblem(slug: string): string | null {
   if (RESERVED_SLUGS.has(slug)) return "Ese link está reservado. Prueba otro.";
   return null;
 }
+
+const BRAND = "amoxtli";
+const STAFF_DOMAIN = "@amoxtli.tech";
+
+/** Dice si un texto menciona la marca aunque lo disfracen con acentos, mayúsculas, espacios o signos («A.moxtli», «AMOXTLI»). */
+export function mentionsBrand(text: string) {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .includes(BRAND);
+}
+
+/**
+ * Nombres y links que usan la marca están reservados para el equipo (correo @amoxtli.tech), para que nadie se haga pasar por Amoxtli.
+ * Solo se aplica al crear o cambiar: las tiendas que ya existen con ese texto siguen funcionando.
+ */
+export function brandProblem(text: string, email?: string | null): string | null {
+  if (email?.toLowerCase().endsWith(STAFF_DOMAIN)) return null;
+  return mentionsBrand(text) ? "Ese nombre está reservado. Prueba con otro." : null;
+}

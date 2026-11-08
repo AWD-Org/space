@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, Boxes, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, Boxes, CircleDollarSign, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/lib/toast";
@@ -76,7 +76,7 @@ function Row({
       </div>
     </>
   );
-  const chip = "inline-flex min-h-11 items-center gap-1 rounded-full border border-ink/10 bg-white px-2.5 text-[0.8125rem] font-medium text-ink outline-none transition-colors hover:bg-cloud focus-visible:ring-2 focus-visible:ring-primary";
+  const tool = "grid h-11 w-11 shrink-0 place-items-center rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary";
   return (
     <li
       ref={setNodeRef}
@@ -91,6 +91,17 @@ function Row({
         <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
           {body}
         </Link>
+        {/* Lo de todos los días va en la misma línea: «Vendí» siempre; agotado y ocultar como íconos desde tablet (en móvil, en el menú). */}
+        <button type="button" onClick={onStock} aria-label={`Vendí ${product.name}`} title="Registrar una venta" className={cn(tool, "bg-primary text-white hover:bg-primary/90 sm:flex sm:w-auto sm:flex-row sm:gap-1.5 sm:px-3.5 sm:text-sm sm:font-medium")}>
+          <CircleDollarSign className="h-5 w-5 sm:h-4 sm:w-4" aria-hidden />
+          <span className="hidden sm:inline">Vendí</span>
+        </button>
+        <button type="button" onClick={() => onAvailability(soldOut ? "available" : "soldout")} aria-label={`${soldOut ? "Marcar disponible" : "Marcar agotado"}: ${product.name}`} title={soldOut ? "Marcar disponible" : "Marcar agotado"} className={cn(tool, "hidden text-slate hover:bg-cloud hover:text-ink sm:grid")}>
+          {soldOut ? <PackageCheck className="h-5 w-5" aria-hidden /> : <PackageX className="h-5 w-5" aria-hidden />}
+        </button>
+        <button type="button" onClick={() => onVisible(!product.visible)} aria-label={`${product.visible ? "Ocultar" : "Mostrar"}: ${product.name}`} title={product.visible ? "Ocultar del catálogo" : "Mostrar en el catálogo"} className={cn(tool, "hidden text-slate hover:bg-cloud hover:text-ink sm:grid")}>
+          {product.visible ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`Más acciones de ${product.name}`}
@@ -102,6 +113,12 @@ function Row({
             <DropdownMenuItem onSelect={() => router.push(`/app/productos/${product.id}`)}>
               <Pencil /> Editar
             </DropdownMenuItem>
+            <DropdownMenuItem className="sm:hidden" onSelect={() => onAvailability(soldOut ? "available" : "soldout")}>
+              {soldOut ? <PackageCheck /> : <PackageX />} {soldOut ? "Marcar disponible" : "Marcar agotado"}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="sm:hidden" onSelect={() => onVisible(!product.visible)}>
+              {product.visible ? <EyeOff /> : <Eye />} {product.visible ? "Ocultar del catálogo" : "Mostrar en el catálogo"}
+            </DropdownMenuItem>
             <DropdownMenuItem disabled={duplicating} onSelect={onDuplicate}>
               <Copy /> Duplicar
             </DropdownMenuItem>
@@ -111,20 +128,6 @@ function Row({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-      {/* Lo que se hace todos los días, a un toque: registrar una venta, marcar agotado y mostrar u ocultar. */}
-      <div className="mt-2 flex flex-wrap gap-1.5 pl-3 sm:pl-4" role="group" aria-label={`Acciones rápidas de ${product.name}`}>
-        <button type="button" onClick={onStock} className={cn(chip, "border-transparent bg-primary text-white hover:bg-primary/90")}>
-          <Boxes className="h-4 w-4" aria-hidden /> Vendí
-        </button>
-        <button type="button" onClick={() => onAvailability(soldOut ? "available" : "soldout")} className={chip}>
-          {soldOut ? <PackageCheck className="h-4 w-4" aria-hidden /> : <PackageX className="h-4 w-4" aria-hidden />}
-          {soldOut ? "Disponible" : "Agotado"}
-        </button>
-        <button type="button" onClick={() => onVisible(!product.visible)} className={chip}>
-          {product.visible ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
-          {product.visible ? "Ocultar" : "Mostrar"}
-        </button>
       </div>
     </li>
   );
