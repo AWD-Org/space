@@ -8,6 +8,9 @@ import { refreshStore } from "@/lib/actions/helpers";
 
 export const runtime = "nodejs";
 
+/** Tope de lo que se acepta antes de normalizar; las funciones sin servidor rechazan cuerpos de ~6 MB. */
+const MAX_INCOMING_BYTES = 4_500_000;
+
 const TYPES: Record<string, string> = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
 
 /** Verifica los primeros bytes: el Content-Type lo manda el cliente y no es de fiar. */
@@ -31,7 +34,9 @@ export async function POST(req: NextRequest) {
   if (!TYPES[file.type]) return NextResponse.json({ ok: false, error: "Usa una foto JPG, PNG o WebP." }, { status: 415 });
 
   const limits = await getLimits();
-  if (file.size > limits.maxStoredBytes) {
+  // Lo que llega puede ser más grande que lo que se guarda (un navegador que no pudo comprimir a WebP manda JPEG o PNG):
+  // el límite de lo guardado se aplica después de normalizar. Este tope solo protege al servidor.
+  if (file.size > MAX_INCOMING_BYTES) {
     return NextResponse.json({ ok: false, error: "La foto pesa demasiado. Intenta con otra." }, { status: 413 });
   }
 

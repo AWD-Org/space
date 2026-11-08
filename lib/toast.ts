@@ -14,11 +14,14 @@ const SOLID = {
   error: "#B42318",
   warning: "#B45309",
 } as const;
-const ON_COLOR = { title: "!text-white", description: "!text-white/90", badge: "!bg-white/20 !text-white" };
+const ON_COLOR = { title: "!text-white", description: "!text-white/90", badge: "!bg-white/20 !text-white", button: "!bg-white/20 !text-white hover:!bg-white/30" };
 const solid = (state: keyof typeof SOLID) => ({ fill: SOLID[state], styles: ON_COLOR });
 
 /** El ícono por defecto del error es una «X», que se confunde con el botón de cerrar (#19): se usa una señal de alerta. */
 const errorIcon = () => createElement(TriangleAlert, { size: 16, "aria-hidden": true });
+
+/** Los avisos de error y de revisión se quedan hasta que se leen: llevan un botón explícito para cerrarlos (#19). */
+const closeButton = { title: "Cerrar", onClick: () => sileo.clear() };
 
 const SHORT = { error: "No se pudo completar", warning: "Revisa esto" } as const;
 
@@ -33,8 +36,8 @@ function say(message: string, label: string) {
 export const toast = {
   success: (message: string) => sileo.success({ ...say(message, "Listo"), ...solid("success") }),
   info: (message: string) => sileo.info(say(message, "Aviso")),
-  error: (message: string) => sileo.error({ title: SHORT.error, description: message, icon: errorIcon(), ...solid("error") }),
-  warning: (message: string) => sileo.warning({ title: SHORT.warning, description: message, ...solid("warning") }),
+  error: (message: string) => sileo.error({ title: SHORT.error, description: message, icon: errorIcon(), button: closeButton, ...solid("error") }),
+  warning: (message: string) => sileo.warning({ title: SHORT.warning, description: message, button: closeButton, ...solid("warning") }),
   /** Cierra todos los avisos visibles. */
   dismiss: () => sileo.clear(),
 
@@ -70,7 +73,7 @@ export const toast = {
       await sileo.promise(job, {
         loading: { title: msgs.loading },
         success: (r) => ({ ...say(successTitle(r as T), "Listo"), ...solid("success") }),
-        error: (e) => ({ title: SHORT.error, description: e instanceof Error ? e.message : msgs.error ?? "Inténtalo de nuevo.", icon: errorIcon(), ...solid("error") }),
+        error: (e) => ({ title: SHORT.error, description: e instanceof Error ? e.message : msgs.error ?? "Inténtalo de nuevo.", icon: errorIcon(), button: closeButton, ...solid("error") }),
       });
     } catch {
       /* el aviso de error ya se mostró */
