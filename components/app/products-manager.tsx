@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, Boxes, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, Boxes, CircleDollarSign, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/lib/toast";
@@ -92,8 +92,8 @@ function Row({
           {body}
         </Link>
         {/* Lo de todos los días va en la misma línea: «Vendí» siempre; agotado y ocultar como íconos desde tablet (en móvil, en el menú). */}
-        <button type="button" onClick={onStock} aria-label={`Vendí ${product.name}`} title="Registrar una venta" className={cn(tool, "bg-primary text-white hover:bg-primary/90 sm:w-auto sm:gap-1.5 sm:px-3.5 sm:text-sm sm:font-medium")}>
-          <Boxes className="h-5 w-5 sm:h-4 sm:w-4" aria-hidden />
+        <button type="button" onClick={onStock} aria-label={`Vendí ${product.name}`} title="Registrar una venta" className={cn(tool, "bg-primary text-white hover:bg-primary/90 sm:flex sm:w-auto sm:flex-row sm:gap-1.5 sm:px-3.5 sm:text-sm sm:font-medium")}>
+          <CircleDollarSign className="h-5 w-5 sm:h-4 sm:w-4" aria-hidden />
           <span className="hidden sm:inline">Vendí</span>
         </button>
         <button type="button" onClick={() => onAvailability(soldOut ? "available" : "soldout")} aria-label={`${soldOut ? "Marcar disponible" : "Marcar agotado"}: ${product.name}`} title={soldOut ? "Marcar disponible" : "Marcar agotado"} className={cn(tool, "hidden text-slate hover:bg-cloud hover:text-ink sm:grid")}>
