@@ -4,17 +4,17 @@ import { getDb } from "@/lib/db";
 import { requireUserForAction } from "@/lib/auth/session";
 import { getLimits, getStore, listProducts, slugPath, storePath } from "@/lib/data/queries";
 import { DEFAULT_DELIVERY } from "@/lib/delivery";
-import { slugProblem, slugify } from "@/lib/slug";
+import { brandProblem, slugProblem, slugify } from "@/lib/slug";
 import { createStoreSchema, firstError, updateStoreSchema } from "@/lib/validators";
 import type { ActionResult, Store } from "@/lib/types";
 import { refreshStore, run, UserError } from "./helpers";
 
 export async function checkSlug(raw: string): Promise<{ available: boolean; message?: string; slug: string }> {
   const slug = slugify(raw);
-  const problem = slugProblem(slug);
+  const user = await requireUserForAction();
+  const problem = slugProblem(slug) ?? brandProblem(slug, user.email);
   if (problem) return { available: false, message: problem, slug };
   const db = await getDb();
-  const user = await requireUserForAction();
   const taken = await db.get<{ storeId: string }>(slugPath(slug));
   if (taken && taken.storeId !== user.uid) return { available: false, message: "Ese link ya tiene dueño. Prueba otro.", slug };
   return { available: true, slug };
@@ -27,7 +27,7 @@ export async function createStore(input: { name: string; slug: string; whatsapp:
     if (!parsed.success) throw new UserError(firstError(parsed.error));
     const { name, whatsapp, accent } = parsed.data;
     const slug = slugify(parsed.data.slug || name);
-    const problem = slugProblem(slug);
+    const problem = slugProblem(slug) ?? brandProblem(slug, user.email) ?? brandProblem(name, user.email);
     if (problem) throw new UserError(problem);
 
     const db = await getDb();
@@ -78,6 +78,10 @@ export async function updateStore(input: Record<string, unknown>): Promise<Actio
     if (!parsed.success) throw new UserError(firstError(parsed.error));
     const store = await getStore(user.uid);
     if (!store) throw new UserError("Primero crea tu tienda.");
+    if (parsed.data.name !== undefined && parsed.data.name !== store.name) {
+      const problem = brandProblem(parsed.data.name, user.email);
+      if (problem) throw new UserError(problem);
+    }
     const db = await getDb();
     await db.update(storePath(user.uid), { ...parsed.data, updatedAt: Date.now() });
     refreshStore(store.slug);
@@ -89,7 +93,7 @@ export async function changeSlug(raw: string): Promise<ActionResult<{ slug: stri
   return run(async () => {
     const user = await requireUserForAction();
     const slug = slugify(raw);
-    const problem = slugProblem(slug);
+    const problem = slugProblem(slug) ?? brandProblem(slug, user.email);
     if (problem) throw new UserError(problem);
     const limits = await getLimits();
     const db = await getDb();
