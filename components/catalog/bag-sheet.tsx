@@ -46,7 +46,7 @@ export function BagSheet({
   onSend?: (message: string) => void;
   demo?: boolean;
 }) {
-  const { items, setQty, clear, lines } = useBag();
+  const { items, setQty, clear, lines, maxFor } = useBag();
   const { total, partial } = bagTotal(lines);
   const hasDelivery = deliveryMethods.length > 0;
   const hasPayment = paymentMethods.length > 0;
@@ -113,7 +113,7 @@ export function BagSheet({
                       {item.variant && <p className="truncate text-sm text-muted-foreground">{item.variant}</p>}
                       <p className="text-sm tabular-nums text-muted-foreground">{formatPrice(item.price != null ? item.price * item.qty : null, item.priceFrom)}</p>
                     </div>
-                    <QtyStepper value={item.qty} onChange={(n) => setQty(itemKey(item), n)} label={item.variant ? `${item.name}, ${item.variant}` : item.name} />
+                    <QtyStepper value={item.qty} onChange={(n) => setQty(itemKey(item), n)} label={item.variant ? `${item.name}, ${item.variant}` : item.name} max={maxFor(item)} />
                   </li>
                 ))}
               </ul>
@@ -170,7 +170,7 @@ export function BagSheet({
                 <WhatsAppGlyph className="h-5 w-5" />
                 Mandar pedido por WhatsApp
               </button>
-              <button type="button" onClick={clear} className="mt-2 w-full py-2 text-sm text-muted-foreground hover:text-ink">
+              <button type="button" onClick={clear} className="mt-2 min-h-11 w-full py-2 text-sm text-muted-foreground hover:text-ink">
                 Vaciar bolsa
               </button>
             </div>

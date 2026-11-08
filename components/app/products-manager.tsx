@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Copy, Eye, EyeOff, FileSpreadsheet, FolderInput, GripVertical, Loader2, Minus, MoreVertical, Boxes, PackageCheck, PackageX, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { toast } from "@/lib/toast";
@@ -16,10 +16,16 @@ import { Button } from "@/components/ui/button";
 import { bulkProducts, duplicateProduct, reorderProducts, setAvailability, type BulkOp } from "@/lib/actions/product";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatPrice } from "@/lib/format";
+import { isSoldOut } from "@/lib/options";
+import { stockLabel } from "@/lib/stock";
 import type { Availability, Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { CategoriesSheet } from "./categories-sheet";
-import { ImportSheet } from "./import-sheet";
+import dynamic from "next/dynamic";
+
+// Las hojas se descargan la primera vez que se abren: la lista abre más rápido y bloquea menos el hilo principal.
+const CategoriesSheet = dynamic(() => import("./categories-sheet").then((m) => m.CategoriesSheet), { ssr: false });
+const ImportSheet = dynamic(() => import("./import-sheet").then((m) => m.ImportSheet), { ssr: false });
+const StockSheet = dynamic(() => import("./stock-sheet").then((m) => m.StockSheet), { ssr: false });
 
 function Row({
   product,
@@ -27,6 +33,7 @@ function Row({
   selected,
   onToggle,
   onAvailability,
+  onStock,
   onVisible,
   onDuplicate,
   onDelete,
@@ -37,6 +44,7 @@ function Row({
   selected: boolean;
   onToggle: () => void;
   onAvailability: (a: Availability) => void;
+  onStock: () => void;
   onVisible: (v: boolean) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -45,6 +53,8 @@ function Row({
   const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: product.id });
   const soldOut = product.availability === "soldout";
+  const out = isSoldOut(product);
+  const stock = stockLabel(product);
   const body = (
     <>
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl skeleton-img">
@@ -55,7 +65,8 @@ function Row({
         <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
           <span className="tabular-nums">{formatPrice(product.price, product.priceFrom)}</span>
           {category && <span>· {category}</span>}
-          {soldOut && <span className="font-medium text-[#9A3412]">· Agotado</span>}
+          {out && <span className="font-medium text-[#9A3412]">· Agotado</span>}
+          {stock && !(out && stock === "Sin stock") && <span className="tabular-nums">· {stock}</span>}
           {!product.visible && (
             <span className="inline-flex items-center gap-1">
               · <EyeOff className="h-3.5 w-3.5" aria-hidden /> Oculto
@@ -65,23 +76,24 @@ function Row({
       </div>
     </>
   );
+  const chip = "inline-flex min-h-11 items-center gap-1 rounded-full border border-ink/10 bg-white px-2.5 text-[0.8125rem] font-medium text-ink outline-none transition-colors hover:bg-cloud focus-visible:ring-2 focus-visible:ring-primary";
   return (
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("flex items-center gap-1 bg-white py-3 pr-1 transition-colors sm:gap-2 sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]", duplicating && "pointer-events-none opacity-60")}
+      className={cn("bg-white py-3 pr-1 transition-colors sm:pr-2", isDragging && "relative z-10 rounded-xl shadow-lg", selected && "bg-primary/[0.04]", duplicating && "pointer-events-none opacity-60")}
     >
-      <CheckBox checked={selected} onChange={onToggle} label={`Elegir ${product.name}`} />
-      <button type="button" className="touch-none cursor-grab px-0.5 text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
-        <GripVertical className="h-5 w-5" />
-      </button>
-      <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-        {body}
-      </Link>
-      {(
+      <div className="flex items-center gap-1 sm:gap-2">
+        <CheckBox checked={selected} onChange={onToggle} label={`Elegir ${product.name}`} />
+        <button type="button" className="grid h-11 w-11 shrink-0 touch-none cursor-grab place-items-center text-slate active:cursor-grabbing" aria-label={`Mover ${product.name}`} {...attributes} {...listeners}>
+          <GripVertical className="h-5 w-5" />
+        </button>
+        <Link href={`/app/productos/${product.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+          {body}
+        </Link>
         <DropdownMenu>
           <DropdownMenuTrigger
-            aria-label={`Acciones de ${product.name}`}
+            aria-label={`Más acciones de ${product.name}`}
             className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-cloud hover:text-ink focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:bg-cloud"
           >
             {duplicating ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <MoreVertical className="h-5 w-5" aria-hidden />}
@@ -89,14 +101,6 @@ function Row({
           <DropdownMenuContent>
             <DropdownMenuItem onSelect={() => router.push(`/app/productos/${product.id}`)}>
               <Pencil /> Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onAvailability(soldOut ? "available" : "soldout")}>
-              {soldOut ? <PackageCheck /> : <PackageX />}
-              {soldOut ? "Volver a disponible" : "Marcar como agotado"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onVisible(!product.visible)}>
-              {product.visible ? <EyeOff /> : <Eye />}
-              {product.visible ? "Ocultar del catálogo" : "Mostrar en el catálogo"}
             </DropdownMenuItem>
             <DropdownMenuItem disabled={duplicating} onSelect={onDuplicate}>
               <Copy /> Duplicar
@@ -107,7 +111,21 @@ function Row({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
+      </div>
+      {/* Lo que se hace todos los días, a un toque: registrar una venta, marcar agotado y mostrar u ocultar. */}
+      <div className="mt-2 flex flex-wrap gap-1.5 pl-3 sm:pl-4" role="group" aria-label={`Acciones rápidas de ${product.name}`}>
+        <button type="button" onClick={onStock} className={cn(chip, "border-transparent bg-primary text-white hover:bg-primary/90")}>
+          <Boxes className="h-4 w-4" aria-hidden /> Vendí
+        </button>
+        <button type="button" onClick={() => onAvailability(soldOut ? "available" : "soldout")} className={chip}>
+          {soldOut ? <PackageCheck className="h-4 w-4" aria-hidden /> : <PackageX className="h-4 w-4" aria-hidden />}
+          {soldOut ? "Disponible" : "Agotado"}
+        </button>
+        <button type="button" onClick={() => onVisible(!product.visible)} className={chip}>
+          {product.visible ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+          {product.visible ? "Ocultar" : "Mostrar"}
+        </button>
+      </div>
     </li>
   );
 }
@@ -122,6 +140,13 @@ export function ProductsManager({ products: initial, categories, limit, category
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [toDelete, setToDelete] = React.useState<Product | null>(null);
   const [dupBusy, setDupBusy] = React.useState<string | null>(null);
+  const [stockFor, setStockFor] = React.useState<Product | null>(null);
+  // Una hoja se monta la primera vez que se abre y se queda montada para conservar su animación de cierre.
+  const sheetsSeen = React.useRef({ stock: false, import: false, cats: false });
+  const [stockOpen, setStockOpen] = React.useState(false);
+  if (stockOpen) sheetsSeen.current.stock = true;
+  if (importOpen) sheetsSeen.current.import = true;
+  if (catsOpen) sheetsSeen.current.cats = true;
   React.useEffect(() => setProducts(initial), [initial]);
 
   const sensors = useSensors(
@@ -347,6 +372,10 @@ export function ProductsManager({ products: initial, categories, limit, category
                     selected={picked.has(p.id)}
                     onToggle={() => toggle(p.id)}
                     onAvailability={(a) => changeAvailability(p.id, a)}
+                    onStock={() => {
+                      setStockFor(p);
+                      setStockOpen(true);
+                    }}
                     onVisible={(v) => changeVisible(p.id, v)}
                     onDuplicate={() => duplicate(p.id)}
                     onDelete={() => setToDelete(p)}
@@ -377,8 +406,9 @@ export function ProductsManager({ products: initial, categories, limit, category
         confirmLabel="Eliminar"
         onConfirm={removeOne}
       />
-      <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />
-      <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />
+      {sheetsSeen.current.stock && <StockSheet product={stockFor ? products.find((x) => x.id === stockFor.id) ?? stockFor : null} open={stockOpen} onOpenChange={setStockOpen} />}
+      {sheetsSeen.current.import && <ImportSheet open={importOpen} onOpenChange={setImportOpen} hasProducts={products.length > 0} />}
+      {sheetsSeen.current.cats && <CategoriesSheet open={catsOpen} onOpenChange={setCatsOpen} categories={categories} limit={categoryLimit} />}
     </>
   );
 }
@@ -386,7 +416,7 @@ export function ProductsManager({ products: initial, categories, limit, category
 function CheckBox({ checked, onChange, label }: { checked: boolean | "mixed"; onChange: () => void; label: string }) {
   const on = checked === true || checked === "mixed";
   return (
-    <button type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onChange} className="group grid h-11 w-10 shrink-0 place-items-center rounded-full outline-none sm:w-11">
+    <button type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onChange} className="group grid h-11 w-11 shrink-0 place-items-center rounded-full outline-none">
       <span
         className={cn(
           "grid h-[1.4rem] w-[1.4rem] place-items-center rounded-md ring-1 ring-inset transition-[background-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-active:scale-90 group-focus-visible:ring-2 group-focus-visible:ring-primary",

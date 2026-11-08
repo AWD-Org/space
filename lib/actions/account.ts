@@ -3,7 +3,7 @@
 import { getDb } from "@/lib/db";
 import { isLocalMode } from "@/lib/env";
 import { requireUserForAction } from "@/lib/auth/session";
-import { categoriesPath, getStore, listProducts, productsPath, slugPath, statsPath, storePath } from "@/lib/data/queries";
+import { categoriesPath, getStore, listProducts, productsPath, salesPath, slugPath, statsPath, storePath } from "@/lib/data/queries";
 import { removeAllUserImages, removeImages } from "@/lib/storage/server";
 import type { ActionResult } from "@/lib/types";
 import { DELETE_PHRASE, PAUSE_OPTIONS } from "@/lib/account-options";
@@ -37,7 +37,7 @@ export async function resumeStore(): Promise<ActionResult> {
   });
 }
 
-/** Borra para siempre la tienda, productos, categorías, estadísticas, imágenes y la cuenta. */
+/** Borra para siempre la tienda, productos, categorías, estadísticas, ventas, imágenes y la cuenta. */
 export async function deleteAccount(phrase: string): Promise<ActionResult> {
   return run(async () => {
     const user = await requireUserForAction();
@@ -49,11 +49,12 @@ export async function deleteAccount(phrase: string): Promise<ActionResult> {
       const paths = [...products.flatMap((p) => p.images.map((i) => i.path)), ...(store.logo ? [store.logo.path] : [])];
       await removeImages(paths);
       await removeAllUserImages(user.uid);
-      const [cats, stats] = await Promise.all([db.list<{ id: string }>(categoriesPath(user.uid)), db.list<{ id: string }>(statsPath(user.uid))]);
+      const [cats, stats, sales] = await Promise.all([db.list<{ id: string }>(categoriesPath(user.uid)), db.list<{ id: string }>(statsPath(user.uid)), db.list<{ id: string }>(salesPath(user.uid))]);
       await Promise.all([
         ...products.map((p) => db.delete(`${productsPath(user.uid)}/${p.id}`)),
         ...cats.map((c) => db.delete(`${categoriesPath(user.uid)}/${c.id}`)),
         ...stats.map((s) => db.delete(`${statsPath(user.uid)}/${s.id}`)),
+        ...sales.map((s) => db.delete(`${salesPath(user.uid)}/${s.id}`)),
       ]);
       await db.delete(slugPath(store.slug));
       await db.delete(storePath(user.uid));

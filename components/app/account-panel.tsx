@@ -200,7 +200,7 @@ function CloseAccount({ pausedUntil }: { pausedUntil: number | null }) {
   return (
     <div className="pt-10">
       {step === 0 && (
-        <button type="button" onClick={() => setStep(1)} className="text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <button type="button" onClick={() => setStep(1)} className="inline-flex min-h-11 items-center text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           ¿Quieres cerrar tu cuenta?
         </button>
       )}

@@ -8,6 +8,7 @@ import { formatPrice, AVAILABILITY_LABEL } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { hasPriceExtras, isSoldOut } from "@/lib/options";
+import { LOW_STOCK, availabilityNote, totalStock } from "@/lib/stock";
 import { useBag } from "./bag";
 
 export function ProductCard({
@@ -28,12 +29,15 @@ export function ProductCard({
   headingLevel?: "h3" | "p";
 }) {
   const Title = headingLevel;
-  const { add, setQty, countOf } = useBag();
+  const { add, setQty, countOf, roomFor } = useBag();
   const hasOptions = (product.options ?? []).length > 0;
   const reduce = useReducedMotion();
   const inBag = countOf(product.id);
   const soldOut = isSoldOut(product);
   const image = product.images[0];
+  const left = totalStock(product);
+  const lowNote = left !== null && left > 0 && left <= LOW_STOCK ? availabilityNote(left) : null;
+  const atLimit = !hasOptions && roomFor(product) <= 0;
 
   return (
     <article className="group flex flex-col">
@@ -91,7 +95,7 @@ export function ProductCard({
               <span className="w-6 text-center text-sm font-semibold tabular-nums text-ink" aria-live="polite">
                 {inBag}
               </span>
-              <button type="button" onClick={() => add(product)} className="grid h-11 w-11 place-items-center rounded-full bg-[var(--accent)] text-white active:brightness-90" aria-label={`Agregar otro ${product.name}`}>
+              <button type="button" disabled={atLimit} onClick={() => add(product)} className="grid h-11 w-11 place-items-center rounded-full bg-[var(--accent)] text-white active:brightness-90 disabled:opacity-40" aria-label={atLimit ? `Ya tienes todas las que hay de ${product.name}` : `Agregar otro ${product.name}`}>
                 <Plus className="h-4 w-4" aria-hidden />
               </button>
             </div>
@@ -113,6 +117,7 @@ export function ProductCard({
       <button type="button" onClick={onOpen} className="mt-2.5 text-left">
         <Title className="line-clamp-2 font-display text-[1rem] font-medium leading-snug text-ink">{product.name}</Title>
         <p className="mt-0.5 text-[0.95rem] font-semibold tabular-nums text-ink">{formatPrice(product.price, product.priceFrom || hasPriceExtras(product))}</p>
+        {lowNote && !soldOut && <p className="mt-0.5 text-sm font-medium text-[#9A3412]">{lowNote}</p>}
       </button>
     </article>
   );

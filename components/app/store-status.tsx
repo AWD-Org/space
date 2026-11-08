@@ -60,7 +60,7 @@ export function StoreStatus({ url, displayUrl, published, isOpen, canPublish }: 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{published ? "Tu catálogo está en línea" : "Tu catálogo es un borrador"}</p>
-          <a href={url} target="_blank" rel="noopener" className="mt-0.5 block truncate font-display text-lg font-semibold text-ink underline-offset-4 hover:underline sm:text-xl">
+          <a href={url} target="_blank" rel="noopener" className="mt-0.5 block min-h-11 truncate py-2 font-display text-lg font-semibold text-ink underline-offset-4 hover:underline sm:text-xl">
             {displayUrl}
           </a>
         </div>
