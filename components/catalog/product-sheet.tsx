@@ -35,6 +35,7 @@ export function ProductSheet({
   canOrder,
   closedReason,
   accent,
+  fit = "cover",
 }: {
   product: Product | null;
   open: boolean;
@@ -42,6 +43,7 @@ export function ProductSheet({
   canOrder: boolean;
   closedReason?: string;
   accent: string;
+  fit?: "cover" | "contain";
 }) {
   const { add, roomFor } = useBag();
   const [qty, setQty] = React.useState(1);
@@ -92,7 +94,7 @@ export function ProductSheet({
               {product.images.length ? (
                 product.images.map((img, i) => (
                   <div key={img.path} className="relative h-full w-full shrink-0 snap-center">
-                    <Image src={img.url} alt={`${product.name}, foto ${i + 1}`} fill sizes="(min-width: 640px) 420px, 100vw" className="object-cover" priority={i === 0} />
+                    <Image src={img.url} alt={`${product.name}, foto ${i + 1}`} fill sizes="(min-width: 640px) 420px, 100vw" quality={80} className={fit === "contain" ? "object-contain" : "object-cover"} priority={i === 0} />
                   </div>
                 ))
               ) : (

@@ -19,6 +19,7 @@ export function ProductCard({
   priority,
   isNew = false,
   headingLevel = "h3",
+  fit = "cover",
 }: {
   product: Product;
   onOpen: () => void;
@@ -27,6 +28,7 @@ export function ProductCard({
   priority?: boolean;
   isNew?: boolean;
   headingLevel?: "h3" | "p";
+  fit?: "cover" | "contain";
 }) {
   const Title = headingLevel;
   const { add, setQty, countOf, roomFor } = useBag();
@@ -45,7 +47,7 @@ export function ProductCard({
       <button
         type="button"
         onClick={onOpen}
-        className={cn("relative block aspect-[4/5] w-full overflow-hidden rounded-[1.375rem] text-left", image ? "skeleton-img" : "bg-spaceMist")}
+        className={cn("relative block aspect-[4/5] w-full overflow-hidden rounded-[1.375rem] text-left", image ? (fit === "contain" ? "bg-spaceMist" : "skeleton-img") : "bg-spaceMist")}
       >
         {image ? (
           <Image
@@ -53,8 +55,9 @@ export function ProductCard({
             alt={product.name}
             fill
             sizes={sizes}
+            quality={80}
             priority={priority}
-            className={cn("object-cover transition-transform duration-500 group-hover:scale-[1.03]", soldOut && "opacity-60 grayscale-[40%]")}
+            className={cn(fit === "contain" ? "object-contain" : "object-cover", "transition-transform duration-500 group-hover:scale-[1.03]", soldOut && "opacity-60 grayscale-[40%]")}
           />
         ) : (
           <span className="absolute inset-0 grid place-items-center px-4 text-center font-display text-lg font-medium text-[#2F43B8]">

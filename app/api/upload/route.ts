@@ -13,6 +13,25 @@ const MAX_INCOMING_BYTES = 4_500_000;
 
 const TYPES: Record<string, string> = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
 
+/** Lado máximo guardado: 2000 px en productos, 512 px en logos. */
+const PRODUCT_SIDE = 2000;
+const LOGO_SIDE = 512;
+/** Calidades que se prueban, de mayor a menor, hasta que la foto quepa en el tope de almacenamiento. */
+const QUALITIES = [88, 82, 76, 70, 64];
+
+type Sharp = (typeof import("sharp"))["default"];
+
+/** Una sola codificación a WebP: la mejor calidad que quepa; si ni así cabe, se reduce el lado y se vuelve a intentar. */
+async function encodeWebp(sharp: Sharp, input: Buffer, side: number, maxBytes: number): Promise<Buffer> {
+  const base = sharp(input).rotate().resize({ width: side, height: side, fit: "inside", withoutEnlargement: true });
+  for (const quality of QUALITIES) {
+    const out = await base.clone().webp({ quality, effort: 4 }).toBuffer();
+    if (out.length <= maxBytes) return out;
+  }
+  if (side <= 800) throw new Error("too-big");
+  return encodeWebp(sharp, input, Math.round(side * 0.8), maxBytes);
+}
+
 /** Verifica los primeros bytes: el Content-Type lo manda el cliente y no es de fiar. */
 function matchesSignature(b: Buffer, type: string) {
   if (type === "image/jpeg") return b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
@@ -50,8 +69,18 @@ export async function POST(req: NextRequest) {
   let contentType = file.type;
   try {
     const sharp = (await import("sharp")).default;
-    const side = kind === "logo" ? 512 : 1600;
-    bytes = await sharp(bytes).rotate().resize({ width: side, height: side, fit: "inside", withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+    const side = kind === "logo" ? LOGO_SIDE : PRODUCT_SIDE;
+    const meta = await sharp(bytes).metadata();
+    // Un WebP que el navegador ya dejó en tamaño, sin metadatos, sin animación y dentro del tope se guarda tal cual:
+    // recomprimirlo sumaría una segunda pérdida de calidad sin ganar peso.
+    const ready =
+      file.type === "image/webp" &&
+      bytes.length <= limits.maxStoredBytes &&
+      Math.max(meta.width ?? Infinity, meta.height ?? Infinity) <= side &&
+      !meta.exif &&
+      !meta.xmp &&
+      !((meta.pages ?? 1) > 1);
+    if (!ready) bytes = await encodeWebp(sharp, bytes, side, limits.maxStoredBytes);
     contentType = "image/webp";
   } catch {
     return NextResponse.json({ ok: false, error: "No pudimos procesar esa foto. Prueba con otra." }, { status: 415 });

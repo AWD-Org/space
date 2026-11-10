@@ -57,6 +57,7 @@ export const updateStoreSchema = z
       })
       .transform((o) => cleanSocials(o)),
     accent: accentSchema,
+    imageFit: z.enum(["cover", "contain"]),
     isOpen: z.boolean(),
   })
   .partial();
@@ -163,6 +164,7 @@ export const settingsFormSchema = z.object({
   tiktok: z.string().trim().refine((v) => normalizeSocial("tiktok", v) !== null, "Revisa tu TikTok."),
   youtube: z.string().trim().refine((v) => normalizeSocial("youtube", v) !== null, "Revisa tu YouTube."),
   accent: z.string().refine((v) => normalizeHex(v) !== null, "Ese color no es válido."),
+  imageFit: z.enum(["cover", "contain"]),
 });
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
