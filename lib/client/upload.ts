@@ -60,7 +60,7 @@ async function canvasCompress(file: File, side: number, maxBytes: number): Promi
     ctx.drawImage(dec.source, 0, 0, canvas.width, canvas.height);
     let best: Blob | null = null;
     for (const type of ["image/webp", "image/jpeg"]) {
-      for (const q of [0.82, 0.7, 0.58]) {
+      for (const q of [0.88, 0.8, 0.7]) {
         const blob = await toBlob(canvas, type, q);
         if (!blob || blob.type !== type) break; // el navegador no soporta ese formato
         if (!best || blob.size < best.size) best = blob;
@@ -75,14 +75,20 @@ async function canvasCompress(file: File, side: number, maxBytes: number): Promi
   }
 }
 
-/** Comprime en el navegador (WebP, 1600 px) y sube al servidor. */
+/** Lado máximo de una foto de producto. 2000 px alcanza para una tarjeta en pantalla retina y para la vista ampliada. */
+export const PRODUCT_SIDE = 2000;
+
+/**
+ * Prepara la foto en el navegador (WebP, 2000 px, calidad 0.88) y la sube. El navegador solo reduce el tamaño para que quepa en la subida
+ * (las funciones sin servidor rechazan cuerpos de ~6 MB); la compresión final, una sola vez, la hace el servidor.
+ */
 export async function uploadImage(file: File, kind: "product" | "logo" = "product"): Promise<ImageRef> {
   if (!looksLikeImage(file)) throw new Error("Ese archivo no es una foto.");
   if (file.size > MAX_ORIGINAL_MB * 1024 * 1024) throw new Error(`La foto pesa más de ${MAX_ORIGINAL_MB} MB.`);
 
-  const side = kind === "logo" ? 512 : 1600;
-  const maxMB = kind === "logo" ? 0.15 : 0.35;
-  const opts = { maxWidthOrHeight: side, maxSizeMB: maxMB, fileType: "image/webp", initialQuality: 0.82 } as const;
+  const side = kind === "logo" ? 512 : PRODUCT_SIDE;
+  const maxMB = kind === "logo" ? 0.25 : 1.2;
+  const opts = { maxWidthOrHeight: side, maxSizeMB: maxMB, fileType: "image/webp", initialQuality: 0.88 } as const;
 
   let compressed: Blob | null = null;
   try {

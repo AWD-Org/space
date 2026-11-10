@@ -43,6 +43,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
       tiktok: displaySocial("tiktok", store.socials?.tiktok),
       youtube: displaySocial("youtube", store.socials?.youtube),
       accent: store.accent,
+      imageFit: store.imageFit ?? "cover",
     }),
     [store]
   );
@@ -60,6 +61,7 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
   const payments = watch("paymentMethods");
   const deliveries = watch("deliveryMethods");
   const accent = watch("accent");
+  const imageFit = watch("imageFit");
 
   const save = handleSubmit(
     async (v) => {
@@ -149,6 +151,23 @@ export function StoreSettings({ store, host, slugDays }: { store: Store; host: s
               <p className="mb-2 text-sm font-medium text-ink">Color de tu catálogo</p>
               <ColorPicker value={accent} onChange={(v) => setValue("accent", v, { shouldDirty: true, shouldValidate: true })} label="Color de tu catálogo" />
               {errors.accent && <p role="alert" className="mt-1.5 text-sm text-destructive">{errors.accent.message}</p>}
+            </div>
+            <div>
+              <p className="mb-1 text-sm font-medium text-ink">Cómo se ven tus fotos</p>
+              <p className="mb-2 text-sm text-muted-foreground">Llenar recorta los bordes para que todas queden iguales. Completa muestra la foto entera, útil para gorras, ropa o piezas largas.</p>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Cómo se ven tus fotos">
+                {([["cover", "Llenar"], ["contain", "Completa"]] as const).map(([v, label]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={imageFit === v}
+                    onClick={() => setValue("imageFit", v, { shouldDirty: true })}
+                    className={cn("min-h-11 rounded-full px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors", imageFit === v ? "bg-ink text-white ring-ink" : "bg-white text-ink ring-border hover:bg-cloud")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </Panel>

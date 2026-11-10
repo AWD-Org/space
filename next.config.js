@@ -22,6 +22,8 @@ const nextConfig = {
   htmlLimitedBots: /.*/,
   images: {
     formats: ["image/avif", "image/webp"],
+    // Calidades que se pueden pedir al optimizador: 60 miniaturas, 75 por defecto, 80 tarjetas y foto ampliada.
+    qualities: [60, 75, 80],
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
     ],

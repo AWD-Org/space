@@ -24,7 +24,7 @@ const BagSheet = dynamic(() => import("./bag-sheet").then((m) => m.BagSheet), { 
 
 export type CatalogStore = Pick<
   Store,
-  "id" | "name" | "slug" | "tagline" | "whatsapp" | "paymentMethods" | "deliveryMethods" | "accent" | "logo" | "isOpen" | "socials"
+  "id" | "name" | "slug" | "tagline" | "whatsapp" | "paymentMethods" | "deliveryMethods" | "accent" | "imageFit" | "logo" | "isOpen" | "socials"
 >;
 
 interface CatalogProps {
@@ -476,7 +476,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
             ) : (
               <div className={cn("grid grid-cols-2 gap-x-2.5 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-10", showSidebar ? "lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" : "lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6")}>
                 {visible.map((p, i) => (
-                  <ProductCard key={p.id} product={p} isNew={hasNew && isNewProduct(p.createdAt, now)} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} />
+                  <ProductCard key={p.id} product={p} isNew={hasNew && isNewProduct(p.createdAt, now)} onOpen={() => open(p)} canOrder={canOrder} priority={i < 4} fit={store.imageFit} />
                 ))}
               </div>
             )}
@@ -529,7 +529,7 @@ function CatalogInner({ store, categories, products, initialProductSlug, track: 
         )}
       </AnimatePresence>
 
-      {productLoaded && <ProductSheet product={openProduct} open={Boolean(openProduct)} onOpenChange={close} canOrder={canOrder} closedReason={closedReason} accent={store.accent} />}
+      {productLoaded && <ProductSheet product={openProduct} open={Boolean(openProduct)} onOpenChange={close} canOrder={canOrder} closedReason={closedReason} accent={store.accent} fit={store.imageFit} />}
       {bagLoaded && <BagSheet
         open={bagOpen}
         onOpenChange={setBagOpen}

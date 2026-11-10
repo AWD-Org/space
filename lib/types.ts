@@ -35,6 +35,8 @@ export interface Store {
   /** Redes sociales visibles en el catálogo (links https ya normalizados). */
   socials?: Partial<Record<"instagram" | "facebook" | "tiktok" | "youtube", string>>;
   accent: string; // color de acento del catálogo
+  /** Cómo se ajustan las fotos a la tarjeta: "cover" llena y recorta, "contain" muestra la foto completa. Sin valor: "cover". */
+  imageFit?: "cover" | "contain";
   logo: ImageRef | null;
   isOpen: boolean;
   /** Pausa temporal pedida por el dueño (ms). Mientras no pase, el catálogo no toma pedidos. */
