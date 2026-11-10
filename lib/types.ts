@@ -7,6 +7,19 @@ export interface ImageRef {
   url: string;
 }
 
+export type SubscriptionStatus = "free" | "trial" | "active" | "past_due" | "canceled";
+
+export interface Subscription {
+  planName: string;
+  status: SubscriptionStatus;
+  /** Próxima renovación (ms). null: sin fecha. */
+  renewsAt: number | null;
+  /** Monto por periodo en centavos MXN, solo informativo. */
+  amountCents: number | null;
+  note: string;
+  updatedAt: number;
+}
+
 export interface Store {
   id: string; // = uid del dueño
   ownerId: string;
@@ -28,6 +41,8 @@ export interface Store {
   pausedUntil?: number | null;
   status: "draft" | "published";
   plan: "free";
+  /** Suscripción administrada a mano por el superadmin. Sin ella, la cuenta es gratis. */
+  subscription?: Subscription;
   counts: { products: number; categories: number };
   slugChangedAt: number | null;
   /** Tutorial del panel: qué pantallas ya vio la persona (se guarda en su cuenta, no en una cookie). */
