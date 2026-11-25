@@ -4,6 +4,7 @@ import { getDb, increment } from "@/lib/db";
 import { normalizeOptions } from "@/lib/options";
 import { requireUserForAction } from "@/lib/auth/session";
 import { categoriesPath, getLimits, getStore, productsPath, storePath } from "@/lib/data/queries";
+import { limitsFor } from "@/lib/plan";
 import { copyImage, removeImages, ownsPath } from "@/lib/storage/server";
 import { slugify } from "@/lib/slug";
 import { firstError, productSchema, type ProductInput } from "@/lib/validators";
@@ -26,15 +27,15 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
     const parsed = productSchema.safeParse(input);
     if (!parsed.success) throw new UserError(firstError(parsed.error));
     const data = parsed.data;
-    const limits = await getLimits();
-    if (data.images.length > limits.imagesPerProduct) {
-      throw new UserError(`Cada producto puede tener hasta ${limits.imagesPerProduct} fotos.`);
-    }
-    if (data.images.some((img) => !ownsPath(user.uid, img.path))) throw new UserError("Hay una foto que no es tuya.");
-
+    const base = await getLimits();
     const db = await getDb();
     const store = await getStore(user.uid);
     if (!store) throw new UserError("Primero crea tu tienda.");
+    const limits = limitsFor(base, store);
+    if (data.images.length > limits.imagesPerProduct) {
+      throw new UserError(`Cada producto puede tener hasta ${limits.imagesPerProduct} fotos en tu plan.`);
+    }
+    if (data.images.some((img) => !ownsPath(user.uid, img.path))) throw new UserError("Hay una foto que no es tuya.");
     if (data.categoryId) {
       const cat = await db.get(`${categoriesPath(user.uid)}/${data.categoryId}`);
       if (!cat) data.categoryId = null;
@@ -81,8 +82,9 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
     await db.tx(async (tx) => {
       const s = await tx.get<Store>(storePath(user.uid));
       if (!s) throw new UserError("Primero crea tu tienda.");
-      if ((s.counts?.products ?? 0) >= limits.products) {
-        throw new UserError(`Llegaste a ${limits.products} productos, el máximo del plan gratis. Borra uno para agregar otro.`);
+      const max = limitsFor(base, s).products;
+      if ((s.counts?.products ?? 0) >= max) {
+        throw new UserError(`Llegaste a ${max} productos, el máximo de tu plan. Borra uno o cambia de plan para agregar otro.`);
       }
       tx.set(`${productsPath(user.uid)}/${id}`, { ...fields, slug, order: now, createdAt: now });
       tx.update(storePath(user.uid), { "counts.products": increment(1), updatedAt: now });
@@ -147,11 +149,12 @@ export async function duplicateProduct(id: string): Promise<ActionResult<{ id: s
     const db = await getDb();
     const source = await db.get<Product>(`${productsPath(user.uid)}/${id}`);
     if (!source) throw new UserError("Ese producto ya no existe.");
-    const limits = await getLimits();
+    const base = await getLimits();
     const store = await getStore(user.uid);
     if (!store) throw new UserError("Primero crea tu tienda.");
-    if ((store.counts?.products ?? 0) >= limits.products) {
-      throw new UserError(`Llegaste a ${limits.products} productos, el máximo del plan gratis. Borra uno para duplicar.`);
+    const max = limitsFor(base, store).products;
+    if ((store.counts?.products ?? 0) >= max) {
+      throw new UserError(`Llegaste a ${max} productos, el máximo de tu plan. Borra uno o cambia de plan para duplicar.`);
     }
     const newId = db.newId();
     const stamp = Date.now().toString(36);
@@ -168,7 +171,7 @@ export async function duplicateProduct(id: string): Promise<ActionResult<{ id: s
       await db.tx(async (tx) => {
         const s = await tx.get<Store>(storePath(user.uid));
         if (!s) throw new UserError("Primero crea tu tienda.");
-        if ((s.counts?.products ?? 0) >= limits.products) throw new UserError(`Llegaste a ${limits.products} productos, el máximo del plan gratis.`);
+        if ((s.counts?.products ?? 0) >= limitsFor(base, s).products) throw new UserError(`Llegaste a ${limitsFor(base, s).products} productos, el máximo de tu plan.`);
         tx.set(`${productsPath(user.uid)}/${newId}`, {
           name,
           slug,

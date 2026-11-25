@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { getDb, increment } from "@/lib/db";
 import { requireUserForAction } from "@/lib/auth/session";
-import { categoriesPath, getLimits, listCategories, listProducts, productsPath, storePath } from "@/lib/data/queries";
+import { categoriesPath, getLimits, getStore, listCategories, listProducts, productsPath, storePath } from "@/lib/data/queries";
+import { limitsFor } from "@/lib/plan";
 import { MAX_IMPORT_ROWS, normKey, planImport } from "@/lib/catalog-io";
 import { productOptionsSchema } from "@/lib/validators";
 import { rateLimited } from "@/lib/rate-limit";
@@ -36,9 +37,10 @@ export async function importProducts(input: unknown): Promise<ActionResult<Impor
     const parsed = z.array(rowSchema).min(1).max(MAX_IMPORT_ROWS).safeParse(input);
     if (!parsed.success) throw new UserError("El archivo ya no es válido. Súbelo otra vez.");
 
-    const limits = await getLimits();
+    const base = await getLimits();
     const db = await getDb();
-    const [products, categories] = await Promise.all([listProducts(user.uid), listCategories(user.uid)]);
+    const [products, categories, current] = await Promise.all([listProducts(user.uid), listCategories(user.uid), getStore(user.uid)]);
+    const limits = limitsFor(base, current ?? {});
     const plan = planImport(parsed.data, {
       existingNames: products.map((p) => p.name),
       existingCategories: categories.map((c) => c.name),
@@ -66,8 +68,9 @@ export async function importProducts(input: unknown): Promise<ActionResult<Impor
       const store = await tx.get<Store>(storePath(user.uid));
       if (!store) throw new UserError("Primero crea tu tienda.");
       slug = store.slug;
-      if ((store.counts?.products ?? 0) + plan.accepted.length > limits.products) throw new UserError(`El plan gratis permite ${limits.products} productos.`);
-      if ((store.counts?.categories ?? 0) + newCats.length > limits.categories) throw new UserError(`El plan gratis permite ${limits.categories} categorías.`);
+      const max = limitsFor(base, store);
+      if ((store.counts?.products ?? 0) + plan.accepted.length > max.products) throw new UserError(`Tu plan permite ${max.products} productos.`);
+      if ((store.counts?.categories ?? 0) + newCats.length > max.categories) throw new UserError(`Tu plan permite ${max.categories} categorías.`);
       for (const c of newCats) tx.set(`${categoriesPath(user.uid)}/${c.id}`, { name: c.name, order: c.order });
       plan.accepted.forEach((r, i) => {
         const id = db.newId();

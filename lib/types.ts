@@ -47,7 +47,7 @@ export interface Store {
   plan: "free";
   /** Suscripción administrada a mano por el superadmin. Sin ella, la cuenta es gratis. */
   subscription?: Subscription;
-  /** Límites especiales puestos a mano por el superadmin (vacío = el del plan). Aún no se aplican en el servidor. */
+  /** Límites especiales puestos a mano por el superadmin (vacío = el del plan). Se aplican en el servidor encima del plan. */
   limitOverrides?: { products?: number; categories?: number; imagesPerProduct?: number } | null;
   counts: { products: number; categories: number };
   slugChangedAt: number | null;

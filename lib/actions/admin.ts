@@ -89,7 +89,7 @@ export async function setStoreState(storeId: string, input: { status?: "draft" |
 const limitField = (label: string) =>
   z.string().trim().max(6, `${label} no válido.`).regex(/^\d*$/, `${label}: solo números enteros.`);
 
-/** Límites especiales por tienda (vacío = el del plan). Se guardan y se ven; el servidor aún no los aplica. */
+/** Límites especiales por tienda (vacío = el del plan). El servidor los aplica encima del plan. */
 export async function setLimits(storeId: string, input: Record<string, unknown>): Promise<ActionResult> {
   return run(async () => {
     const admin = await requireAdminForAction({ fresh: true });

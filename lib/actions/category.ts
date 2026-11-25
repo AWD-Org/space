@@ -3,6 +3,7 @@
 import { getDb, increment } from "@/lib/db";
 import { requireUserForAction } from "@/lib/auth/session";
 import { categoriesPath, getLimits, getStore, productsPath, storePath } from "@/lib/data/queries";
+import { limitsFor } from "@/lib/plan";
 import { categoryNameSchema, firstError } from "@/lib/validators";
 import type { ActionResult, Category, Product, Store } from "@/lib/types";
 import { refreshStore, run, UserError } from "./helpers";
@@ -21,7 +22,7 @@ export async function createCategory(name: string): Promise<ActionResult<Categor
     const parsed = categoryNameSchema.safeParse(name);
     if (!parsed.success) throw new UserError(firstError(parsed.error));
     await assertUniqueName(user.uid, parsed.data);
-    const limits = await getLimits();
+    const base = await getLimits();
     const db = await getDb();
     const id = db.newId();
     const now = Date.now();
@@ -29,8 +30,9 @@ export async function createCategory(name: string): Promise<ActionResult<Categor
     await db.tx(async (tx) => {
       const store = await tx.get<Store>(storePath(user.uid));
       if (!store) throw new UserError("Primero crea tu tienda.");
-      if ((store.counts?.categories ?? 0) >= limits.categories) {
-        throw new UserError(`El plan gratis permite ${limits.categories} categorías.`);
+      const max = limitsFor(base, store).categories;
+      if ((store.counts?.categories ?? 0) >= max) {
+        throw new UserError(`Tu plan permite ${max} categorías.`);
       }
       slug = store.slug;
       tx.set(`${categoriesPath(user.uid)}/${id}`, { name: parsed.data, order: now });

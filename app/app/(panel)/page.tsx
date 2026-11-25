@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronRight, Circle, Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { getLimits, getStats, getStoreForView, hasVisibleProduct, topViewedProducts } from "@/lib/data/queries";
+import { limitsFor } from "@/lib/plan";
 import { SITE_URL } from "@/lib/env";
 import { todayKey } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -32,8 +33,9 @@ function Meter({ label, used, max }: { label: string; used: number; max: number 
 
 export default async function HomePage() {
   const user = await requireUser();
-  const [store, limits, stats, canPublish] = await Promise.all([getStoreForView(user.uid), getLimits(), getStats(user.uid, 14), hasVisibleProduct(user.uid)]);
+  const [store, base, stats, canPublish] = await Promise.all([getStoreForView(user.uid), getLimits(), getStats(user.uid, 14), hasVisibleProduct(user.uid)]);
   if (!store) return null;
+  const limits = limitsFor(base, store);
   const productCount = store.counts?.products ?? 0;
 
   const url = `${SITE_URL}/${store.slug}`;
