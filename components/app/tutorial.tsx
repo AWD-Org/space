@@ -93,7 +93,7 @@ export function HelpCard({ id, title, children }: { id: TutorialId; title: strin
             <div className="min-w-0 flex-1">
               <p className="font-display font-semibold text-ink">{title}</p>
               <p className="mt-1 text-[0.95rem] leading-relaxed text-ink/75">{children}</p>
-              <button type="button" onClick={() => markSeen(id)} className="mt-2 text-sm font-medium text-blueInk underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <button type="button" onClick={() => markSeen(id)} className="-ml-2 mt-1 inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-blueInk underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 Entendido
               </button>
             </div>
@@ -101,7 +101,7 @@ export function HelpCard({ id, title, children }: { id: TutorialId; title: strin
               type="button"
               onClick={() => markSeen(id)}
               aria-label="Cerrar ayuda"
-              className="-mr-1 -mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink/60 transition-colors hover:bg-white/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="-mr-2 -mt-2 grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink/60 transition-colors hover:bg-white/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>

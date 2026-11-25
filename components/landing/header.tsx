@@ -42,7 +42,7 @@ export function LandingHeader() {
   return (
     <header className={cn("sticky top-0 z-40 transition-colors", scrolled ? "border-b border-ink/5 bg-background/90 backdrop-blur" : "bg-transparent")}>
       <div className="container flex h-16 items-center justify-between gap-2 sm:gap-4">
-        <Link href="/" className="flex min-h-11 items-center gap-2 rounded-lg" aria-label="Space, inicio">
+        <Link href="/" className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg" aria-label="Space, inicio">
           <SpaceLogo variant="mark" size={28} />
           <span className="font-display text-xl font-semibold text-ink max-[360px]:sr-only">Space</span>
         </Link>
@@ -53,7 +53,7 @@ export function LandingHeader() {
               href={l.href}
               aria-current={active === l.href.slice(1) ? "location" : undefined}
               className={cn(
-                "rounded-full px-4 py-2 text-[0.95rem] transition-colors hover:bg-ink/5 hover:text-ink",
+                "inline-flex min-h-11 items-center rounded-full px-4 text-[0.95rem] transition-colors hover:bg-ink/5 hover:text-ink",
                 active === l.href.slice(1) ? "bg-white text-ink shadow-sm ring-1 ring-ink/5" : "text-ink/80"
               )}
             >
