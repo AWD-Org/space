@@ -18,11 +18,11 @@ export function verificationEmail(name: string | null, link: string) {
 <tr><td style="padding-top:28px"><a href="${esc(link)}" style="display:inline-block;background:#3B55E6;color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 26px;border-radius:999px">Confirmar mi correo</a></td></tr>
 <tr><td style="padding-top:28px;font-size:13px;line-height:1.5;color:#6B7194">Si el botón no abre, copia este enlace en tu navegador:<br><span style="word-break:break-all;color:#3B55E6">${esc(link)}</span></td></tr>
 <tr><td style="padding-top:24px"><div style="border-top:1px solid #E9ECFF;height:1px;line-height:1px;font-size:1px">&nbsp;</div></td></tr>
-<tr><td style="padding-top:16px;font-size:12px;line-height:1.5;color:#6B7194">Si no creaste una cuenta en Space, ignora este mensaje y no pasará nada.</td></tr>
+<tr><td style="padding-top:16px;font-size:12px;line-height:1.5;color:#6B7194">Si no creaste una cuenta en Space, ignora este mensaje y no pasará nada. ¿Dudas? Escríbenos a <a href="mailto:${SUPPORT_EMAIL}" style="color:#6B7194">${SUPPORT_EMAIL}</a>.</td></tr>
 </table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px"><tr><td align="center" style="padding-top:16px;font-size:12px;color:#6B7194">Space · <a href="${SITE_URL}" style="color:#6B7194">${SITE_URL.replace(/^https?:\/\//, "")}</a></td></tr></table>
 </td></tr></table></body></html>`;
-  const text = `${hello}, confirma tu correo en Space.\n\nAbre este enlace: ${link}\n\nSi no creaste una cuenta, ignora este mensaje.`;
+  const text = `${hello}, confirma tu correo en Space.\n\nAbre este enlace: ${link}\n\nSi no creaste una cuenta, ignora este mensaje. Dudas: ${SUPPORT_EMAIL}`;
   return { subject: "Confirma tu correo en Space", html, text };
 }
 

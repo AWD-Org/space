@@ -16,7 +16,8 @@ export async function middleware(req: NextRequest) {
     const res = harden(NextResponse.next());
     const secret = (process.env.ADMIN_TOTP_SECRET ?? "").trim();
     const token = secret.length >= 16 ? await readToken(req.cookies.get(ADMIN_COOKIE)?.value, secret) : null;
-    if (token && isLive(token)) {
+    // Las Server Actions pueden poner su propia cookie (login, reconfirmación): no se pisa. La ventana se renueva en la siguiente navegación.
+    if (token && isLive(token) && !req.headers.has("next-action")) {
       res.cookies.set(ADMIN_COOKIE, await signToken({ ...token, l: Date.now() }, secret), {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

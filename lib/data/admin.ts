@@ -69,7 +69,7 @@ export async function getPlatformStats(days: number): Promise<PlatformStats> {
 
 /** Estado efectivo de una cuenta: sin suscripción guardada es gratis. */
 export function effectiveSub(s: Store) {
-  return s.subscription ?? { planName: "Gratis", status: "free" as const, renewsAt: null, amountCents: null, note: "", updatedAt: 0 };
+  return s.subscription ?? { planName: "Satélite", status: "free" as const, renewsAt: null, amountCents: null, note: "", updatedAt: 0, billing: undefined, courtesy: false };
 }
 
 export function summarize(stores: Store[], now = Date.now()) {
@@ -84,7 +84,7 @@ export function summarize(stores: Store[], now = Date.now()) {
   for (const s of stores) {
     const sub = effectiveSub(s);
     subs[sub.status]++;
-    if (sub.status === "active" && sub.amountCents) mrrCents += sub.amountCents;
+    if (sub.status === "active" && sub.amountCents && !sub.courtesy) mrrCents += sub.amountCents;
   }
   const renewals = stores
     .filter((s) => s.subscription && ["active", "trial", "past_due"].includes(s.subscription.status) && s.subscription.renewsAt != null)
