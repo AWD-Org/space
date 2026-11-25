@@ -7,7 +7,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { safe } from "@/lib/client/safe-action";
+import { useReauth } from "@/components/admin/reauth";
 import { setStoreState, setSubscription } from "@/lib/actions/admin";
 import { STATUS_LABEL } from "@/lib/admin-labels";
 import { toast } from "@/lib/toast";
@@ -29,6 +29,7 @@ export type AdminUser = {
 /** Edición de la suscripción y del estado de una tienda, desde la tabla de usuarios. */
 export function UserAdmin({ u }: { u: AdminUser }) {
   const router = useRouter();
+  const { guarded, dialog } = useReauth();
   const [open, setOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [f, setF] = React.useState({ planName: u.planName, status: u.subStatus, renewsOn: u.renewsOn, amount: u.amount, note: u.note });
@@ -37,7 +38,7 @@ export function UserAdmin({ u }: { u: AdminUser }) {
 
   async function save() {
     setBusy(true);
-    const res = await safe(() => setSubscription(u.id, f));
+    const res = await guarded(() => setSubscription(u.id, f));
     setBusy(false);
     if (!res.ok) return toast.error(res.error);
     toast.success("Suscripción guardada.");
@@ -46,7 +47,7 @@ export function UserAdmin({ u }: { u: AdminUser }) {
 
   async function state(patch: { status?: "draft" | "published"; isOpen?: boolean }, msg: string): Promise<void> {
     setBusy(true);
-    const res = await safe(() => setStoreState(u.id, patch));
+    const res = await guarded(() => setStoreState(u.id, patch));
     setBusy(false);
     if (!res.ok) {
       toast.error(res.error);
@@ -97,6 +98,7 @@ export function UserAdmin({ u }: { u: AdminUser }) {
           </div>
         </div>
       )}
+      {dialog}
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}
