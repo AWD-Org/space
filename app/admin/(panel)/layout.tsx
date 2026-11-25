@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { backendReady } from "@/lib/db";
 import { adminSignOut } from "@/lib/actions/admin-auth";
+import { refreshAdminData } from "@/lib/actions/admin";
 import { NotConfigured } from "@/components/app/not-configured";
 
 const NAV = [
@@ -29,6 +30,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
             <span className="hidden sm:inline">{user.email}</span>
             <Link href="/app" className="inline-flex min-h-11 items-center font-medium text-blueInk hover:underline">Mi panel</Link>
+            <form action={refreshAdminData}>
+              <button type="submit" title="Los datos del panel se guardan hasta 5 minutos" className="inline-flex min-h-11 items-center font-medium text-blueInk hover:underline">Actualizar datos</button>
+            </form>
             <form action={adminSignOut}>
               <button type="submit" className="inline-flex min-h-11 items-center font-medium text-blueInk hover:underline">Cerrar admin</button>
             </form>

@@ -112,3 +112,10 @@ export async function setLimits(storeId: string, input: Record<string, unknown>)
     return undefined;
   });
 }
+
+/** Vuelve a leer tiendas y visitas ahora mismo (si no, el panel guarda los datos hasta 5 minutos para gastar menos lecturas). */
+export async function refreshAdminData(): Promise<void> {
+  await requireAdminForAction();
+  revalidateTag(ADMIN_TAG);
+  revalidatePath("/admin", "layout");
+}
