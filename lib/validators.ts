@@ -224,4 +224,6 @@ export const subscriptionSchema = z.object({
   renewsOn: z.string().trim().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Fecha no válida."),
   amount: z.string().trim().max(12, "Monto no válido."),
   note: z.string().trim().max(300, "Máximo 300 caracteres."),
+  billing: z.enum(["", "monthly", "annual"], { message: "Periodo no válido." }).optional(),
+  courtesy: z.boolean().optional(),
 });

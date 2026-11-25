@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/legal-page";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Términos de uso",
@@ -51,7 +52,7 @@ export default function TermsPage() {
       </p>
 
       <h2>Cierre de cuenta</h2>
-      <p>Puedes pedir que eliminemos tu cuenta y tu catálogo escribiendo a space@amoxtli.tech. El tratamiento de tus datos se describe en el Aviso de privacidad.</p>
+      <p>Puedes pedir que eliminemos tu cuenta y tu catálogo escribiendo a {SUPPORT_EMAIL}. El tratamiento de tus datos se describe en el Aviso de privacidad.</p>
 
       <h2>Cambios y ley aplicable</h2>
       <p>Podemos actualizar estos términos y publicaremos la versión vigente aquí. Se rigen por las leyes de los Estados Unidos Mexicanos.</p>

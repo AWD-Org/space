@@ -7,6 +7,7 @@ import { NotConfigured } from "@/components/app/not-configured";
 const NAV = [
   { href: "/admin", label: "Resumen" },
   { href: "/admin/usuarios", label: "Usuarios" },
+  { href: "/admin/uso", label: "Uso justo" },
   { href: "/admin/actividad", label: "Actividad" },
 ];
 

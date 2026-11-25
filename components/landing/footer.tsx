@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SpaceLogo } from "@/src/brand/space/SpaceLogo";
+import { SUPPORT_EMAIL } from "@/lib/site";
 import { CtaLink, Reveal, WordsReveal } from "./motion";
 
 export function FinalCta() {
@@ -37,6 +38,9 @@ export function LandingFooter() {
           </Link>
           <a href="#preguntas" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Preguntas
+          </a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
+            Soporte
           </a>
           <Link href="/privacidad" className="inline-flex min-h-11 items-center text-ink/80 hover:text-ink">
             Aviso de privacidad

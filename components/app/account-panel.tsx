@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { safe } from "@/lib/client/safe-action";
+import { SUPPORT_EMAIL } from "@/lib/site";
 import { authErrorMessage, changeDisplayName, changePassword, hasPasswordLogin, signOut } from "@/lib/firebase/client";
 import { deleteAccount, pauseStore, resumeStore } from "@/lib/actions/account";
 import { PAUSE_OPTIONS } from "@/lib/account-options";
@@ -144,6 +145,14 @@ export function AccountPanel({ name, email, emailVerified, pausedUntil }: { name
         <Button variant="secondary" size="sm" onClick={logout}>
           Cerrar sesión
         </Button>
+      </Panel>
+
+      <Panel title="¿Necesitas ayuda?">
+        <p className="text-sm text-muted-foreground">
+          Escríbenos a{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-blueInk underline-offset-4 hover:underline">{SUPPORT_EMAIL}</a>
+          {" "}desde el correo de tu cuenta y te respondemos.
+        </p>
       </Panel>
 
       <CloseAccount pausedUntil={pausedUntil} />

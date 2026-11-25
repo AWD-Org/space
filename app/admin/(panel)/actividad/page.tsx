@@ -12,6 +12,7 @@ const LABEL: Record<string, string> = {
   logout: "Cierre de sesión admin",
   setSubscription: "Suscripción editada",
   setStoreState: "Estado de tienda cambiado",
+  setLimits: "Límites especiales cambiados",
 };
 const BAD = new Set(["code_failed", "locked"]);
 const fmt = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "medium", timeZone: "America/Mexico_City" });

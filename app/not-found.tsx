@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export default function NotFound() {
   return (
@@ -9,6 +10,10 @@ export default function NotFound() {
         <Link href="/" className="mt-6 inline-flex min-h-11 items-center font-medium text-blueInk underline-offset-4 hover:underline">
           Conoce Space
         </Link>
+        <p className="mt-4 text-sm text-muted-foreground">
+          ¿Algo no cuadra? Escríbenos a{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-blueInk underline-offset-4 hover:underline">{SUPPORT_EMAIL}</a>
+        </p>
       </div>
     </main>
   );

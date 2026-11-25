@@ -23,3 +23,16 @@ export const toInputDate = (ms: number | null | undefined) => (ms ? new Date(ms)
 export function daysUntil(ms: number, now = Date.now()) {
   return Math.ceil((ms - now) / 86_400_000);
 }
+
+/** Planes de Space (nombres definitivos). «Gratis» es el nombre histórico del plan sin pago. */
+export const PLAN_OPTIONS = ["Satélite", "Cohete", "Estación"] as const;
+
+/** Visitas por mes a partir de las cuales se revisa el uso (uso justo). Solo orientativo: la decisión siempre es de una persona. */
+export const FAIR_USE: Record<string, number> = { Satélite: 3000, Cohete: 15000, Estación: 35000 };
+export const fairThreshold = (planName: string) => FAIR_USE[planName] ?? FAIR_USE.Satélite;
+
+/** Nivel de exceso: 0 sin exceso, 1 = superó el umbral, 3 = triplicó, 5 = quintuplicó. */
+export function fairLevel(views: number, planName: string): 0 | 1 | 3 | 5 {
+  const r = views / fairThreshold(planName);
+  return r >= 5 ? 5 : r >= 3 ? 3 : r >= 1 ? 1 : 0;
+}
