@@ -1,5 +1,6 @@
 import "server-only";
 import { SITE_URL } from "@/lib/env";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
@@ -32,7 +33,7 @@ export async function sendVerificationEmail(to: string, name: string | null, lin
   const res = await fetch(`${process.env.RESEND_API_URL || "https://api.resend.com"}/emails`, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: process.env.RESEND_FROM || "Space <space@amoxtli.tech>", to: [to], subject, html, text }),
+    body: JSON.stringify({ from: process.env.RESEND_FROM || `Space <${SUPPORT_EMAIL}>`, to: [to], subject, html, text }),
   });
   if (!res.ok) throw new Error(`Resend respondió ${res.status}`);
 }

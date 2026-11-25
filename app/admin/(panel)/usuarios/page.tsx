@@ -8,10 +8,15 @@ import { UserAdmin } from "@/components/admin/user-admin";
 import { STATUS_LABEL, STATUS_STYLE, fmtDate, toInputDate } from "@/lib/admin-labels";
 import type { SubscriptionStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { brandProblem } from "@/lib/slug";
 
 export const metadata: Metadata = { title: "Usuarios" };
 const PAGE = 50;
-const FILTERS = ["todas", "free", "trial", "active", "past_due", "canceled"] as const;
+const FILTERS = ["todas", "free", "trial", "active", "past_due", "canceled", "marca"] as const;
+
+/** Tiendas cuyo nombre o link usan una marca reservada (Amoxtli o Space), salvo las del equipo. */
+const usesBrand = (s: { name: string; slug: string; ownerEmail?: string | null }) =>
+  brandProblem(s.name, s.ownerEmail) !== null || brandProblem(s.slug, s.ownerEmail) !== null;
 
 export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; estado?: string; p?: string }> }) {
   await requireAdmin();
@@ -20,7 +25,9 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   const needle = q.trim().toLowerCase().slice(0, 80);
   const filter = (FILTERS as readonly string[]).includes(estado) ? estado : "todas";
   const rows = stores.filter((s) => {
-    if (filter !== "todas" && effectiveSub(s).status !== filter) return false;
+    if (filter === "marca") {
+      if (!usesBrand(s)) return false;
+    } else if (filter !== "todas" && effectiveSub(s).status !== filter) return false;
     if (!needle) return true;
     return [s.name, s.slug, s.ownerEmail ?? "", s.whatsapp].some((v) => v.toLowerCase().includes(needle));
   });
@@ -43,7 +50,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
       <nav aria-label="Estado de suscripción" className="mb-4 flex flex-wrap gap-1">
         {FILTERS.map((f) => (
           <Link key={f} href={href({ estado: f })} aria-current={f === filter ? "page" : undefined} className={cn("inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-medium", f === filter ? "bg-ink text-white" : "bg-white text-ink ring-1 ring-inset ring-border hover:bg-cloud")}>
-            {f === "todas" ? "Todas" : STATUS_LABEL[f as SubscriptionStatus]}
+            {f === "todas" ? "Todas" : f === "marca" ? "Marca reservada" : STATUS_LABEL[f as SubscriptionStatus]}
           </Link>
         ))}
       </nav>
@@ -62,14 +69,23 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                         <Link href={`/${s.slug}`} className="font-medium text-ink hover:underline">{s.name}</Link>
                         <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", STATUS_STYLE[sub.status])}>{STATUS_LABEL[sub.status]}</span>
                         <span className="rounded-full bg-cloud px-2.5 py-0.5 text-xs text-muted-foreground">{s.status === "published" ? "Publicada" : "Borrador"}</span>
+                        {usesBrand(s) && <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900">Marca reservada</span>}
                       </p>
                       <p className="truncate text-sm text-muted-foreground">{s.ownerEmail ?? "Sin correo"} · /{s.slug}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {s.counts?.products ?? 0} productos · alta {fmtDate(s.createdAt)} · plan {sub.planName}
+                        {s.counts?.products ?? 0} productos · {s.counts?.categories ?? 0} categorías · alta {fmtDate(s.createdAt)} · plan {sub.planName}
                         {sub.renewsAt ? ` · renueva ${fmtDate(sub.renewsAt)}` : ""}
                         {sub.amountCents ? ` · ${formatPrice(sub.amountCents)}` : ""}
                       </p>
                       {sub.note && <p className="mt-1 text-xs text-muted-foreground">Nota: {sub.note}</p>}
+                      <p className="mt-1 flex flex-wrap gap-x-4 text-xs">
+                        {s.ownerEmail && (
+                          <a className="inline-flex min-h-11 items-center font-medium text-blueInk hover:underline" href={`mailto:${s.ownerEmail}?subject=${encodeURIComponent("Tu tienda en Space")}`}>Escribir por correo</a>
+                        )}
+                        {s.whatsapp && (
+                          <a className="inline-flex min-h-11 items-center font-medium text-blueInk hover:underline" href={`https://wa.me/${s.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                        )}
+                      </p>
                     </div>
                     <UserAdmin u={{ id: s.id, name: s.name, slug: s.slug, status: s.status, isOpen: s.isOpen, planName: sub.planName, subStatus: sub.status, renewsOn: toInputDate(sub.renewsAt), amount: sub.amountCents ? centsToInput(sub.amountCents) : "", note: sub.note }} />
                   </div>
