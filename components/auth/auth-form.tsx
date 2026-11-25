@@ -9,6 +9,7 @@ import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { SUPPORT_EMAIL } from "@/lib/site";
 import { Field } from "@/components/ui/field";
 import { RouteLoader } from "@/components/ui/route-loader";
 import { authFormSchema, type AuthFormValues } from "@/lib/validators";
@@ -193,6 +194,10 @@ export function AuthForm({ mode, next }: { mode: "signin" | "signup"; next?: str
         <Link href={signup ? "/entrar" : "/registro"} className="rounded-sm font-medium text-blueInk underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
           {signup ? "Entra aquí" : "Créalo gratis"}
         </Link>
+      </p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        ¿Necesitas ayuda? Escríbenos a{" "}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-blueInk underline-offset-4 hover:underline">{SUPPORT_EMAIL}</a>
       </p>
     </div>
   );

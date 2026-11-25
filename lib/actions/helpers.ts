@@ -14,7 +14,7 @@ export async function run<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
     if (err instanceof UserError || err instanceof BackendNotConfiguredError) {
       return { ok: false, error: err.message };
     }
-    if (err instanceof Error && err.message.startsWith("Tu sesión")) return { ok: false, error: err.message };
+    if (err instanceof Error && (err.message.startsWith("Tu sesión") || err.message === "REAUTH_REQUIRED" || err.message.startsWith("No tienes permiso"))) return { ok: false, error: err.message };
     console.error("[space action]", err);
     return { ok: false, error: "Algo salió mal. Intenta de nuevo en un momento." };
   }

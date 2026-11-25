@@ -7,6 +7,23 @@ export interface ImageRef {
   url: string;
 }
 
+export type SubscriptionStatus = "free" | "trial" | "active" | "past_due" | "canceled";
+
+export interface Subscription {
+  planName: string;
+  status: SubscriptionStatus;
+  /** Próxima renovación (ms). null: sin fecha. */
+  renewsAt: number | null;
+  /** Monto por periodo en centavos MXN, solo informativo. */
+  amountCents: number | null;
+  note: string;
+  /** Periodo de cobro, solo informativo hasta conectar Stripe. */
+  billing?: "monthly" | "annual";
+  /** Cuenta de cortesía: plan sin cobro (no cuenta en el ingreso). */
+  courtesy?: boolean;
+  updatedAt: number;
+}
+
 export interface Store {
   id: string; // = uid del dueño
   ownerId: string;
@@ -28,6 +45,10 @@ export interface Store {
   pausedUntil?: number | null;
   status: "draft" | "published";
   plan: "free";
+  /** Suscripción administrada a mano por el superadmin. Sin ella, la cuenta es gratis. */
+  subscription?: Subscription;
+  /** Límites especiales puestos a mano por el superadmin (vacío = el del plan). Aún no se aplican en el servidor. */
+  limitOverrides?: { products?: number; categories?: number; imagesPerProduct?: number } | null;
   counts: { products: number; categories: number };
   slugChangedAt: number | null;
   /** Tutorial del panel: qué pantallas ya vio la persona (se guarda en su cuenta, no en una cookie). */

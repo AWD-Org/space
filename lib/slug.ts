@@ -42,17 +42,26 @@ export function slugProblem(slug: string): string | null {
   return null;
 }
 
-const BRAND = "amoxtli";
+/**
+ * Marcas reservadas: la empresa (Amoxtli, AWD), el producto (Space) y marcas conocidas con las que
+ * alguien podría hacerse pasar. El equipo (correo @amoxtli.tech) queda exento.
+ */
+const BRANDS = [
+  "amoxtli", "awd", "space",
+  "shopify", "facebook", "instagram", "whatsapp", "tiktok", "youtube", "google",
+  "mercadolibre", "mercadopago", "stripe", "paypal", "amazon",
+];
+const BRAND_RE = new RegExp(BRANDS.join("|"));
 const STAFF_DOMAIN = "@amoxtli.tech";
 
-/** Dice si un texto menciona la marca aunque lo disfracen con acentos, mayúsculas, espacios o signos («A.moxtli», «AMOXTLI»). */
+/** Dice si un texto menciona una marca reservada (Amoxtli o Space) aunque lo disfracen con acentos, mayúsculas, espacios o signos («A.moxtli», «S p a c e», «AMOXTLI»). */
 export function mentionsBrand(text: string) {
   return text
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "")
-    .includes(BRAND);
+    .match(BRAND_RE) !== null;
 }
 
 /**

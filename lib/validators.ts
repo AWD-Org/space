@@ -215,3 +215,15 @@ export function makeOrderSchema(opts: OrderFormOptions) {
     });
 }
 export type OrderFormValues = z.infer<ReturnType<typeof makeOrderSchema>>;
+
+// ── Admin ──
+export const subscriptionSchema = z.object({
+  planName: z.string().trim().min(1, "Ponle nombre al plan.").max(40, "Máximo 40 caracteres."),
+  status: z.enum(["free", "trial", "active", "past_due", "canceled"], { message: "Estado no válido." }),
+  /** AAAA-MM-DD o vacío. */
+  renewsOn: z.string().trim().regex(/^(\d{4}-\d{2}-\d{2})?$/, "Fecha no válida."),
+  amount: z.string().trim().max(12, "Monto no válido.").regex(/^[\d.,\s$]*$/, "Monto no válido."),
+  note: z.string().trim().max(300, "Máximo 300 caracteres."),
+  billing: z.enum(["", "monthly", "annual"], { message: "Periodo no válido." }).optional(),
+  courtesy: z.boolean().optional(),
+});

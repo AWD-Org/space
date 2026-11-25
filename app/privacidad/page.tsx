@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/legal-page";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Aviso de privacidad",
@@ -16,7 +17,7 @@ export default function PrivacyPage() {
 
       <h2>Responsable</h2>
       <p>
-        AMOXTLI®, con domicilio en Uhma 60-B, colonia Del Valle, alcaldía Benito Juárez, C.P. 03100, Ciudad de México. Contacto: space@amoxtli.tech.
+        AMOXTLI®, con domicilio en Uhma 60-B, colonia Del Valle, alcaldía Benito Juárez, C.P. 03100, Ciudad de México. Contacto: {SUPPORT_EMAIL}.
       </p>
 
       <h2>Datos que recabamos</h2>
@@ -55,7 +56,7 @@ export default function PrivacyPage() {
 
       <h2>Tus derechos ARCO</h2>
       <p>
-        Puedes solicitar el acceso, la rectificación o la cancelación de tus datos, y oponerte a su tratamiento, escribiendo a space@amoxtli.tech desde el correo de tu cuenta. Responderemos en un máximo de 20 días hábiles. También puedes pausar o eliminar tu cuenta y tu catálogo tú mismo desde Mi cuenta, en el panel.
+        Puedes solicitar el acceso, la rectificación o la cancelación de tus datos, y oponerte a su tratamiento, escribiendo a {SUPPORT_EMAIL} desde el correo de tu cuenta. Responderemos en un máximo de 20 días hábiles. También puedes pausar o eliminar tu cuenta y tu catálogo tú mismo desde Mi cuenta, en el panel.
       </p>
 
       <h2>Cambios a este aviso</h2>
