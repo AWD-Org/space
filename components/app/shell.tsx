@@ -138,11 +138,11 @@ export function AppShell({ storeName, slug, email, atLimit = false, emailVerifie
   );
 }
 
-export function PageHeader({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
+export function PageHeader({ title, description, action, as: Tag = "h1" }: { title: string; description?: string; action?: React.ReactNode; as?: "h1" | "h2" }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-[1.75rem] font-semibold leading-tight text-ink sm:text-3xl">{title}</h1>
+        <Tag className="font-display text-[1.75rem] font-semibold leading-tight text-ink sm:text-3xl">{title}</Tag>
         {description && <p className="mt-1 text-muted-foreground">{description}</p>}
       </div>
       {action}

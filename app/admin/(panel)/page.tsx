@@ -14,8 +14,10 @@ function Stat({ label, value, hint }: { label: string; value: React.ReactNode; h
   return (
     <div className="rounded-2xl bg-white p-4 ring-1 ring-ink/5">
       <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-display text-3xl font-semibold tabular-nums text-ink">{value}</dd>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      <dd className="mt-1 font-display text-3xl font-semibold tabular-nums text-ink">
+        {value}
+        {hint && <span className="mt-1 block font-sans text-xs font-normal text-muted-foreground">{hint}</span>}
+      </dd>
     </div>
   );
 }
@@ -96,6 +98,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
 
       <div className="mt-8">
         <PageHeader
+          as="h2"
           title="Actividad"
           description="Visitas y pedidos enviados desde todos los catálogos."
           action={

@@ -66,18 +66,18 @@ export function ImageUploader({
             <button
               type="button"
               onClick={() => onChange(value.filter((v) => v.path !== img.path))}
-              className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-white/95 text-ink shadow-sm"
+              className="absolute right-0 top-0 grid h-11 w-11 place-items-center text-ink"
               aria-label={`Quitar foto ${i + 1}`}
             >
-              <X className="h-4 w-4" />
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-white/95 shadow-sm"><X className="h-4 w-4" /></span>
             </button>
             {value.length > 1 && (
-              <div className="absolute inset-x-1.5 bottom-1.5 flex justify-between">
-                <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="grid h-7 w-7 place-items-center rounded-full bg-white/95 text-ink shadow-sm disabled:opacity-0" aria-label={`Mover foto ${i + 1} a la izquierda`}>
-                  <ArrowLeft className="h-3.5 w-3.5" />
+              <div className="absolute inset-x-0 bottom-0 flex justify-between">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="grid h-11 w-11 place-items-center text-ink disabled:opacity-0" aria-label={`Mover foto ${i + 1} a la izquierda`}>
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-white/95 shadow-sm"><ArrowLeft className="h-3.5 w-3.5" /></span>
                 </button>
-                <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} className="grid h-7 w-7 place-items-center rounded-full bg-white/95 text-ink shadow-sm disabled:opacity-0" aria-label={`Mover foto ${i + 1} a la derecha`}>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                <button type="button" onClick={() => move(i, 1)} disabled={i === value.length - 1} className="grid h-11 w-11 place-items-center text-ink disabled:opacity-0" aria-label={`Mover foto ${i + 1} a la derecha`}>
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-white/95 shadow-sm"><ArrowRight className="h-3.5 w-3.5" /></span>
                 </button>
               </div>
             )}

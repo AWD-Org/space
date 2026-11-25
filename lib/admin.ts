@@ -4,7 +4,11 @@ import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { getSessionUser } from "@/lib/auth/session";
 import { ADMIN_COOKIE, isFresh, isLive, readToken, type AdminToken } from "@/lib/admin/token";
+import { getDb } from "@/lib/db";
 import type { SessionUser } from "@/lib/types";
+
+/** Documento donde se anota el último cierre de admin: los tokens emitidos antes de esa hora ya no sirven. */
+export const ADMIN_SESSION_DOC = "adminSecurity/session";
 
 /** Texto del error que el cliente usa para pedir el código otra vez antes de una acción delicada. */
 export const REAUTH = "REAUTH_REQUIRED";
@@ -42,6 +46,9 @@ export const getVerifiedAdmin = cache(async (): Promise<Verified | null> => {
   if (!user) return null;
   const token = await readToken((await cookies()).get(ADMIN_COOKIE)?.value, totpSecret()!);
   if (!token || token.u !== user.uid || !isLive(token)) return null;
+  const db = await getDb();
+  const rev = await db.get<{ revokedBefore?: number }>(ADMIN_SESSION_DOC);
+  if (rev?.revokedBefore && token.i <= rev.revokedBefore) return null;
   return { user, token };
 });
 
