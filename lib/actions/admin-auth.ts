@@ -2,7 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getBaseAdmin, getVerifiedAdmin, totpSecret } from "@/lib/admin";
+import { ADMIN_SESSION_DOC, getBaseAdmin, getVerifiedAdmin, totpSecret } from "@/lib/admin";
+import { getDb } from "@/lib/db";
 import { ADMIN_COOKIE, IDLE_MS, signToken } from "@/lib/admin/token";
 import { checkCode, logAdmin } from "@/lib/admin/security";
 import type { ActionResult } from "@/lib/types";
@@ -56,7 +57,12 @@ export async function reconfirmAdminCode(code: string): Promise<ActionResult> {
 /** Cierra solo la sesión de administración (la cuenta normal sigue abierta). */
 export async function adminSignOut() {
   const v = await getVerifiedAdmin();
-  if (v) await logAdmin(v.user.email!, "logout");
+  if (v) {
+    // Cerrar admin invalida también cualquier copia de la cookie emitida antes de este momento.
+    const db = await getDb();
+    await db.set(ADMIN_SESSION_DOC, { revokedBefore: Date.now() });
+    await logAdmin(v.user.email!, "logout");
+  }
   (await cookies()).delete({ name: ADMIN_COOKIE, path: "/admin" });
   redirect("/app");
 }
