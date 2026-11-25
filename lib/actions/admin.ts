@@ -33,7 +33,7 @@ function done(slug: string) {
 /** Guarda la suscripción de una cuenta (se administra a mano). */
 export async function setSubscription(storeId: string, input: Record<string, unknown>): Promise<ActionResult> {
   return run(async () => {
-    const admin = await requireAdminForAction();
+    const admin = await requireAdminForAction({ fresh: true });
     const parsed = subscriptionSchema.safeParse(input);
     if (!parsed.success) throw new UserError(firstError(parsed.error));
     const store = await target(storeId);
@@ -60,7 +60,7 @@ export async function setSubscription(storeId: string, input: Record<string, unk
 /** Publica o despublica una tienda, o abre y cierra sus pedidos. */
 export async function setStoreState(storeId: string, input: { status?: "draft" | "published"; isOpen?: boolean }): Promise<ActionResult> {
   return run(async () => {
-    const admin = await requireAdminForAction();
+    const admin = await requireAdminForAction({ fresh: true });
     const store = await target(storeId);
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
     if (input.status !== undefined) {
